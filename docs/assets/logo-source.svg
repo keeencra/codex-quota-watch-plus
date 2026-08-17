@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="gaugeGrad" gradientUnits="userSpaceOnUse" x1="117" y1="256" x2="395" y2="256">
+      <stop offset="0" stop-color="#16C94A"></stop>
+      <stop offset="0.33" stop-color="#86DE1E"></stop>
+      <stop offset="0.58" stop-color="#F3CE08"></stop>
+      <stop offset="1" stop-color="#FF7A16"></stop>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="#F4F1EA"></rect>
+
+  <path d="M117.4 394.6 A196 196 0 1 1 394.6 394.6" fill="none" stroke="url(#gaugeGrad)" stroke-width="42" stroke-linecap="round"></path>
+
+  <polyline points="165,196 251,256 165,316" fill="none" stroke="#16181D" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"></polyline>
+  <line x1="271" y1="316" x2="347" y2="316" stroke="#16181D" stroke-width="36" stroke-linecap="round"></line>
+</svg>

@@ -1,0 +1,749 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A00100000000000000000001 /* Shared/UsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000001 /* Shared/UsageModels.swift */; };
+		A00100000000000000000002 /* Shared/UsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000002 /* Shared/UsageClient.swift */; };
+		A00100000000000000000003 /* iPhoneApp/QuotaPhoneApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000003 /* iPhoneApp/QuotaPhoneApp.swift */; };
+		A00100000000000000000004 /* iPhoneApp/ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000004 /* iPhoneApp/ContentView.swift */; };
+		A00100000000000000000005 /* iPhoneApp/PhoneConnectivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000005 /* iPhoneApp/PhoneConnectivity.swift */; };
+		A00100000000000000000006 /* Shared/UsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000001 /* Shared/UsageModels.swift */; };
+		A0010000000000000000000D /* Shared/UsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000002 /* Shared/UsageClient.swift */; };
+		A00100000000000000000007 /* WatchApp/QuotaWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000006 /* WatchApp/QuotaWatchApp.swift */; };
+		A00100000000000000000008 /* WatchApp/WatchContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000007 /* WatchApp/WatchContentView.swift */; };
+		A00100000000000000000009 /* WatchApp/WatchConnectivityReceiver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000008 /* WatchApp/WatchConnectivityReceiver.swift */; };
+		A0010000000000000000000C /* CodingQuota Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = A0020000000000000000000B /* CodingQuota Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A0010000000000000000000F /* iPhoneApp/PairingScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000017 /* iPhoneApp/PairingScannerView.swift */; };
+		A00100000000000000000010 /* iPhoneApp/WatchTokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000018 /* iPhoneApp/WatchTokenStore.swift */; };
+		A00100000000000000000011 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000019 /* Assets.xcassets */; };
+		A00100000000000000000012 /* Icon-Watch-24x24@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000001A /* Icon-Watch-24x24@2x.png */; };
+		A00100000000000000000013 /* Icon-Watch-27.5x27.5@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000001B /* Icon-Watch-27.5x27.5@2x.png */; };
+		A00100000000000000000014 /* Icon-Watch-29x29@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000001C /* Icon-Watch-29x29@2x.png */; };
+		A00100000000000000000015 /* Icon-Watch-29x29@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000001D /* Icon-Watch-29x29@3x.png */; };
+		A00100000000000000000016 /* Icon-Watch-40x40@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000001E /* Icon-Watch-40x40@2x.png */; };
+		A00100000000000000000017 /* Icon-Watch-44x44@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A0020000000000000000001F /* Icon-Watch-44x44@2x.png */; };
+		A00100000000000000000018 /* Icon-Watch-50x50@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000020 /* Icon-Watch-50x50@2x.png */; };
+		A00100000000000000000019 /* Icon-Watch-86x86@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000021 /* Icon-Watch-86x86@2x.png */; };
+		A0010000000000000000001A /* Icon-Watch-98x98@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000022 /* Icon-Watch-98x98@2x.png */; };
+		A0010000000000000000001B /* Icon-Watch-108x108@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000023 /* Icon-Watch-108x108@2x.png */; };
+		A0010000000000000000001C /* Icon-Watch-1024x1024@1x.png in Resources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000024 /* Icon-Watch-1024x1024@1x.png */; };
+		A00100000000000000000025 /* Shared/UsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000001 /* Shared/UsageModels.swift */; };
+		A00100000000000000000026 /* WidgetExtension/CodingQuotaWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000025 /* WidgetExtension/CodingQuotaWidget.swift */; };
+		A00100000000000000000027 /* CodingQuotaWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A00200000000000000000028 /* CodingQuotaWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, CodeSignOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A00300000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A00F00000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A00B00000000000000000002;
+			remoteInfo = "CodingQuota Watch App";
+		};
+		A00300000000000000000002 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A00F00000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A00B00000000000000000003;
+			remoteInfo = CodingQuotaWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A00400000000000000000001 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				A0010000000000000000000C /* CodingQuota Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00400000000000000000002 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A00100000000000000000027 /* CodingQuotaWidgetExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		A00200000000000000000001 /* Shared/UsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/UsageModels.swift; sourceTree = "<group>"; };
+		A00200000000000000000002 /* Shared/UsageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/UsageClient.swift; sourceTree = "<group>"; };
+		A00200000000000000000003 /* iPhoneApp/QuotaPhoneApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneApp/QuotaPhoneApp.swift; sourceTree = "<group>"; };
+		A00200000000000000000004 /* iPhoneApp/ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneApp/ContentView.swift; sourceTree = "<group>"; };
+		A00200000000000000000005 /* iPhoneApp/PhoneConnectivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneApp/PhoneConnectivity.swift; sourceTree = "<group>"; };
+		A00200000000000000000006 /* WatchApp/QuotaWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchApp/QuotaWatchApp.swift; sourceTree = "<group>"; };
+		A00200000000000000000007 /* WatchApp/WatchContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchApp/WatchContentView.swift; sourceTree = "<group>"; };
+		A00200000000000000000008 /* WatchApp/WatchConnectivityReceiver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchApp/WatchConnectivityReceiver.swift; sourceTree = "<group>"; };
+		A0020000000000000000000A /* CodingQuota.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CodingQuota.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A0020000000000000000000B /* CodingQuota Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "CodingQuota Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A00200000000000000000010 /* Config/iPhoneApp-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Config/iPhoneApp-Info.plist"; sourceTree = "<group>"; };
+		A00200000000000000000011 /* Config/WatchApp-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Config/WatchApp-Info.plist"; sourceTree = "<group>"; };
+		A00200000000000000000013 /* Config/iPhoneApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Config/iPhoneApp.entitlements; sourceTree = "<group>"; };
+		A00200000000000000000014 /* Config/WatchApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Config/WatchApp.entitlements; sourceTree = "<group>"; };
+		A00200000000000000000017 /* iPhoneApp/PairingScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneApp/PairingScannerView.swift; sourceTree = "<group>"; };
+		A00200000000000000000018 /* iPhoneApp/WatchTokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneApp/WatchTokenStore.swift; sourceTree = "<group>"; };
+		A00200000000000000000019 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A0020000000000000000001A /* Icon-Watch-24x24@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Watch-24x24@2x.png"; sourceTree = "<group>"; };
+		A0020000000000000000001B /* Icon-Watch-27.5x27.5@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Watch-27.5x27.5@2x.png"; sourceTree = "<group>"; };
+		A0020000000000000000001C /* Icon-Watch-29x29@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Watch-29x29@2x.png"; sourceTree = "<group>"; };
+		A0020000000000000000001D /* Icon-Watch-29x29@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Watch-29x29@3x.png"; sourceTree = "<group>"; };
+		A0020000000000000000001E /* Icon-Watch-40x40@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Watch-40x40@2x.png"; sourceTree = "<group>"; };
+		A0020000000000000000001F /* Icon-Watch-44x44@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Watch-44x44@2x.png"; sourceTree = "<group>"; };
+		A00200000000000000000020 /* Icon-Watch-50x50@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Watch-50x50@2x.png"; sourceTree = "<group>"; };
+		A00200000000000000000021 /* Icon-Watch-86x86@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Watch-86x86@2x.png"; sourceTree = "<group>"; };
+		A00200000000000000000022 /* Icon-Watch-98x98@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Watch-98x98@2x.png"; sourceTree = "<group>"; };
+		A00200000000000000000023 /* Icon-Watch-108x108@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Watch-108x108@2x.png"; sourceTree = "<group>"; };
+		A00200000000000000000024 /* Icon-Watch-1024x1024@1x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Watch-1024x1024@1x.png"; sourceTree = "<group>"; };
+		A00200000000000000000025 /* WidgetExtension/CodingQuotaWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetExtension/CodingQuotaWidget.swift; sourceTree = "<group>"; };
+		A00200000000000000000026 /* Config/WidgetExtension-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Config/WidgetExtension-Info.plist"; sourceTree = "<group>"; };
+		A00200000000000000000027 /* Config/WidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Config/WidgetExtension.entitlements; sourceTree = "<group>"; };
+		A00200000000000000000028 /* CodingQuotaWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CodingQuotaWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A00500000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00500000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00500000000000000000003 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A00600000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				A00600000000000000000002 /* Sources */,
+				A00600000000000000000006 /* Config */,
+				A00200000000000000000019 /* Assets.xcassets */,
+				A00600000000000000000009 /* WatchIcons */,
+				A00600000000000000000007 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A00600000000000000000002 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				A00600000000000000000003 /* Shared */,
+				A00600000000000000000004 /* iPhoneApp */,
+				A00600000000000000000005 /* WatchApp */,
+				A0060000000000000000000A /* WidgetExtension */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		A00600000000000000000003 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				A00200000000000000000001 /* Shared/UsageModels.swift */,
+				A00200000000000000000002 /* Shared/UsageClient.swift */,
+			);
+			name = Shared;
+			sourceTree = "<group>";
+		};
+		A00600000000000000000004 /* iPhoneApp */ = {
+			isa = PBXGroup;
+			children = (
+				A00200000000000000000003 /* iPhoneApp/QuotaPhoneApp.swift */,
+				A00200000000000000000004 /* iPhoneApp/ContentView.swift */,
+				A00200000000000000000005 /* iPhoneApp/PhoneConnectivity.swift */,
+				A00200000000000000000017 /* iPhoneApp/PairingScannerView.swift */,
+				A00200000000000000000018 /* iPhoneApp/WatchTokenStore.swift */,
+			);
+			name = iPhoneApp;
+			sourceTree = "<group>";
+		};
+		A00600000000000000000005 /* WatchApp */ = {
+			isa = PBXGroup;
+			children = (
+				A00200000000000000000006 /* WatchApp/QuotaWatchApp.swift */,
+				A00200000000000000000007 /* WatchApp/WatchContentView.swift */,
+				A00200000000000000000008 /* WatchApp/WatchConnectivityReceiver.swift */,
+			);
+			name = WatchApp;
+			sourceTree = "<group>";
+		};
+		A00600000000000000000006 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				A00200000000000000000010 /* Config/iPhoneApp-Info.plist */,
+				A00200000000000000000011 /* Config/WatchApp-Info.plist */,
+				A00200000000000000000026 /* Config/WidgetExtension-Info.plist */,
+				A00200000000000000000013 /* Config/iPhoneApp.entitlements */,
+				A00200000000000000000014 /* Config/WatchApp.entitlements */,
+				A00200000000000000000027 /* Config/WidgetExtension.entitlements */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		A00600000000000000000007 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A0020000000000000000000A /* CodingQuota.app */,
+				A0020000000000000000000B /* CodingQuota Watch App.app */,
+				A00200000000000000000028 /* CodingQuotaWidgetExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A00600000000000000000009 /* WatchIcons */ = {
+			isa = PBXGroup;
+			children = (
+				A0020000000000000000001A /* Icon-Watch-24x24@2x.png */,
+				A0020000000000000000001B /* Icon-Watch-27.5x27.5@2x.png */,
+				A0020000000000000000001C /* Icon-Watch-29x29@2x.png */,
+				A0020000000000000000001D /* Icon-Watch-29x29@3x.png */,
+				A0020000000000000000001E /* Icon-Watch-40x40@2x.png */,
+				A0020000000000000000001F /* Icon-Watch-44x44@2x.png */,
+				A00200000000000000000020 /* Icon-Watch-50x50@2x.png */,
+				A00200000000000000000021 /* Icon-Watch-86x86@2x.png */,
+				A00200000000000000000022 /* Icon-Watch-98x98@2x.png */,
+				A00200000000000000000023 /* Icon-Watch-108x108@2x.png */,
+				A00200000000000000000024 /* Icon-Watch-1024x1024@1x.png */,
+			);
+			path = WatchIcons;
+			sourceTree = "<group>";
+		};
+		A0060000000000000000000A /* WidgetExtension */ = {
+			isa = PBXGroup;
+			children = (
+				A00200000000000000000025 /* WidgetExtension/CodingQuotaWidget.swift */,
+			);
+			name = WidgetExtension;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A00B00000000000000000001 /* CodingQuota */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00D00000000000000000002 /* Build configuration list for PBXNativeTarget "CodingQuota" */;
+			buildPhases = (
+				A00800000000000000000001 /* Sources */,
+				A00500000000000000000001 /* Frameworks */,
+				A00700000000000000000001 /* Resources */,
+				A00400000000000000000001 /* Embed Watch Content */,
+				A00400000000000000000002 /* Embed App Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A00900000000000000000001 /* PBXTargetDependency */,
+				A00900000000000000000002 /* PBXTargetDependency */,
+			);
+			name = CodingQuota;
+			productName = CodingQuota;
+			productReference = A0020000000000000000000A /* CodingQuota.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A00B00000000000000000002 /* CodingQuota Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00D00000000000000000003 /* Build configuration list for PBXNativeTarget "CodingQuota Watch App" */;
+			buildPhases = (
+				A00800000000000000000002 /* Sources */,
+				A00500000000000000000002 /* Frameworks */,
+				A00700000000000000000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "CodingQuota Watch App";
+			productName = "CodingQuota Watch App";
+			productReference = A0020000000000000000000B /* CodingQuota Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A00B00000000000000000003 /* CodingQuotaWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00D00000000000000000004 /* Build configuration list for PBXNativeTarget "CodingQuotaWidgetExtension" */;
+			buildPhases = (
+				A00800000000000000000003 /* Sources */,
+				A00500000000000000000003 /* Frameworks */,
+				A00700000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CodingQuotaWidgetExtension;
+			productName = CodingQuotaWidgetExtension;
+			productReference = A00200000000000000000028 /* CodingQuotaWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A00F00000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2650;
+				LastUpgradeCheck = 2650;
+				TargetAttributes = {
+					A00B00000000000000000001 = {
+						CreatedOnToolsVersion = 26.5;
+						ProvisioningStyle = Automatic;
+					};
+					A00B00000000000000000002 = {
+						CreatedOnToolsVersion = 26.5;
+						ProvisioningStyle = Automatic;
+					};
+					A00B00000000000000000003 = {
+						CreatedOnToolsVersion = 26.5;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = A00D00000000000000000001 /* Build configuration list for PBXProject "CodingQuota" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A00600000000000000000001;
+			productRefGroup = A00600000000000000000007 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A00B00000000000000000001 /* CodingQuota */,
+				A00B00000000000000000002 /* CodingQuota Watch App */,
+				A00B00000000000000000003 /* CodingQuotaWidgetExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A00700000000000000000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00100000000000000000011 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00700000000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00100000000000000000012 /* Icon-Watch-24x24@2x.png in Resources */,
+				A00100000000000000000013 /* Icon-Watch-27.5x27.5@2x.png in Resources */,
+				A00100000000000000000014 /* Icon-Watch-29x29@2x.png in Resources */,
+				A00100000000000000000015 /* Icon-Watch-29x29@3x.png in Resources */,
+				A00100000000000000000016 /* Icon-Watch-40x40@2x.png in Resources */,
+				A00100000000000000000017 /* Icon-Watch-44x44@2x.png in Resources */,
+				A00100000000000000000018 /* Icon-Watch-50x50@2x.png in Resources */,
+				A00100000000000000000019 /* Icon-Watch-86x86@2x.png in Resources */,
+				A0010000000000000000001A /* Icon-Watch-98x98@2x.png in Resources */,
+				A0010000000000000000001B /* Icon-Watch-108x108@2x.png in Resources */,
+				A0010000000000000000001C /* Icon-Watch-1024x1024@1x.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00700000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A00800000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00100000000000000000001 /* Shared/UsageModels.swift in Sources */,
+				A00100000000000000000002 /* Shared/UsageClient.swift in Sources */,
+				A00100000000000000000003 /* iPhoneApp/QuotaPhoneApp.swift in Sources */,
+				A00100000000000000000004 /* iPhoneApp/ContentView.swift in Sources */,
+				A00100000000000000000005 /* iPhoneApp/PhoneConnectivity.swift in Sources */,
+				A0010000000000000000000F /* iPhoneApp/PairingScannerView.swift in Sources */,
+				A00100000000000000000010 /* iPhoneApp/WatchTokenStore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00800000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00100000000000000000006 /* Shared/UsageModels.swift in Sources */,
+				A0010000000000000000000D /* Shared/UsageClient.swift in Sources */,
+				A00100000000000000000007 /* WatchApp/QuotaWatchApp.swift in Sources */,
+				A00100000000000000000008 /* WatchApp/WatchContentView.swift in Sources */,
+				A00100000000000000000009 /* WatchApp/WatchConnectivityReceiver.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00800000000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00100000000000000000025 /* Shared/UsageModels.swift in Sources */,
+				A00100000000000000000026 /* WidgetExtension/CodingQuotaWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A00900000000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A00B00000000000000000002 /* CodingQuota Watch App */;
+			targetProxy = A00300000000000000000001 /* PBXContainerItemProxy */;
+		};
+		A00900000000000000000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A00B00000000000000000003 /* CodingQuotaWidgetExtension */;
+			targetProxy = A00300000000000000000002 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		A00C00000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		A00C00000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
+		A00C00000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Config/iPhoneApp.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Config/iPhoneApp-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.CodexQuota;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		A00C00000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Config/iPhoneApp.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Config/iPhoneApp-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.CodexQuota;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A00C00000000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Config/WatchApp.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Config/WatchApp-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.CodexQuota.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		A00C00000000000000000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Config/WatchApp.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Config/WatchApp-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.CodexQuota.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
+		A00C00000000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/WidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Config/WidgetExtension-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.CodexQuota.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		A00C00000000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/WidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Config/WidgetExtension-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.CodexQuota.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A00D00000000000000000001 /* Build configuration list for PBXProject "CodingQuota" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00C00000000000000000001 /* Debug */,
+				A00C00000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A00D00000000000000000002 /* Build configuration list for PBXNativeTarget "CodingQuota" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00C00000000000000000003 /* Debug */,
+				A00C00000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A00D00000000000000000003 /* Build configuration list for PBXNativeTarget "CodingQuota Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00C00000000000000000005 /* Debug */,
+				A00C00000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A00D00000000000000000004 /* Build configuration list for PBXNativeTarget "CodingQuotaWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00C00000000000000000007 /* Debug */,
+				A00C00000000000000000008 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A00F00000000000000000001 /* Project object */;
+}

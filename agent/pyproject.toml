@@ -1,0 +1,25 @@
+[project]
+name = "codex-watch-agent"
+version = "0.2.0"
+description = "Local Mac agent for Codex quota summaries for Apple Watch"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.30.0",
+  "pydantic>=2.7.0",
+  "python-dotenv>=1.0.0",
+  "httpx>=0.27.0",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0.0",
+]
+
+[project.scripts]
+codex-watch-agent = "codex_watch_agent.main:run"
+codex-quota-app-server = "codex_watch_agent.codex_rpc:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -1,0 +1,42 @@
+{
+  "updated_at": "2026-06-12T12:00:00+00:00",
+  "codex": {
+    "remaining_percent": 80.0,
+    "used_percent": 20.0,
+    "reset_in": "1h 34m",
+    "window": "5h",
+    "status": "ok",
+    "source": "codex app-server account/rateLimits/read",
+    "error": null,
+    "quota_updated_at": "2026-06-12T12:00:00+00:00",
+    "today_tokens": 123456,
+    "today_input_tokens": 60000,
+    "today_output_tokens": 3456,
+    "today_cache_tokens": 60000,
+    "hourly": [
+      {
+        "hour": 0,
+        "tokens": 0
+      },
+      {
+        "hour": 1,
+        "tokens": 4200
+      },
+      {
+        "hour": 2,
+        "tokens": 12800
+      }
+    ],
+    "buckets": [
+      {
+        "id": "codex:primary",
+        "label": "codex 5h",
+        "remaining_percent": 80.0,
+        "used_percent": 20.0,
+        "reset_in": "1h 34m",
+        "window": "5h",
+        "status": "ok"
+      }
+    ]
+  }
+}

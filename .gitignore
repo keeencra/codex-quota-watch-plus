@@ -1,0 +1,43 @@
+.DS_Store
+*.swp
+*.swo
+
+# Local secrets and runtime configuration
+.env
+*.env
+!.env.example
+agent/.env
+
+# Local handoff / agent-operation notes not meant for the public repo
+AGENTS.md
+CODEX_HANDOFF.md
+docs/CODEX_HANDOFF.md
+docs/CODEX_PROMPT.md
+.codex-watch-agent.log
+gpt_review/
+
+# Python local environment and bytecode
+agent/.venv/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+
+# Xcode local build products and user state
+ios-watch/build/
+ios-watch/.build/
+*.xcuserstate
+*.xcuserdata/
+**/xcuserdata/
+**/*.xcuserdatad/
+**/*.xcodeproj/project.xcworkspace/xcuserdata/
+**/*.xcodeproj/xcuserdata/
+DerivedData/
+*.ipa
+*.zip
+*.dSYM/
+*.mobileprovision
+*.p12
+*.cer
