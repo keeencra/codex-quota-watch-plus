@@ -95,7 +95,7 @@ check_file_absent_from_git "ios-watch/.build"
 
 if [ -f agent/.env ]; then
   echo "ok   agent/.env exists"
-  env_perm="$(stat -f "%Lp" agent/.env 2>/dev/null || stat -c "%a" agent/.env 2>/dev/null || true)"
+  env_perm="$(stat -Lf "%Lp" agent/.env 2>/dev/null || stat -Lc "%a" agent/.env 2>/dev/null || true)"
   if [ "$env_perm" = "600" ]; then
     echo "ok   agent/.env permissions are 600"
   else

@@ -149,7 +149,13 @@ for entitlements in (
     root / "ios-watch/Config/WatchApp.entitlements",
     root / "ios-watch/Config/WidgetExtension.entitlements",
 ):
-    replace_text(entitlements, [(r"<string>group\.[^<]+</string>", f"<string>{app_group}</string>")])
+    replace_text(entitlements, [
+        (r"<string>group\.[^<]+</string>", f"<string>{app_group}</string>"),
+        (r"\$\(AppIdentifierPrefix\)[A-Za-z0-9.-]+", f"$(AppIdentifierPrefix){phone_id}"),
+    ])
+
+for info in (root / "ios-watch/Config/iPhoneApp-Info.plist", root / "ios-watch/Config/WidgetExtension-Info.plist"):
+    replace_text(info, [(r"\$\(AppIdentifierPrefix\)[A-Za-z0-9.-]+", f"$(AppIdentifierPrefix){phone_id}")])
 
 print("Updated iOS/watchOS identifiers:")
 print(f"  iPhone bundle id: {phone_id}")
