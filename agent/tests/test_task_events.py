@@ -113,7 +113,9 @@ def test_interrupted_turn_cannot_later_report_completion(store):
     store.record(event('Interrupt'))
     assert not store.record(event('Stop'))
     assert store.snapshot()['task_events'][0]['status'] == 'interrupted'
-    assert store.snapshot()['notifications']['pending_count'] == 0
+    assert store.snapshot()['notifications']['pending_count'] == 1
+    with store.connection() as db:
+        assert db.execute('SELECT status FROM outbox').fetchone()[0] == 'interrupted'
 
 
 def test_bark_address_is_private_and_payload_goes_to_fixed_endpoint(store):
@@ -155,3 +157,15 @@ def test_bark_application_error_is_not_a_successful_delivery(store):
     snapshot = store.snapshot()['notifications']
     assert snapshot['last_delivery_at'] is None
     assert snapshot['pending_count'] == 1
+
+
+def test_optional_project_title_keeps_raw_paths_and_content_private(store):
+    (store.root / 'notification-preferences.json').write_text('{"include_project":true}')
+    store.record(event('Stop', last_assistant_message='SECRET'))
+    calls = []
+    with mock_client(calls) as client:
+        assert deliver_pending(store, client=client) == 1
+    body = json.loads(calls[0].content)
+    assert body['title'].startswith('project · ')
+    assert '/private' not in calls[0].content.decode()
+    assert 'SECRET' not in calls[0].content.decode()

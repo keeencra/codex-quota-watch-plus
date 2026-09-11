@@ -27,6 +27,10 @@ from examples, short values, and non URL-safe values are rejected.
 
 Task snapshots include a project directory basename, hashed event ID, status and
 timestamps. They exclude full paths, raw prompts, commands and response text.
+The separate authenticated `/tasks` endpoint can return local task titles and
+allowlisted activity summaries. Native apps keep these in memory only, outside
+quota snapshots, widgets and push payloads. Titles may be sensitive: keep the
+paired token private. No task logs can grant approval.
 Bark notifications contain only fixed status text. The private device key is never
 returned in snapshots. Keep notifications.json, pairing pages and tunnel credentials private.
 
@@ -45,3 +49,9 @@ the public internet.
 This version also offers an authenticated gateway on loopback port 8788 for an
 HTTPS tunnel. Expose only that gateway, not the full agent on 8787. See
 [remote setup](docs/enhancements.md).
+
+## Remote approvals
+
+Remote approval is opt-in and reuses the paired WATCH_TOKEN over HTTPS. This token can view complete pending operation details and submit one-shot decisions. Details stay out of quota snapshots, widgets, and third-party push payloads. Temporary details live in a separate owner-only approvals.sqlite3 and are cleared when consumed, cancelled, or expired.
+
+Decisions require a live request, random nonce, immutable operation fingerprint, expiry check, and an explicit user action. No arbitrary command or session-wide policy can be submitted. The native adapter validates the local socket owner and protocol version and sends only accept/decline to the current request owner. Protocol mismatches and stale requests fail closed. See [remote approval limitations](docs/remote-approval.md).

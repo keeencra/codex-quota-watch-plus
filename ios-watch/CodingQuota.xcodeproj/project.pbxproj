@@ -37,6 +37,9 @@
 		A00100000000000000000027 /* CodingQuotaWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A00200000000000000000028 /* CodingQuotaWidgetExtension.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A00100000000000000000028 /* Shared/UsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000002 /* Shared/UsageClient.swift */; };
 		A00100000000000000000029 /* iPhoneApp/WatchTokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000018 /* iPhoneApp/WatchTokenStore.swift */; };
+		A00100000000000000000030 /* Shared/TaskDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000030; };
+		A00100000000000000000031 /* Shared/TaskDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000030; };
+		A00100000000000000000032 /* Shared/TaskDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000030; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -114,6 +117,7 @@
 		A00200000000000000000026 /* Config/WidgetExtension-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Config/WidgetExtension-Info.plist"; sourceTree = "<group>"; };
 		A00200000000000000000027 /* Config/WidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Config/WidgetExtension.entitlements; sourceTree = "<group>"; };
 		A00200000000000000000028 /* CodingQuotaWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CodingQuotaWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A00200000000000000000030 /* Shared/TaskDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/TaskDashboard.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -168,6 +172,7 @@
 			children = (
 				A00200000000000000000001 /* Shared/UsageModels.swift */,
 				A00200000000000000000002 /* Shared/UsageClient.swift */,
+				A00200000000000000000030 /* Shared/TaskDashboard.swift */,
 			);
 			name = Shared;
 			sourceTree = "<group>";
@@ -388,6 +393,7 @@
 			files = (
 				A00100000000000000000001 /* Shared/UsageModels.swift in Sources */,
 				A00100000000000000000002 /* Shared/UsageClient.swift in Sources */,
+				A00100000000000000000030 /* Shared/TaskDashboard.swift in Sources */,
 				A00100000000000000000003 /* iPhoneApp/QuotaPhoneApp.swift in Sources */,
 				A00100000000000000000004 /* iPhoneApp/ContentView.swift in Sources */,
 				A00100000000000000000005 /* iPhoneApp/PhoneConnectivity.swift in Sources */,
@@ -402,6 +408,7 @@
 			files = (
 				A00100000000000000000006 /* Shared/UsageModels.swift in Sources */,
 				A0010000000000000000000D /* Shared/UsageClient.swift in Sources */,
+				A00100000000000000000031 /* Shared/TaskDashboard.swift in Sources */,
 				A00100000000000000000007 /* WatchApp/QuotaWatchApp.swift in Sources */,
 				A00100000000000000000008 /* WatchApp/WatchContentView.swift in Sources */,
 				A00100000000000000000009 /* WatchApp/WatchConnectivityReceiver.swift in Sources */,
@@ -415,6 +422,7 @@
 				A00100000000000000000025 /* Shared/UsageModels.swift in Sources */,
 				A00100000000000000000026 /* WidgetExtension/CodingQuotaWidget.swift in Sources */,
 				A00100000000000000000028 /* Shared/UsageClient.swift in Sources */,
+				A00100000000000000000032 /* Shared/TaskDashboard.swift in Sources */,
 				A00100000000000000000029 /* iPhoneApp/WatchTokenStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

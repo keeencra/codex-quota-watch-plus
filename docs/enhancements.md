@@ -4,7 +4,7 @@
 
 ## 1. 认证 HTTPS 网关
 
-原 Mac Agent 监听 8787。新增网关仅监听 Mac 回环地址 8788，开放最小健康检查、带认证的 `/watch` 和 Bark 配置接口，不开放原始用量、调试和 API 文档。
+原 Mac Agent 监听 8787。新增网关仅监听 Mac 回环地址 8788，开放最小健康检查、带认证的 `/watch`、Bark 配置和逐项审批接口，不开放原始用量、调试和 API 文档。
 
 在仓库的 `agent` 目录启动，沿用该目录的 `.env`：
 
@@ -40,7 +40,7 @@ ngrok http 8788 --url=https://YOUR-DOMAIN.ngrok-free.dev --inspect=false
 
 ## 3. Codex 任务事件
 
-发送进程与 Hook 分离：Hook 只写本地队列，不联网、不自动批准操作、不要求继续回答。Hook 支持 `UserPromptSubmit`、`PermissionRequest`、`Stop`、`Interrupt`；结束一轮回复不表示整个项目已完成。
+发送进程与 Hook 分离：常规任务 Hook 只写本地队列；显式启用远程审批后，PermissionRequest 可等待手机／手表返回逐项决定，不会自动批准。Hook 支持 `UserPromptSubmit`、`PermissionRequest`、`Stop`、`Interrupt`；结束一轮回复不表示整个项目已完成。远程审批及增量日志补充检查见 [远程审批](remote-approval.md)。
 
 在 `agent` 目录运行以下命令生成与你的 Python 路径对应的配置示例：
 
@@ -59,8 +59,8 @@ PY
 
 ## 隐私与展示
 
-- 通知只发送固定状态文字，不发送提示词、命令、工具参数、完整路径或助手回复。
-- 本地任务记录包含项目目录名、内部摘要 ID、时间和状态；接口返回最近 10 个，手表显示最近 5 个。
+- 通知默认只发送状态文字，可选择附上项目目录名；不发送提示词、命令、工具参数、完整路径或助手回复。
+- `/watch` 保留最近 10 条基本状态；新版首页通过独立 `/tasks` 获取按会话去重的任务总览、标题及固定活动摘要，详见 [任务总览](task-dashboard.md)。
 - 小组件会独立请求额度；iOS 决定后台刷新频率，无法保证每分钟更新。
 - 套餐标签来自实际接口数据。没有某个额度窗口时，不会将其他窗口复制为该窗口。
 

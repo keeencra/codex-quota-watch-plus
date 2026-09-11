@@ -1271,6 +1271,8 @@ public struct CodexTaskEvent: Codable, Equatable, Identifiable {
         switch status {
         case "running": return "进行中"
         case "needs_approval": return "需要确认"
+        case "needs_input": return "等待回复"
+        case "stalled": return "可能停滞"
         case "finished": return "本轮已结束"
         case "interrupted": return "已中断"
         default: return "未知状态"
@@ -1291,4 +1293,35 @@ public struct TaskNotificationConfig: Codable, Equatable {
         case lastDeliveryAt = "last_delivery_at"
         case pendingCount = "pending_count"
     }
+}
+
+// Approval capabilities stay in memory; they never enter quota snapshots/widgets.
+public struct RemoteApproval: Codable, Identifiable, Equatable {
+    public let id: String
+    public let nonce: String
+    public let fingerprint: String
+    public let project: String
+    public let tool: String
+    public let details: String
+    public let expires: Double
+    public let status: String
+    public let decision: String?
+
+    public func canDecide(at date: Date = Date()) -> Bool {
+        status == "pending" && expires > date.timeIntervalSince1970 && !details.isEmpty
+    }
+    public var statusLabel: String {
+        switch status {
+        case "pending": return "等待你的决定"
+        case "submitted": return "已提交，等待 Mac 接收"
+        case "consumed": return decision == "allow" ? "批准已交回 Codex" : "拒绝已交回 Codex"
+        case "cancelled": return "任务已结束或中断"
+        default: return "已过期，请回 Mac 确认"
+        }
+    }
+}
+
+public struct RemoteApprovalList: Decodable {
+    public let enabled: Bool
+    public let requests: [RemoteApproval]
 }

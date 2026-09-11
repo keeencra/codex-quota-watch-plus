@@ -58,3 +58,9 @@ renew-signing-*.json
 !renew-signing-config.example.json
 renew-signing.lock
 RenewalLogs/
+
+# Remote approval configuration and private request details
+remote-approval.json
+approvals.sqlite3*
+
+notification-preferences.json
