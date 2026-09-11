@@ -8,6 +8,7 @@ public struct TaskActivity: Decodable, Equatable {
 public struct DashboardTask: Decodable, Identifiable, Equatable {
     public let id: String
     public let project: String
+    public var projectID: String? = nil
     public let title: String?
     public let status: String
     public let phase: String
@@ -17,9 +18,14 @@ public struct DashboardTask: Decodable, Identifiable, Equatable {
     public let recent: [TaskActivity]
     enum CodingKeys: String, CodingKey {
         case id, project, title, status, phase, stale, recent
+        case projectID = "project_id"
         case updatedAt = "updated_at", startedAt = "started_at"
     }
-    public var displayTitle: String { title?.isEmpty == false ? title! : project }
+    public var displayTitle: String {
+        let name = title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return name.isEmpty ? "未命名任务 · \(id.prefix(6))" : name
+    }
+    public var groupingID: String { projectID ?? "legacy:" + project }
     public var isRunning: Bool { status == "running" && !stale }
     public var needsAttention: Bool { stale || ["needs_approval", "needs_input", "stalled"].contains(status) }
     public var statusLabel: String {
@@ -31,6 +37,7 @@ public struct DashboardTask: Decodable, Identifiable, Equatable {
         case "stalled": return "可能停滞"
         case "finished": return "已结束"
         case "interrupted": return "已中断"
+        case "untracked": return "尚未监测"
         default: return "状态未知"
         }
     }
@@ -42,6 +49,24 @@ public struct TaskDashboardSnapshot: Decodable {
     enum CodingKeys: String, CodingKey { case tasks; case updatedAt = "updated_at" }
     public var runningCount: Int { tasks.filter(\.isRunning).count }
     public var attentionCount: Int { tasks.filter(\.needsAttention).count }
+
+    public func projectGroups(activeOnly: Bool) -> [TaskProjectGroup] {
+        var groups: [TaskProjectGroup] = []
+        for task in tasks where !activeOnly || task.isRunning || task.needsAttention {
+            if let index = groups.firstIndex(where: { $0.id == task.groupingID }) {
+                groups[index].tasks.append(task)
+            } else {
+                groups.append(TaskProjectGroup(id: task.groupingID, name: task.project, tasks: [task]))
+            }
+        }
+        return groups
+    }
+}
+
+public struct TaskProjectGroup: Identifiable {
+    public let id: String
+    public let name: String
+    public var tasks: [DashboardTask]
 }
 
 #if canImport(SwiftUI)
@@ -172,7 +197,7 @@ public struct TaskListView: View {
     @ObservedObject var model: TaskDashboardModel
     let base: String
     let token: String
-    @State private var activeOnly = true
+    @State private var activeOnly = false
     public var body: some View {
         List {
             Picker("显示", selection: $activeOnly) {
@@ -182,21 +207,28 @@ public struct TaskListView: View {
             if let error = model.taskError {
                 Text(error + "；以下为上次读取的记录。").font(.caption).foregroundStyle(.orange)
             }
-            let tasks = (model.snapshot?.tasks ?? []).filter { !activeOnly || $0.isRunning || $0.needsAttention }
-            if tasks.isEmpty {
-                Label(model.snapshot == nil ? "等待任务数据" : "当前没有进行中的任务", systemImage: "tray")
+            let groups = model.snapshot?.projectGroups(activeOnly: activeOnly) ?? []
+            if groups.isEmpty {
+                Label(model.snapshot == nil ? "等待任务数据" : activeOnly ? "当前没有进行中的任务" : "当前没有任务", systemImage: "tray")
                     .font(.callout).foregroundStyle(.secondary)
             }
-            ForEach(tasks) { task in
-                NavigationLink {
-                    TaskProgressView(id: task.id, model: model, base: base, token: token)
-                } label: {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(task.displayTitle).font(.headline).lineLimit(2)
-                        Text(task.statusLabel).font(.caption.weight(.semibold))
-                            .foregroundStyle(task.needsAttention ? Color.orange : Color.cyan)
-                        Text(task.phase).font(.caption).foregroundStyle(.secondary).lineLimit(2)
-                    }.padding(.vertical, 4)
+            ForEach(groups) { group in
+                Section {
+                    ForEach(group.tasks) { task in
+                        NavigationLink {
+                            TaskProgressView(id: task.id, model: model, base: base, token: token)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(task.displayTitle).font(.headline).lineLimit(2)
+                                Text(task.statusLabel).font(.caption.weight(.semibold))
+                                    .foregroundStyle(task.needsAttention ? Color.orange : task.isRunning ? Color.cyan : Color.secondary)
+                                Text(task.phase).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                            }.padding(.vertical, 4)
+                        }
+                    }
+                } header: {
+                    Label("\(group.name) · \(group.tasks.count)", systemImage: "folder")
+                        .textCase(nil)
                 }
             }
             Button("刷新任务") { Task { await model.refresh(base: base, token: token) } }.disabled(model.loading)
