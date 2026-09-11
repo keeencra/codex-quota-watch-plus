@@ -1,9 +1,11 @@
 import SwiftUI
 import WidgetKit
+import AppIntents
 
 struct CodingQuotaWidgetEntry: TimelineEntry {
     let date: Date
     let snapshot: WatchSnapshot?
+    var refreshFailed = false
 }
 
 struct CodingQuotaWidgetProvider: TimelineProvider {
@@ -16,18 +18,36 @@ struct CodingQuotaWidgetProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<CodingQuotaWidgetEntry>) -> Void) {
-        let now = Date()
-        let refreshAfter = Calendar.current.date(byAdding: .minute, value: 15, to: now) ?? now.addingTimeInterval(900)
-        completion(Timeline(entries: [CodingQuotaWidgetEntry(date: now, snapshot: loadSnapshot())], policy: .after(refreshAfter)))
+        Task {
+            let result = await WidgetSnapshotFetcher.refresh {
+                let defaults = UserDefaults(suiteName: AppConstants.appGroupID) ?? .standard
+                defaults.synchronize()
+                let macURL = defaults.string(forKey: AppConstants.macURLKey) ?? ""
+                return try await UsageClient().fetchCompact(
+                    macAgentBaseURL: macURL,
+                    token: WatchTokenStore.load(),
+                    timeoutSeconds: 10
+                )
+            }
+            let now = Date()
+            let entry = CodingQuotaWidgetEntry(date: now, snapshot: result.snapshot, refreshFailed: result.failed)
+            completion(Timeline(entries: [entry], policy: .after(now.addingTimeInterval(15 * 60))))
+        }
     }
 
     private func loadSnapshot() -> WatchSnapshot? {
-        let defaults = UserDefaults(suiteName: AppConstants.appGroupID)
-        guard let json = defaults?.string(forKey: AppConstants.snapshotKey),
-              let data = json.data(using: .utf8) else {
-            return nil
-        }
-        return try? JSONDecoder().decode(WatchSnapshot.self, from: data)
+        SharedUsageStore.shared.loadOptional()
+    }
+}
+
+struct RefreshQuotaWidgetIntent: AppIntent {
+    static var title: LocalizedStringResource = "刷新额度"
+    static var description = IntentDescription("从 Mac 获取最新额度。")
+
+    func perform() async throws -> some IntentResult {
+        // WidgetKit reloads the timeline after an interaction; the provider fetches live data.
+        WidgetCenter.shared.reloadTimelines(ofKind: "CodingQuotaWidget")
+        return .result()
     }
 }
 
@@ -52,14 +72,14 @@ struct CodingQuotaWidgetView: View {
     private func small(_ summary: WidgetQuotaSummary) -> some View {
         VStack(alignment: .leading, spacing: 9) {
             header(summary, showsMeta: false)
-            smallQuotaRow(summary.fiveHour, accent: .codexWidgetGreen, track: .codexWidgetGreenTrack)
-            smallQuotaRow(
-                summary.sevenDay ?? WidgetQuotaWindow(title: "7 天", bucket: nil, fallback: .placeholder(status: "not_configured")),
-                accent: .codexWidgetBlue,
-                track: .codexWidgetBlueTrack
-            )
+            ForEach(Array(summary.windows.enumerated()), id: \.offset) { index, window in
+                smallQuotaRow(window,
+                    accent: index == 0 ? .codexWidgetGreen : .codexWidgetBlue,
+                    track: index == 0 ? .codexWidgetGreenTrack : .codexWidgetBlueTrack)
+            }
+            if summary.windows.isEmpty { Text("暂无额度数据").foregroundStyle(.secondary) }
             Spacer(minLength: 0)
-            Text(shortUpdateLabel(summary.updatedLabel))
+            Text(updateLabel(summary))
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .foregroundStyle(Color.codexWidgetSecondary)
                 .lineLimit(1)
@@ -73,12 +93,12 @@ struct CodingQuotaWidgetView: View {
 
             HStack(spacing: 14) {
                 VStack(alignment: .leading, spacing: 11) {
-                    mediumQuotaRow(summary.fiveHour, accent: .codexWidgetGreen, track: .codexWidgetGreenTrack)
-                    mediumQuotaRow(
-                        summary.sevenDay ?? WidgetQuotaWindow(title: "7 天", bucket: nil, fallback: .placeholder(status: "not_configured")),
-                        accent: .codexWidgetBlue,
-                        track: .codexWidgetBlueTrack
-                    )
+                    ForEach(Array(summary.windows.enumerated()), id: \.offset) { index, window in
+                        mediumQuotaRow(window,
+                            accent: index == 0 ? .codexWidgetGreen : .codexWidgetBlue,
+                            track: index == 0 ? .codexWidgetGreenTrack : .codexWidgetBlueTrack)
+                    }
+                    if summary.windows.isEmpty { Text("暂无额度数据").foregroundStyle(.secondary) }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -95,14 +115,14 @@ struct CodingQuotaWidgetView: View {
 
     private func header(_ summary: WidgetQuotaSummary, showsMeta: Bool) -> some View {
         HStack(spacing: 8) {
-            Text("Codex")
+            Text("Codex · \(summary.planLabel)")
                 .font(.system(size: 20, weight: .black, design: .rounded))
                 .foregroundStyle(Color.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
             Spacer(minLength: 4)
             if showsMeta {
-                Text("\(summary.modelLabel) · \(shortUpdateLabel(summary.updatedLabel))")
+                Text(updateLabel(summary))
                     .font(.system(size: 11, weight: .bold, design: .monospaced))
                     .foregroundStyle(Color.codexWidgetSecondary)
                     .lineLimit(1)
@@ -112,7 +132,20 @@ struct CodingQuotaWidgetView: View {
                     .fill(statusColor(summary.status))
                     .frame(width: 8, height: 8)
             }
+            Button(intent: RefreshQuotaWidgetIntent()) {
+                Image(systemName: "arrow.clockwise")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(Color.white)
+                    .frame(width: 28, height: 28)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("刷新额度")
         }
+    }
+
+    private func updateLabel(_ summary: WidgetQuotaSummary) -> String {
+        let time = shortUpdateLabel(summary.updatedLabel)
+        return entry.refreshFailed ? "未更新 · \(time)" : time
     }
 
     private func smallQuotaRow(_ window: WidgetQuotaWindow, accent: Color, track: Color) -> some View {
@@ -259,7 +292,7 @@ struct CodingQuotaWidget: Widget {
             CodingQuotaWidgetView(entry: entry)
         }
         .configurationDisplayName("Codex Quota")
-        .description("Shows the latest Codex quota snapshot synced by the iPhone app.")
+        .description("显示最新 Codex 额度，可独立联网或点击刷新。")
         .supportedFamilies([.systemSmall, .systemMedium])
         .contentMarginsDisabled()
     }
