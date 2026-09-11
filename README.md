@@ -29,6 +29,16 @@ Codex Quota Watch Plus 是一套运行在 **Mac、iPhone 和 Apple Watch** 上�
 | <img src="docs/assets/gallery/iphone-overview.jpg" width="250" alt="iPhone 总览：运行中、待审批、剩余额度三个独立入口"> | <img src="docs/assets/gallery/iphone-task.jpg" width="250" alt="iPhone 任务详情：当前阶段、状态与最近事件"> | <img src="docs/assets/gallery/iphone-approval.jpg" width="250" alt="iPhone 审批详情：完整操作、有效期和本次批准或拒绝"> |
 | 一眼查看数量与额度，点不同卡片进入对应内容。 | 查看任务标题、当前活动和最近阶段变化。 | 看清操作后，决定仅对这一条请求生效。 |
 
+### 项目分组与侧栏标题同步
+
+「运行中」入口的任务列表默认展示**全部未归档任务**，按 Codex 项目分组；优先使用你在侧栏设置的任务名称。项目和任务改名后，刷新即可同步。切换「进行中与待处理」可只看需要关注的任务。未采集到活动的任务显示「尚未监测」，不会计入运行中数量。
+
+| iPhone 项目分组 | Apple Watch 项目分组 |
+| :---: | :---: |
+| <img src="docs/assets/gallery/iphone-tasks.jpg" width="260" alt="iPhone 按项目分组并显示侧栏任务标题"> | <img src="docs/assets/gallery/watch-projects.jpg" width="230" alt="Apple Watch 项目分组与任务标题"> |
+
+截图中的「产品开发」等均为虚构项目。真实界面使用自己 Mac 上的 Codex 项目名称；分组仅显示存在可见任务的项目。
+
 ### Apple Watch：抬腕查看，逐项处理
 
 | 手表总览 | 任务进展 | 额度详情 |
@@ -56,7 +66,7 @@ Codex Quota Watch Plus 是一套运行在 **Mac、iPhone 和 Apple Watch** 上�
 | 能力 | iPhone | Apple Watch | Mac 端负责什么 |
 | --- | --- | --- | --- |
 | 任务总览 | 运行中、需关注与待审批数量 | 同样的三项总览 | 汇总已跟踪会话的最新状态 |
-| 任务进展 | 列表筛选、标题、阶段、最近事件 | 列表及任务详情 | Hooks + 增量日志观察，处理旧状态 |
+| 任务进展 | 项目分组、侧栏标题、筛选、阶段与事件 | 项目分组及任务详情 | Hooks + 增量日志观察，处理旧状态 |
 | 逐项审批 | 查看完整操作、批准或拒绝 | 查看完整操作、批准或拒绝 | 接收支持的请求、检验有效期并返回决定 |
 | 额度监控 | 套餐、窗口、重置、今日 Tokens | 额度页与今日用量页 | 读取本机 Codex 返回的额度与用量 |
 | 手机桌面小组件 | 小号／中号，独立刷新与缓存提示 | 本项目未提供表盘复杂功能 | 通过认证接口提供额度数据 |
