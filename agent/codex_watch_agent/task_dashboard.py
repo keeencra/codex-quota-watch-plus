@@ -3,8 +3,9 @@ from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
-import sqlite3
 import time
+
+from .codex_catalog import read_catalog, fallback_project
 
 PHASES = {
     'running': '正在处理任务', 'needs_approval': '等待操作确认',
@@ -33,34 +34,44 @@ def task_dashboard(store, *, codex_home=None, now=None):
             LEFT JOIN task_progress p ON p.id=t.id ORDER BY t.updated_at DESC''').fetchall()
     # One most recent turn per known task. Legacy rows keep their own identity.
     seen, tasks = set(), []
-    title_db = None
-    try:
-        title_db = sqlite3.connect((home / 'state_5.sqlite').as_uri() + '?mode=ro', uri=True, timeout=1)
-    except (sqlite3.Error, ValueError):
-        pass
-    try:
-        for row in rows:
-            identity = row['session'] or row['id']
-            if identity in seen:
-                continue
-            seen.add(identity)
-            title = None
-            if title_db and row['session']:
-                try:
-                    match = title_db.execute('SELECT title FROM threads WHERE id=?', (row['session'],)).fetchone()
-                    if match and isinstance(match[0], str):
-                        title = ''.join(c for c in match[0] if c.isprintable()).strip()[:160] or None
-                except sqlite3.Error:
-                    pass
-            age = now - datetime.fromisoformat(row['updated_at']).timestamp()
-            stale = row['status'] in ('running', 'needs_approval', 'needs_input', 'stalled') and age > 900
-            tasks.append({
-                'id': row['id'], 'project': row['project'], 'title': title,
-                'status': row['status'], 'phase': row['phase'] or PHASES.get(row['status'], '状态待确认'),
-                'updated_at': row['updated_at'], 'started_at': row['started_at'],
-                'stale': stale, 'recent': json.loads(row['recent']) if row['recent'] else [],
-            })
-    finally:
-        if title_db:
-            title_db.close()
+    catalog = read_catalog(home)
+    for row in rows:
+        identity = row['session'] or row['id']
+        if identity in seen:
+            continue
+        seen.add(identity)
+        if catalog.available and identity not in catalog:
+            continue  # Removed or foreign tasks must not reappear from old event logs.
+        metadata = catalog.get(identity, {})
+        if metadata.get('archived'):
+            continue
+        project, project_id = fallback_project(row['project'])
+        age = now - datetime.fromisoformat(row['updated_at']).timestamp()
+        stale = row['status'] in ('running', 'needs_approval', 'needs_input', 'stalled') and age > 900
+        tasks.append({
+            'id': identity, 'project': metadata.get('project', project),
+            'project_id': metadata.get('project_id', project_id), 'title': metadata.get('display_title'),
+            'status': row['status'], 'phase': row['phase'] or PHASES.get(row['status'], '状态待确认'),
+            'updated_at': row['updated_at'], 'started_at': row['started_at'],
+            'stale': stale, 'recent': json.loads(row['recent']) if row['recent'] else [],
+        })
+    # Desktop tasks without observed activity remain distinguishable, but never count as running.
+    for identity, metadata in catalog.items():
+        if identity in seen or metadata.get('archived'):
+            continue
+        def timestamp(key):
+            value = metadata.get(key)
+            try:
+                return datetime.fromtimestamp(float(value), timezone.utc).isoformat() if value else ''
+            except (ValueError, TypeError, OverflowError, OSError):
+                return ''
+        tasks.append({
+            'id': identity, 'project': metadata['project'], 'project_id': metadata['project_id'],
+            'title': metadata['display_title'], 'status': 'untracked', 'phase': '尚未采集到任务活动',
+            'updated_at': timestamp('updated_at'), 'started_at': timestamp('created_at'),
+            'stale': False, 'recent': [],
+        })
+    # Match project order from the desktop; preserve latest-activity order within each project.
+    tasks.sort(key=lambda t: t['updated_at'], reverse=True)
+    tasks.sort(key=lambda t: catalog.get(t['id'], {}).get('project_order', 100000))
     return {'updated_at': datetime.fromtimestamp(now, timezone.utc).isoformat(), 'tasks': tasks}
