@@ -36,23 +36,38 @@ struct ContentView: View {
                         }
                         Text("任务进展与关键确认，抬腕也能查看。")
                             .font(.subheadline).foregroundStyle(.secondary)
-                        TaskOverviewLinks(model: dashboard, base: macURL, token: tokenInput)
-                        NavigationLink {
-                            List {
-                                Section("官方额度") { bucketRows(snapshot.codex.buckets) }
-                                Section("今日用量") { row("Tokens", NumberFormatters.compactTokens(snapshot.codex.todayTokens)) }
-                                Text(TaskTime.label(snapshot.updatedAt)).font(.caption).foregroundStyle(.secondary)
-                            }.navigationTitle("剩余额度")
-                        } label: {
-                            let summary = WidgetQuotaSummary(snapshot: snapshot)
-                            OverviewCard(title: "剩余额度", value: summary.windows.first?.percentLabel ?? "—",
-                                         subtitle: summary.windows.map { $0.title + " " + $0.percentLabel }.joined(separator: " · "),
-                                         symbol: "chart.pie.fill", tint: .green)
-                        }.buttonStyle(.plain)
-                        Text(errorText == nil ? "额度更新 · " + TaskTime.label(snapshot.updatedAt) : "额度同步失败，显示上次数据")
-                            .font(.caption2).foregroundStyle(errorText == nil ? Color.secondary : Color.orange)
                     }.padding(.vertical, 8)
+                    // Each link must be a separate Form row; links in one VStack share row activation.
+                    NavigationLink {
+                        TaskListView(model: dashboard, base: macURL, token: tokenInput)
+                    } label: {
+                        OverviewCard(title: "运行中",
+                                     value: dashboard.taskError == nil ? dashboard.snapshot.map { String($0.runningCount) } ?? "—" : "—",
+                                     subtitle: dashboard.taskError != nil ? "连接失败" : dashboard.snapshot.map { $0.attentionCount > 0 ? "\($0.attentionCount) 项需关注" : "查看任务阶段" } ?? "正在连接 Mac",
+                                     symbol: "bolt.fill", tint: .cyan)
+                    }.buttonStyle(.plain)
+                    NavigationLink {
+                        ApprovalInboxView(base: macURL, token: tokenInput)
+                    } label: {
+                        OverviewCard(title: "待审批", value: dashboard.approvalCount.map(String.init) ?? "—",
+                                     subtitle: dashboard.approvalMessage, symbol: "checkmark.shield.fill", tint: .orange)
+                    }.buttonStyle(.plain)
+                    NavigationLink {
+                        List {
+                            Section("官方额度") { bucketRows(snapshot.codex.buckets) }
+                            Section("今日用量") { row("Tokens", NumberFormatters.compactTokens(snapshot.codex.todayTokens)) }
+                            Text(TaskTime.label(snapshot.updatedAt)).font(.caption).foregroundStyle(.secondary)
+                        }.navigationTitle("剩余额度")
+                    } label: {
+                        let summary = WidgetQuotaSummary(snapshot: snapshot)
+                        OverviewCard(title: "剩余额度", value: summary.windows.first?.percentLabel ?? "—",
+                                     subtitle: summary.windows.map { $0.title + " " + $0.percentLabel }.joined(separator: " · "),
+                                     symbol: "chart.pie.fill", tint: .green)
+                    }.buttonStyle(.plain)
+                    Text(errorText == nil ? "额度更新 · " + TaskTime.label(snapshot.updatedAt) : "额度同步失败，显示上次数据")
+                        .font(.caption2).foregroundStyle(errorText == nil ? Color.secondary : Color.orange)
                 }
+                .listRowSeparator(.hidden)
                 Section("连接与同步") {
                     DisclosureGroup("Mac 连接设置") {
                     TextField("Mac 服务地址", text: $macURL)
