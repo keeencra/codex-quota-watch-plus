@@ -2,13 +2,13 @@
 
 # Codex Quota Watch Plus
 
-**项目版本 v0.6.0 · 第 6 次迭代** · [查看各版本变化](CHANGELOG.md#版本索引)
+**项目版本 v0.7.0 · 第 7 次迭代** · [查看各版本变化](CHANGELOG.md#版本索引)
 
 ### 离开电脑，也能知道 Codex 跑到哪一步。
 
 任务进展 · 手表审批 · 额度监控 · 静音提醒
 
-[界面展示](#界面展示) · [开始部署](#开始部署) · [更新日志](CHANGELOG.md) · [功能文档](#功能文档) · [反馈问题](https://github.com/keeencra/codex-quota-watch-plus/issues)
+[所有版本下载](docs/downloads.md) · [界面展示](#界面展示) · [开始部署](#开始部署) · [更新日志](CHANGELOG.md) · [功能文档](#功能文档) · [反馈问题](https://github.com/keeencra/codex-quota-watch-plus/issues)
 
 <img src="docs/assets/repo-hero.svg" alt="Codex Quota Watch Plus 功能示意：运行中任务、待审批和剩余额度集中显示在手表上" width="100%">
 
@@ -118,6 +118,8 @@ flowchart LR
 任务与审批在 App 前台每 10 秒读取。额度刷新和系统小组件有各自的周期，详细说明见 [任务总览](docs/task-dashboard.md) 与 [远程访问设置](docs/enhancements.md)。
 
 ## 开始部署
+
+下载历史版本或当前版本，请进入 [所有版本下载](docs/downloads.md)；每个版本都有固定源码 ZIP 入口。
 
 需要一台运行 Codex 的 Mac、Xcode、iPhone，以及与手机配对的 Apple Watch。原生 App 需要自行构建和签名，本仓库不提供 App Store 安装包。
 
