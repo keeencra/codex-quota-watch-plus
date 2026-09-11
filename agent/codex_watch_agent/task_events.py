@@ -21,11 +21,14 @@ from urllib.parse import urlsplit
 import httpx
 
 DEFAULT_STATE = Path.home() / 'Library/Application Support/CodexQuotaWatch'
-EVENT_STATUS = {'UserPromptSubmit': 'running', 'PermissionRequest': 'needs_approval', 'Stop': 'finished', 'Interrupt': 'interrupted'}
+EVENT_STATUS = {'UserPromptSubmit': 'running', 'PermissionRequest': 'needs_approval', 'Stop': 'finished', 'Interrupt': 'interrupted', 'Activity': 'running', 'Stalled': 'stalled', 'NeedsInput': 'needs_input'}
 PUSH_TEXT = {
     'needs_approval': ('Codex 需要确认', '有一项操作正在等待你的确认，请返回 Codex 查看。'),
     'finished': ('Codex 本轮已结束', '本轮回复已结束，请打开 Codex 查看结果。'),
     'test': ('Codex 提醒测试', '通知通道已连通。锁定手机并佩戴手表，可验证手表提醒。'),
+    'stalled': ('Codex 可能停滞', '约 10 分钟没有新活动，可能仍在运行，请查看任务状态。'),
+    'needs_input': ('Codex 等待回复', '有一个问题需要你回答，请返回 Codex 查看。'),
+    'interrupted': ('Codex 本轮已中断', '本轮任务已中断，请打开 Codex 查看。'),
 }
 
 
@@ -51,6 +54,9 @@ class TaskEventStore:
                     id TEXT PRIMARY KEY, turn_id TEXT NOT NULL, status TEXT NOT NULL,
                     created REAL NOT NULL, due REAL NOT NULL, attempts INTEGER DEFAULT 0,
                     delivered_at TEXT, error TEXT, expired INTEGER DEFAULT 0);
+                CREATE TABLE IF NOT EXISTS task_progress (
+                    id TEXT PRIMARY KEY, session TEXT NOT NULL, phase TEXT NOT NULL,
+                    recent TEXT NOT NULL, updated_at TEXT NOT NULL);
             ''')
         self.path.chmod(0o600)
 
@@ -64,7 +70,7 @@ class TaskEventStore:
         finally:
             db.close()
 
-    def record(self, event: dict) -> bool:
+    def record(self, event: dict, *, occurred_at: float | None = None) -> bool:
         kind = event.get('hook_event_name')
         status = EVENT_STATUS.get(kind)
         # Ignore recursive Stop and subagent events to avoid duplicate alerts.
@@ -79,27 +85,37 @@ class TaskEventStore:
         cwd = event.get('cwd')
         project = re.split(r'[/\\]', cwd.rstrip('/\\'))[-1][:80] if isinstance(cwd, str) else ''
         project = ''.join(c for c in project if c.isprintable()) or 'Codex'
-        now, timestamp = time.time(), utc_now()
+        now = time.time()
+        timestamp = datetime.fromtimestamp(occurred_at if occurred_at is not None else now, timezone.utc).isoformat()
         with self.connection() as db:
             previous = db.execute('SELECT * FROM turns WHERE id=?', (key,)).fetchone()
+            if previous and occurred_at is not None and datetime.fromisoformat(previous['updated_at']).timestamp() > occurred_at:
+                return False
             if previous and (previous['status'] == 'interrupted' or (previous['status'] == 'finished' and kind != 'Stop')):
                 return False
             db.execute('''INSERT INTO turns VALUES (?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET
                 updated_at=excluded.updated_at, status=excluded.status''',
                 (key, project, timestamp, status, timestamp))
+            from .task_dashboard import record_progress
+            record_progress(db, key, session, status, timestamp, event.get('activity'))
             if status in PUSH_TEXT:
                 # Distinct approvals in the same turn get separate alerts; retries of
                 # the same request are idempotent. Raw tool inputs never leave memory.
                 action = json.dumps(event.get('tool_input', {}), sort_keys=True) if status == 'needs_approval' else ''
                 request_id = event.get('tool_use_id') or event.get('request_id') or action
+                if status == 'stalled':
+                    request_id = timestamp  # One warning per observed idle interval.
                 alert_id = hashlib.sha256(f'{key}\0{status}\0{request_id}'.encode()).hexdigest()
                 db.execute('INSERT OR IGNORE INTO outbox(id,turn_id,status,created,due) VALUES(?,?,?,?,?)',
                            (alert_id, key, status, now, now))
             if status in ('finished', 'interrupted'):
                 # An approval that was never delivered is no longer actionable.
-                db.execute("UPDATE outbox SET expired=1 WHERE turn_id=? AND status='needs_approval' AND delivered_at IS NULL", (key,))
+                db.execute("UPDATE outbox SET expired=1 WHERE turn_id=? AND status IN ('needs_approval','needs_input','stalled') AND delivered_at IS NULL", (key,))
+            elif status == 'running':
+                db.execute("UPDATE outbox SET expired=1 WHERE turn_id=? AND status IN ('needs_input','stalled') AND delivered_at IS NULL", (key,))
             db.execute('DELETE FROM outbox WHERE created < ?', (now - 7 * 86400,))
-            db.execute('DELETE FROM turns WHERE id NOT IN (SELECT id FROM turns ORDER BY updated_at DESC LIMIT 100)')
+            db.execute("DELETE FROM turns WHERE status IN ('finished','interrupted') AND id NOT IN (SELECT id FROM turns ORDER BY updated_at DESC LIMIT 100)")
+            db.execute('DELETE FROM task_progress WHERE id NOT IN (SELECT id FROM turns)')
         return True
 
     def test_notification(self):
@@ -185,6 +201,15 @@ def _deliver(store, config, rows, client, now):
     sent = 0
     for row in rows:
         title, message = PUSH_TEXT[row['status']]
+        try:
+            preferences = json.loads((store.root / 'notification-preferences.json').read_text())
+        except (OSError, ValueError):
+            preferences = {}
+        if isinstance(preferences, dict) and preferences.get('include_project') is True:
+            with store.connection() as db:
+                task = db.execute('SELECT project FROM turns WHERE id=?', (row['turn_id'],)).fetchone()
+            if task:
+                title = f"{task['project']} · {title}"
         # Fixed destination and allowlisted status text only. No event fields in payload.
         bark = config.get('provider') == 'bark'
         if bark:
@@ -217,8 +242,18 @@ def _deliver(store, config, rows, client, now):
 def run_worker():
     os.umask(0o077)
     store = TaskEventStore()
+    from .task_observer import TaskObserver
+    observer = TaskObserver(store)
+    from .desktop_approvals import start_desktop_bridge
+    start_desktop_bridge()
+    next_observe = 0.0
     while True:
         try:
+            if time.monotonic() >= next_observe:
+                observer.scan()
+                from .approvals import ApprovalStore
+                ApprovalStore(store.root).pending()  # Expire abandoned requests and erase details.
+                next_observe = time.monotonic() + 10
             deliver_pending(store)
         except Exception:
             # Avoid dumping event data or credentials to launchd logs.
