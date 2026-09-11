@@ -6,7 +6,7 @@
 
 任务进展 · 手表审批 · 额度监控 · 静音提醒
 
-[开始部署](#开始部署) · [更新日志](CHANGELOG.md) · [功能文档](#功能文档) · [反馈问题](https://github.com/keeencra/codex-quota-watch-plus/issues)
+[界面展示](#界面展示) · [开始部署](#开始部署) · [更新日志](CHANGELOG.md) · [功能文档](#功能文档) · [反馈问题](https://github.com/keeencra/codex-quota-watch-plus/issues)
 
 <img src="docs/assets/repo-hero.svg" alt="Codex Quota Watch Plus 功能示意：运行中任务、待审批和剩余额度集中显示在手表上" width="100%">
 
@@ -17,6 +17,52 @@
 Codex Quota Watch Plus 是一套运行在 **Mac、iPhone 和 Apple Watch** 上的个人 Codex 监控工具。Mac 收集本机任务和额度，手机与手表展示状态；遇到支持的审批请求，可以查看完整操作后，直接在手表上批准本次或拒绝。
 
 它适合已经使用 Mac 运行 Codex，希望在离开桌面时仍能掌握任务进展的人。项目由 **keeencra** 持续维护，包含原生 SwiftUI App、iPhone 小组件、Python 后端及部署脚本。
+
+## 界面展示
+
+下面展示的是 **本项目当前 SwiftUI 界面**，由 iPhone 与 Apple Watch 模拟器运行并截图。任务名称、72% 额度和待审批请求均为虚构演示数据；审批示例不会执行真实命令。不是借鉴项目的截图，也不是尚未实现的设计稿。点击图片可放大查看。
+
+### iPhone：总览、任务、审批，各有入口
+
+| 任务总览 | 任务详情 | 确认操作 |
+| :---: | :---: | :---: |
+| <img src="docs/assets/gallery/iphone-overview.jpg" width="250" alt="iPhone 总览：运行中、待审批、剩余额度三个独立入口"> | <img src="docs/assets/gallery/iphone-task.jpg" width="250" alt="iPhone 任务详情：当前阶段、状态与最近事件"> | <img src="docs/assets/gallery/iphone-approval.jpg" width="250" alt="iPhone 审批详情：完整操作、有效期和本次批准或拒绝"> |
+| 一眼查看数量与额度，点不同卡片进入对应内容。 | 查看任务标题、当前活动和最近阶段变化。 | 看清操作后，决定仅对这一条请求生效。 |
+
+### Apple Watch：抬腕查看，逐项处理
+
+| 手表总览 | 任务进展 | 额度详情 |
+| :---: | :---: | :---: |
+| <img src="docs/assets/gallery/watch-overview.jpg" width="220" alt="Apple Watch 总览的三张彩色卡片"> | <img src="docs/assets/gallery/watch-task.jpg" width="220" alt="Apple Watch 当前任务阶段与状态"> | <img src="docs/assets/gallery/watch-quota.jpg" width="220" alt="Apple Watch Pro 额度、重置时间与更新时间"> |
+| 蓝色任务、橙色审批、绿色额度。 | 手机上同一套任务，也能在手表查看。 | 显示实际额度窗口和重置时间。 |
+
+| 手机任务列表 | 手表待审批 | 手表操作确认 |
+| :---: | :---: | :---: |
+| <img src="docs/assets/gallery/iphone-tasks.jpg" width="230" alt="任务列表及进行中与全部任务筛选"> | <img src="docs/assets/gallery/watch-approvals.jpg" width="220" alt="手表待审批列表"> | <img src="docs/assets/gallery/watch-approval.jpg" width="220" alt="手表确认操作页面"> |
+| 已结束任务可通过筛选查看。 | 通知到达后，在此找到仍有效的请求。 | 操作较长时可滚动查看完整内容。 |
+
+更多入口、截图说明和使用步骤见 [界面与功能导览](docs/feature-tour.md)。
+
+## 一天中可以怎样使用
+
+1. **在 Mac 开始任务**：照常使用 Codex。已配置的 Hooks 与观察器采集活动，不需要在手表重新创建任务。
+2. **离开桌面时看进展**：手机或手表打开「运行中」，查看任务标题、当前阶段及最近事件；「正在执行工具」表示实际活动阶段，不是估算百分比。
+3. **遇到需要确认的操作**：收到提醒后，打开橙色「待审批」，核对完整操作，再批准本次或拒绝。只有已接入且仍在等待的请求可以处理。
+4. **结束后收到静音提醒**：Bark 可镜像到 Apple Watch；已结束的任务仍能在「全部任务」里查看。提醒不包含原始提示词或助手回复。
+5. **随时检查剩余额度**：绿色入口、小组件和手表额度页显示实际窗口及更新时间。外出访问需要提前配置 HTTPS，并让 Mac 保持运行。
+
+## 功能一览
+
+| 能力 | iPhone | Apple Watch | Mac 端负责什么 |
+| --- | --- | --- | --- |
+| 任务总览 | 运行中、需关注与待审批数量 | 同样的三项总览 | 汇总已跟踪会话的最新状态 |
+| 任务进展 | 列表筛选、标题、阶段、最近事件 | 列表及任务详情 | Hooks + 增量日志观察，处理旧状态 |
+| 逐项审批 | 查看完整操作、批准或拒绝 | 查看完整操作、批准或拒绝 | 接收支持的请求、检验有效期并返回决定 |
+| 额度监控 | 套餐、窗口、重置、今日 Tokens | 额度页与今日用量页 | 读取本机 Codex 返回的额度与用量 |
+| 手机桌面小组件 | 小号／中号，独立刷新与缓存提示 | 本项目未提供表盘复杂功能 | 通过认证接口提供额度数据 |
+| 任务提醒 | Bark 静音通知，兼容 ntfy | 镜像 iPhone 通知 | 去重、重试、过期和停滞检查 |
+| 外出访问 | 通过固定 HTTPS 地址连接 | 通过配置的互联网连接访问 | 运行认证网关与隧道，Mac 必须在线 |
+| 自动续签 | 满足条件时重新安装签名包 | 随配套流程续签安装 | 检查签名、构建、安装并记录结果 |
 
 ## 打开手表，先看三件事
 

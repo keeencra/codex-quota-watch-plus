@@ -9,7 +9,9 @@
 agent/.env
 
 # Local handoff / agent-operation notes not meant for the public repo
-AGENTS.md
+# Root AGENTS.md contains public maintenance rules; nested handoff notes stay local.
+**/AGENTS.md
+!/AGENTS.md
 CODEX_HANDOFF.md
 docs/CODEX_HANDOFF.md
 docs/CODEX_PROMPT.md
