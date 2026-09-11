@@ -11,7 +11,7 @@ from typing import Any
 
 import httpx
 
-from .codex_rpc import normalize_rate_limits_for_command, read_codex_rate_limits
+from .codex_rpc import normalize_rate_limits_for_command, read_codex_rate_limits, rate_limit_plan_type
 from .models import QuotaBucket, QuotaStatus, TokenStats
 from .quota_cache import read_quota_cache, write_quota_cache
 from .settings import Settings
@@ -198,6 +198,7 @@ def _normalize_quota(provider: str, label: str, source: str, payload: dict[str, 
     return QuotaStatus(
         provider=provider,  # type: ignore[arg-type]
         label=label,
+        plan_type=payload.get("plan_type") if isinstance(payload.get("plan_type"), str) else None,
         remaining_percent=remaining_f,
         used_percent=used_f,
         reset_at=reset_at,
@@ -257,6 +258,7 @@ def _normalize_codex_app_server(payload: dict[str, Any]) -> QuotaStatus:
     return QuotaStatus(
         provider="codex",
         label="Codex",
+        plan_type=rate_limit_plan_type(payload),
         remaining_percent=main.remaining_percent if main else None,
         used_percent=main.used_percent if main else None,
         reset_at=main.reset_at if main else None,

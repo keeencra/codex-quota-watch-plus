@@ -16,6 +16,7 @@ from .models import QuotaStatus, TokenStats, UsageSnapshot
 from .quota import cached_codex_quota, get_codex_quota
 from .scanner import ScanResult, scan_usage_dir
 from .settings import Settings
+from .task_events import TaskEventStore
 
 settings = Settings()
 
@@ -205,7 +206,13 @@ async def snapshot_v1(force: Annotated[bool, Query()] = False) -> dict[str, obje
 
 @app.get("/watch", dependencies=[Depends(require_token)])
 async def watch_compact(force: Annotated[bool, Query()] = False) -> dict[str, object]:
-    return (await get_snapshot_cached(force=force)).compact()
+    payload = (await get_snapshot_cached(force=force)).compact()
+    try:
+        payload.update(await asyncio.to_thread(lambda: TaskEventStore().snapshot()))
+    except Exception:
+        # History must not break quota refresh if its local database is unavailable.
+        payload["task_events"] = []
+    return payload
 
 
 def run() -> None:

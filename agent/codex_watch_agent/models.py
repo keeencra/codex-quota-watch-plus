@@ -70,6 +70,7 @@ class QuotaBucket(BaseModel):
 class QuotaStatus(BaseModel):
     provider: Literal["codex", "openai_api"]
     label: str
+    plan_type: str | None = None
     remaining_percent: float | None = None
     used_percent: float | None = None
     reset_at: datetime | None = None
@@ -120,6 +121,7 @@ class UsageSnapshot(BaseModel):
 
     def _quota_snapshot(self, quota: QuotaStatus) -> dict[str, Any]:
         return {
+            "plan_type": quota.plan_type,
             "label": quota.label,
             "remaining_percent": quota.remaining_percent,
             "used_percent": quota.used_percent,
@@ -164,6 +166,7 @@ class UsageSnapshot(BaseModel):
         hourly: list[HourBucket],
     ) -> dict[str, Any]:
         return {
+            "plan_type": quota.plan_type,
             "remaining_percent": quota.remaining_percent,
             "used_percent": quota.used_percent,
             "reset_in": quota.reset_in,

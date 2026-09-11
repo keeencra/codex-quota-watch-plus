@@ -225,6 +225,24 @@ def _first_present(*values: Any) -> Any:
     return None
 
 
+def rate_limit_plan_type(result: dict[str, Any]) -> str | None:
+    """Read account plan metadata without inferring quota policy from the plan."""
+    single = result.get("rateLimits")
+    by_id = result.get("rateLimitsByLimitId")
+    candidates = []
+    if isinstance(by_id, dict):
+        candidates.append(by_id.get("codex"))
+    candidates.append(single)
+    if isinstance(by_id, dict):
+        candidates.extend(by_id.values())
+    for candidate in candidates:
+        if isinstance(candidate, dict):
+            plan = candidate.get("planType")
+            if isinstance(plan, str) and plan.strip():
+                return plan.strip().lower()
+    return None
+
+
 def normalize_rate_limits_for_command(result: dict[str, Any]) -> dict[str, Any]:
     """Return the generic JSON shape accepted by CODEX_QUOTA_COMMAND.
 
@@ -278,6 +296,7 @@ def normalize_rate_limits_for_command(result: dict[str, Any]) -> dict[str, Any]:
         chosen = buckets[0]
 
     return {
+        "plan_type": rate_limit_plan_type(result),
         "remaining_percent": chosen.get("remaining_percent") if chosen else None,
         "used_percent": chosen.get("used_percent") if chosen else None,
         "reset_at": chosen.get("reset_at") if chosen else None,
