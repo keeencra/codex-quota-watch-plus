@@ -153,7 +153,7 @@ final class UsageModelsTests: XCTestCase {
         ]
         let selection = WatchDisplayData.codexWindows(from: usage.buckets)
 
-        XCTAssertEqual(QuotaDisplayText.codexFooterModelLabel(selection: selection, fallback: usage), "GPT-5.5")
+        XCTAssertEqual(QuotaDisplayText.codexFooterModelLabel(selection: selection, fallback: usage), "Codex")
     }
 
     func testCodexFooterPrefersCodexModelEvenWhenSelectionIsSpark() {
@@ -180,7 +180,7 @@ final class UsageModelsTests: XCTestCase {
         ]
         let selection = CodexWindowSelection(fiveHour: usage.buckets?.first, sevenDay: nil)
 
-        XCTAssertEqual(QuotaDisplayText.codexFooterModelLabel(selection: selection, fallback: usage), "GPT-5.5")
+        XCTAssertEqual(QuotaDisplayText.codexFooterModelLabel(selection: selection, fallback: usage), "Codex")
     }
 
     func testCodexFooterPreservesSelectedNamedLimitWhenCodexBucketIsMissing() {
@@ -217,7 +217,7 @@ final class UsageModelsTests: XCTestCase {
 
         let selection = WatchDisplayData.codexWindows(from: usage.buckets)
 
-        XCTAssertEqual(QuotaDisplayText.codexFooterModelLabel(selection: selection, fallback: usage), "GPT-5.5")
+        XCTAssertEqual(QuotaDisplayText.codexFooterModelLabel(selection: selection, fallback: usage), "Codex")
     }
 
     func testWatchUpdateLabelUsesSpecificSnapshotTime() {
@@ -659,14 +659,14 @@ final class UsageModelsTests: XCTestCase {
         let summary = WidgetQuotaSummary(snapshot: snapshot, timeZone: TimeZone(secondsFromGMT: 0)!)
 
         XCTAssertEqual(summary.status, .ready)
-        XCTAssertEqual(summary.fiveHour.percentLabel, "64%")
-        XCTAssertEqual(summary.fiveHour.refillLabel, "↻ 15:58 回满")
-        XCTAssertEqual(summary.fiveHour.progress, 0.64, accuracy: 0.001)
+        XCTAssertEqual(summary.windows[0].percentLabel, "64%")
+        XCTAssertEqual(summary.windows[0].refillLabel, "↻ 15:58 回满")
+        XCTAssertEqual(summary.windows[0].progress, 0.64, accuracy: 0.001)
         XCTAssertEqual(summary.sevenDay?.percentLabel, "9%")
         XCTAssertEqual(summary.sevenDay?.refillLabel, "↻ 06/15 03:00 回满")
         XCTAssertEqual(summary.sevenDay?.tone, .critical)
         XCTAssertEqual(summary.updatedLabel, "刷新 11:58")
-        XCTAssertEqual(summary.modelLabel, "GPT-5.5")
+        XCTAssertEqual(summary.modelLabel, "Codex")
         XCTAssertEqual(summary.todayLabel, "今日 1.3M")
         XCTAssertEqual(summary.tokenBreakdownLabel, "In 100.0K · Out 50.0K · Cache 1.1M")
     }
@@ -676,8 +676,8 @@ final class UsageModelsTests: XCTestCase {
 
         XCTAssertEqual(summary.status, .setup)
         XCTAssertEqual(summary.title, "Codex Quota")
-        XCTAssertEqual(summary.fiveHour.percentLabel, "--%")
-        XCTAssertEqual(summary.fiveHour.refillLabel, "↻ --")
+        XCTAssertEqual(summary.windows[0].percentLabel, "--%")
+        XCTAssertEqual(summary.windows[0].refillLabel, "↻ --")
         XCTAssertEqual(summary.updatedLabel, "等待同步")
     }
 
