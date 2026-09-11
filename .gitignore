@@ -41,3 +41,14 @@ DerivedData/
 *.mobileprovision
 *.p12
 *.cer
+
+# Private notification state, tunnels, pairing and diagnostics
+notifications.json
+ngrok.yml
+ngrok.yaml
+pairing*.html
+*.sqlite3
+*.sqlite3-*
+*.log
+*.pem
+*.key
