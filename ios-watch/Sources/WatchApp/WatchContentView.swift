@@ -49,6 +49,7 @@ private extension Color {
 struct WatchContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var receiver = WatchConnectivityReceiver.shared
+    @StateObject private var dashboard = TaskDashboardModel()
     private let foregroundRefreshTimer = Timer.publish(
         every: WatchRefreshPolicy.foregroundRefreshIntervalSeconds,
         on: .main,
@@ -60,14 +61,46 @@ struct WatchContentView: View {
             let metrics = WatchLayoutMetrics(width: Double(proxy.size.width), height: Double(proxy.size.height))
 
             TabView {
+                NavigationStack {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("Codex").font(.headline)
+                                Spacer()
+                                Text(receiver.snapshot.codex.planLabel).font(.caption2).foregroundStyle(.secondary)
+                            }.padding(.horizontal, 4)
+                            if let config = WatchAgentConfigStore().load() {
+                                TaskOverviewLinks(model: dashboard, base: config.macURL, token: config.token)
+                            } else {
+                                Text("请先在手机完成配对和同步").font(.caption).foregroundStyle(.secondary)
+                            }
+                            NavigationLink {
+                                CodexQuotaPage(snapshot: receiver.snapshot)
+                            } label: {
+                                let summary = WidgetQuotaSummary(snapshot: receiver.snapshot)
+                                OverviewCard(title: "剩余额度", value: summary.windows.first?.percentLabel ?? "—",
+                                             subtitle: summary.windows.first.map { $0.title + " · " + summary.planLabel },
+                                             symbol: "chart.pie.fill", tint: .green)
+                            }.buttonStyle(.plain)
+                        }.padding(.horizontal, 5).padding(.bottom, 20)
+                    }
+                }
                 CodexQuotaPage(snapshot: receiver.snapshot)
                 LocalTodayPage(usage: receiver.snapshot.codex)
-                TaskHistoryPage(events: receiver.snapshot.taskEvents)
             }
             .tabViewStyle(.page(indexDisplayMode: .always))
             .environment(\.watchLayoutMetrics, metrics)
         }
         .background(Color.black.ignoresSafeArea())
+        .task(id: scenePhase) {
+            guard scenePhase == .active else { return }
+            while !Task.isCancelled {
+                if let config = WatchAgentConfigStore().load() {
+                    await dashboard.refresh(base: config.macURL, token: config.token)
+                }
+                do { try await Task.sleep(nanoseconds: 10_000_000_000) } catch { return }
+            }
+        }
         .onAppear {
             if WatchRefreshPolicy.refreshesOnAppear {
                 receiver.requestRefresh()
@@ -509,7 +542,7 @@ private struct TaskHistoryPage: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(event.statusLabel)
                             .font(.subheadline.bold())
-                            .foregroundStyle(event.status == "needs_approval" ? Color.orange : Color.green)
+                            .foregroundStyle(["needs_approval", "needs_input", "stalled"].contains(event.status) ? Color.orange : Color.green)
                         Text(event.project).font(.caption).lineLimit(2)
                         Text(NumberFormatters.compactDate(event.updatedAt))
                             .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
