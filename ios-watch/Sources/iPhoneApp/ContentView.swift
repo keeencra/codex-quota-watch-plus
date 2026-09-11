@@ -2,6 +2,8 @@ import SwiftUI
 import UIKit
 
 struct ContentView: View {
+    @Environment(\.scenePhase) private var scenePhase
+    @StateObject private var dashboard = TaskDashboardModel()
     @AppStorage(AppConstants.macURLKey, store: UserDefaults(suiteName: AppConstants.appGroupID))
     private var macURL: String = "http://127.0.0.1:8787"
 
@@ -25,22 +27,50 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Mac Agent") {
-                    TextField("http://Mac-IP:8787", text: $macURL)
+                Section {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("任务总览").font(.title2.bold())
+                            Spacer()
+                            Text(snapshot.codex.planLabel).font(.caption.bold()).foregroundStyle(.secondary)
+                        }
+                        Text("任务进展与关键确认，抬腕也能查看。")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                        TaskOverviewLinks(model: dashboard, base: macURL, token: tokenInput)
+                        NavigationLink {
+                            List {
+                                Section("官方额度") { bucketRows(snapshot.codex.buckets) }
+                                Section("今日用量") { row("Tokens", NumberFormatters.compactTokens(snapshot.codex.todayTokens)) }
+                                Text(TaskTime.label(snapshot.updatedAt)).font(.caption).foregroundStyle(.secondary)
+                            }.navigationTitle("剩余额度")
+                        } label: {
+                            let summary = WidgetQuotaSummary(snapshot: snapshot)
+                            OverviewCard(title: "剩余额度", value: summary.windows.first?.percentLabel ?? "—",
+                                         subtitle: summary.windows.map { $0.title + " " + $0.percentLabel }.joined(separator: " · "),
+                                         symbol: "chart.pie.fill", tint: .green)
+                        }.buttonStyle(.plain)
+                        Text(errorText == nil ? "额度更新 · " + TaskTime.label(snapshot.updatedAt) : "额度同步失败，显示上次数据")
+                            .font(.caption2).foregroundStyle(errorText == nil ? Color.secondary : Color.orange)
+                    }.padding(.vertical, 8)
+                }
+                Section("连接与同步") {
+                    DisclosureGroup("Mac 连接设置") {
+                    TextField("Mac 服务地址", text: $macURL)
                         .textInputAutocapitalization(.never)
                         .keyboardType(.URL)
                     SecureField("WATCH_TOKEN", text: tokenBinding)
                     Button {
                         isShowingPairingScanner = true
                     } label: {
-                        Label("Scan Pairing QR", systemImage: "qrcode.viewfinder")
+                        Label("扫描配对二维码", systemImage: "qrcode.viewfinder")
                     }
-                    Button(isLoading ? "Fetching..." : "Fetch & Sync to Watch") {
+                    }
+                    Button(isLoading ? "正在同步…" : "同步额度到手表") {
                         Task { await fetch() }
                     }
                     .disabled(isLoading)
-                    Toggle("Auto refresh while open", isOn: $autoRefreshEnabled)
-                    Text("Refreshes while open, schedules background refresh, and responds when Watch opens.")
+                    Toggle("自动刷新额度", isOn: $autoRefreshEnabled)
+                    Text("打开 App 时自动同步额度，任务与审批每 10 秒更新。")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     Text(statusText)
@@ -49,6 +79,7 @@ struct ContentView: View {
                 }
 
                 Section("任务提醒") {
+                    DisclosureGroup("通知设置与状态") {
                     if let config = snapshot.notifications, config.enabled {
                         Label(config.provider == "bark" ? "Bark 推送已启用" : "ntfy 推送已启用", systemImage: "bell.badge")
                         if config.provider != "bark" {
@@ -87,30 +118,11 @@ struct ContentView: View {
                     Link("安装 Bark－给你的手机发推送", destination: URL(string: "https://apps.apple.com/app/id1403753865")!)
                     Text("推送只包含状态，不发送原始任务、命令和文件路径。")
                         .font(.caption).foregroundStyle(.secondary)
+                    }
                 }
 
-                Section("最近任务") {
-                    if snapshot.taskEvents.isEmpty {
-                        Text("暂无记录；启用任务事件后会显示在这里。")
-                            .foregroundStyle(.secondary)
-                    }
-                    ForEach(snapshot.taskEvents) { event in
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text(event.project).lineLimit(1)
-                                Spacer()
-                                Text(event.statusLabel)
-                                    .foregroundStyle(event.status == "needs_approval" ? Color.orange : Color.secondary)
-                            }
-                            Text(NumberFormatters.compactDate(event.updatedAt))
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                    }
-                    Text("显示最近同步的任务状态；提醒由已配置的通知 App 推送。")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-
-                Section("Diagnostics") {
+                Section("更多") {
+                    DisclosureGroup("连接诊断") {
                     row("Mac URL", DiagnosticsText.macURLStatus(macURL))
                     row("Token", DiagnosticsText.tokenStatus(tokenInput))
                     row("Last sync", NumberFormatters.compactDate(snapshot.updatedAt))
@@ -122,14 +134,7 @@ struct ContentView: View {
                     } label: {
                         Label("Refresh Diagnostics", systemImage: "stethoscope")
                     }
-                }
-
-                Section("Codex") {
-                    row("套餐", snapshot.codex.planLabel)
-                    row("Status", snapshot.codex.status)
-                    row("Window", snapshot.codex.window ?? "--")
-                    row("Today", NumberFormatters.compactTokens(snapshot.codex.todayTokens))
-                    bucketRows(snapshot.codex.buckets)
+                    }
                 }
 
                 if let errorText {
@@ -140,7 +145,18 @@ struct ContentView: View {
             }
             .navigationTitle("Codex Quota")
             .toolbar {
-                Button("Sync") { Task { await fetch() } }
+                Button("刷新") { Task {
+                    async let tasks: () = dashboard.refresh(base: macURL, token: tokenInput)
+                    await fetch()
+                    await tasks
+                } }
+            }
+            .task(id: macURL + tokenInput + String(describing: scenePhase)) {
+                guard scenePhase == .active else { return }
+                while !Task.isCancelled {
+                    await dashboard.refresh(base: macURL, token: tokenInput)
+                    do { try await Task.sleep(nanoseconds: 10_000_000_000) } catch { return }
+                }
             }
             .onAppear {
                 _ = PhoneConnectivity.shared
