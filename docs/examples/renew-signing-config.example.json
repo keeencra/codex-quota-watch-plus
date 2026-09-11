@@ -1,0 +1,26 @@
+{
+  "project": "/absolute/path/to/codex-quota-watch-plus/ios-watch/CodingQuota.xcodeproj",
+  "derived_data": "/absolute/path/to/private-cache/CodexQuotaWatch/Renewal",
+  "team_id": "YOUR_TEAM_ID",
+  "devices": {
+    "phone": "YOUR_IPHONE_COREDEVICE_IDENTIFIER",
+    "watch": "YOUR_WATCH_COREDEVICE_IDENTIFIER"
+  },
+  "apps": {
+    "phone": {
+      "path": "Debug-iphoneos/CodingQuota.app",
+      "bundle_id": "com.example.CodexQuota",
+      "device_udid": "YOUR_IPHONE_UDID"
+    },
+    "widget": {
+      "path": "Debug-iphoneos/CodingQuota.app/PlugIns/CodingQuotaWidgetExtension.appex",
+      "bundle_id": "com.example.CodexQuota.widget",
+      "device_udid": "YOUR_IPHONE_UDID"
+    },
+    "watch": {
+      "path": "Debug-watchos/CodingQuota Watch App.app",
+      "bundle_id": "com.example.CodexQuota.watchkitapp",
+      "device_udid": "YOUR_WATCH_UDID"
+    }
+  }
+}
