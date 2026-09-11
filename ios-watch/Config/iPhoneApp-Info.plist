@@ -45,5 +45,7 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
+	<key>CodexKeychainAccessGroup</key>
+	<string>$(AppIdentifierPrefix)com.example.CodexQuota</string>
 </dict>
 </plist>
