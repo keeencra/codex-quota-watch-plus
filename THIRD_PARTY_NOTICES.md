@@ -2,6 +2,10 @@
 
 本仓库基于 [cyq1017/codex-quota-watch](https://github.com/cyq1017/codex-quota-watch)，基线提交 `aeabdac`。保留原项目 AGPL-3.0 许可证，详见 [LICENSE](LICENSE)。本版加入套餐识别、远程网关、小组件刷新及任务通知改动；发布时已移除个人部署配置。
 
+上游 README 著作权署名：AGPL-3.0 © 2026 从野秦。keeencra 维护的改进版另加入任务总览、原生远程审批、活动观察器、静音提醒与自动续签等功能；仓库首页及新的功能示意图为本版重新编写和绘制。
+
+活动补充检查的功能设计参考 [DrXin-code/codex-notify](https://github.com/DrXin-code/codex-notify)；任务／审批／额度的信息层级参考用户提供的 [腕令展示帖](https://www.xiaohongshu.com/explore/6aa0becd000000002802e77f)。这两项参考未向本仓库引入对方源代码、图片或品牌素材。
+
 任务通知方案参考 [H1234L1/codex-watch-notifier](https://github.com/H1234L1/codex-watch-notifier)，其 MIT 声明保留如下。Bark 通过公开 HTTP API 使用，[Bark](https://github.com/Finb/Bark) / [bark-server](https://github.com/Finb/bark-server) 源码未打包到本仓库。
 
 # Task notification integration
