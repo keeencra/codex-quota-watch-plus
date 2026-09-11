@@ -5,6 +5,7 @@ import WidgetKit
 @main
 struct QuotaPhoneApp: App {
     init() {
+        RemoteEndpointMigration.applyBundled(key: AppConstants.macURLKey)
         _ = PhoneConnectivity.shared
     }
 

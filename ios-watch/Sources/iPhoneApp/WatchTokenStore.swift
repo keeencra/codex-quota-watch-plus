@@ -6,11 +6,16 @@ enum WatchTokenStore {
     private static let account = "default"
 
     private static var baseQuery: [String: Any] {
-        [
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
         ]
+        // Reuse the iPhone app's original group so existing pairings remain valid.
+        if let group = Bundle.main.object(forInfoDictionaryKey: "CodexKeychainAccessGroup") as? String {
+            query[kSecAttrAccessGroup as String] = group
+        }
+        return query
     }
 
     static func load() -> String {
