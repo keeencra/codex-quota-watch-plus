@@ -62,6 +62,7 @@ struct WatchContentView: View {
             TabView {
                 CodexQuotaPage(snapshot: receiver.snapshot)
                 LocalTodayPage(usage: receiver.snapshot.codex)
+                TaskHistoryPage(events: receiver.snapshot.taskEvents)
             }
             .tabViewStyle(.page(indexDisplayMode: .always))
             .environment(\.watchLayoutMetrics, metrics)
@@ -98,28 +99,24 @@ private struct CodexQuotaPage: View {
     }
 
     var body: some View {
-        let isDualWindow = selection.sevenDay != nil
+        let isDualWindow = selection.windows.count > 1
 
         VStack(alignment: .leading, spacing: metrics.space(isDualWindow ? 4 : 10)) {
             WatchPageHeader(title: "Codex", badge: codexBadge, time: nil)
 
             VStack(alignment: .leading, spacing: metrics.space(isDualWindow ? 5 : 15)) {
-                QuotaWindowBlock(
-                    title: "5\u{5c0f}\u{65f6}",
-                    bucket: selection.fiveHour,
-                    fallback: snapshot.codex,
-                    healthyColor: .codexGreen,
-                    isCondensed: isDualWindow
-                )
-
-                if selection.sevenDay != nil {
+                ForEach(selection.windows, id: \.stableID) { bucket in
                     QuotaWindowBlock(
-                        title: "7\u{5929}",
-                        bucket: selection.sevenDay,
+                        title: QuotaDisplayText.windowTitle(bucket.window),
+                        bucket: bucket,
                         fallback: snapshot.codex,
-                        healthyColor: .codexBlue,
-                        isCondensed: true
+                        healthyColor: bucket.window == "7d" ? .codexBlue : .codexGreen,
+                        isCondensed: isDualWindow
                     )
+                }
+                if selection.windows.isEmpty {
+                    Text("暂无额度数据")
+                        .foregroundStyle(Color.codexSecondary)
                 }
             }
             .frame(maxHeight: .infinity, alignment: isDualWindow ? .top : .center)
@@ -137,7 +134,7 @@ private struct CodexQuotaPage: View {
     }
 
     private var codexBadge: String? {
-        snapshot.codex.status == "ok" ? nil : WatchDisplayText.providerBadge(snapshot.codex, fallback: snapshot.codex.status)
+        snapshot.codex.status == "ok" ? snapshot.codex.planLabel : WatchDisplayText.providerBadge(snapshot.codex, fallback: snapshot.codex.status)
     }
 
 }
@@ -261,20 +258,13 @@ private struct QuotaResetCards: View {
 
     var body: some View {
         HStack(spacing: metrics.space(8)) {
-            QuotaResetCard(
-                title: "\u{91cd}\u{7f6e}(5h)",
-                bucket: selection.fiveHour,
-                fallback: fallback,
-                snapshot: snapshot,
-                accent: .codexGreen
-            )
-            if selection.sevenDay != nil {
+            ForEach(selection.windows, id: \.stableID) { bucket in
                 QuotaResetCard(
-                    title: "\u{91cd}\u{7f6e}(7d)",
-                    bucket: selection.sevenDay,
+                    title: "重置(\(bucket.window ?? "--"))",
+                    bucket: bucket,
                     fallback: fallback,
                     snapshot: snapshot,
-                    accent: .codexBlue
+                    accent: bucket.window == "7d" ? .codexBlue : .codexGreen
                 )
             }
         }
@@ -500,5 +490,37 @@ private struct TokenTotal: View {
                 .minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity, alignment: .center)
+    }
+}
+
+
+private struct TaskHistoryPage: View {
+    let events: [CodexTaskEvent]
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("最近任务").font(.headline)
+                if events.isEmpty {
+                    Text("暂无任务记录")
+                        .foregroundStyle(.secondary)
+                }
+                ForEach(events.prefix(5)) { event in
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(event.statusLabel)
+                            .font(.subheadline.bold())
+                            .foregroundStyle(event.status == "needs_approval" ? Color.orange : Color.green)
+                        Text(event.project).font(.caption).lineLimit(2)
+                        Text(NumberFormatters.compactDate(event.updatedAt))
+                            .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                    }
+                    Divider()
+                }
+                Text("同步时更新 · 提醒由手机通知镜像推送")
+                    .font(.caption2).foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 10)
+        }
     }
 }
