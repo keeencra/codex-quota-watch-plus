@@ -13,11 +13,11 @@
 		A00100000000000000000004 /* iPhoneApp/ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000004 /* iPhoneApp/ContentView.swift */; };
 		A00100000000000000000005 /* iPhoneApp/PhoneConnectivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000005 /* iPhoneApp/PhoneConnectivity.swift */; };
 		A00100000000000000000006 /* Shared/UsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000001 /* Shared/UsageModels.swift */; };
-		A0010000000000000000000D /* Shared/UsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000002 /* Shared/UsageClient.swift */; };
 		A00100000000000000000007 /* WatchApp/QuotaWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000006 /* WatchApp/QuotaWatchApp.swift */; };
 		A00100000000000000000008 /* WatchApp/WatchContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000007 /* WatchApp/WatchContentView.swift */; };
 		A00100000000000000000009 /* WatchApp/WatchConnectivityReceiver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000008 /* WatchApp/WatchConnectivityReceiver.swift */; };
 		A0010000000000000000000C /* CodingQuota Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = A0020000000000000000000B /* CodingQuota Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A0010000000000000000000D /* Shared/UsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000002 /* Shared/UsageClient.swift */; };
 		A0010000000000000000000F /* iPhoneApp/PairingScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000017 /* iPhoneApp/PairingScannerView.swift */; };
 		A00100000000000000000010 /* iPhoneApp/WatchTokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000018 /* iPhoneApp/WatchTokenStore.swift */; };
 		A00100000000000000000011 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000019 /* Assets.xcassets */; };
@@ -34,7 +34,9 @@
 		A0010000000000000000001C /* Icon-Watch-1024x1024@1x.png in Resources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000024 /* Icon-Watch-1024x1024@1x.png */; };
 		A00100000000000000000025 /* Shared/UsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000001 /* Shared/UsageModels.swift */; };
 		A00100000000000000000026 /* WidgetExtension/CodingQuotaWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000025 /* WidgetExtension/CodingQuotaWidget.swift */; };
-		A00100000000000000000027 /* CodingQuotaWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A00200000000000000000028 /* CodingQuotaWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, CodeSignOnCopy, ); }; };
+		A00100000000000000000027 /* CodingQuotaWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A00200000000000000000028 /* CodingQuotaWidgetExtension.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A00100000000000000000028 /* Shared/UsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000002 /* Shared/UsageClient.swift */; };
+		A00100000000000000000029 /* iPhoneApp/WatchTokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000018 /* iPhoneApp/WatchTokenStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -412,6 +414,8 @@
 			files = (
 				A00100000000000000000025 /* Shared/UsageModels.swift in Sources */,
 				A00100000000000000000026 /* WidgetExtension/CodingQuotaWidget.swift in Sources */,
+				A00100000000000000000028 /* Shared/UsageClient.swift in Sources */,
+				A00100000000000000000029 /* iPhoneApp/WatchTokenStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
