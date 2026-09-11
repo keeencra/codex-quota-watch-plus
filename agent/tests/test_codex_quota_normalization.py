@@ -131,3 +131,31 @@ def test_codex_rpc_strips_agent_environment_and_expands_codex_home_for_child_pro
         "codexHome": str(Path("~/.codex").expanduser()),
         "hasAgentPort": False,
     }
+
+
+def test_plan_and_weekly_only_quota_survive_all_serialization_paths():
+    from codex_watch_agent.quota import _normalize_quota
+    from codex_watch_agent.models import UsageSnapshot
+    for plan in ("plus", "pro", "prolite"):
+        payload = {"rateLimitsByLimitId": {"codex": {
+            "planType": plan,
+            "primary": {"usedPercent": 66, "windowDurationMins": 10080},
+            "secondary": None,
+        }}}
+        command = normalize_rate_limits_for_command(payload)
+        assert command["plan_type"] == plan
+        generic = _normalize_quota("codex", "Codex", "test", command)
+        direct = _normalize_codex_app_server(payload)
+        for quota in (generic, direct):
+            assert quota.plan_type == plan
+            assert [b.window for b in quota.buckets] == ["7d"]
+            snapshot = UsageSnapshot(codex_quota=quota)
+            assert snapshot.compact()["codex"]["plan_type"] == plan
+            assert snapshot.snapshot()["providers"]["codex"]["quota"]["plan_type"] == plan
+
+
+def test_unknown_plan_is_not_guessed_and_legacy_single_is_supported():
+    result = normalize_rate_limits_for_command({"rateLimits": {"planType": "plus", "primary": None}})
+    assert result["plan_type"] == "plus"
+    assert result["buckets"] == []
+    assert normalize_rate_limits_for_command({})["plan_type"] is None
