@@ -52,3 +52,9 @@ pairing*.html
 *.log
 *.pem
 *.key
+
+# Personal signing renewal state and device configuration
+renew-signing-*.json
+!renew-signing-config.example.json
+renew-signing.lock
+RenewalLogs/
