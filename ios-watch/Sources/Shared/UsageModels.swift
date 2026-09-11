@@ -444,21 +444,29 @@ public struct WatchLayoutMetrics: Equatable {
 public struct WatchSnapshot: Codable, Equatable {
     public var updatedAt: String
     public var codex: ProviderUsage
+    public var taskEvents: [CodexTaskEvent]
+    public var notifications: TaskNotificationConfig?
 
     enum CodingKeys: String, CodingKey {
         case updatedAt = "updated_at"
         case codex
+        case taskEvents = "task_events"
+        case notifications
     }
 
-    public init(updatedAt: String, codex: ProviderUsage) {
+    public init(updatedAt: String, codex: ProviderUsage, taskEvents: [CodexTaskEvent] = [], notifications: TaskNotificationConfig? = nil) {
         self.updatedAt = updatedAt
         self.codex = codex
+        self.taskEvents = taskEvents
+        self.notifications = notifications
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         updatedAt = try container.decode(String.self, forKey: .updatedAt)
         codex = try container.decode(ProviderUsage.self, forKey: .codex)
+        taskEvents = try container.decodeIfPresent([CodexTaskEvent].self, forKey: .taskEvents) ?? []
+        notifications = try container.decodeIfPresent(TaskNotificationConfig.self, forKey: .notifications)
     }
 
     public static let placeholder = WatchSnapshot(
@@ -508,6 +516,11 @@ public struct HourlyUsage: Codable, Equatable, Identifiable {
 public struct CodexWindowSelection: Equatable {
     public var fiveHour: QuotaBucket?
     public var sevenDay: QuotaBucket?
+    public var otherWindows: [QuotaBucket] = []
+
+    public var windows: [QuotaBucket] {
+        [fiveHour, sevenDay].compactMap { $0 } + otherWindows
+    }
 }
 
 public struct TwoHourTokenBin: Equatable, Identifiable {
@@ -528,8 +541,9 @@ public enum WatchDisplayData {
     public static func codexWindows(from buckets: [QuotaBucket]?) -> CodexWindowSelection {
         let selected = selectedCodexLimitBuckets(from: buckets ?? [])
         return CodexWindowSelection(
-            fiveHour: selected.first { $0.window == "5h" } ?? selected.first,
-            sevenDay: selected.first { $0.window == "7d" }
+            fiveHour: selected.first { $0.window == "5h" },
+            sevenDay: selected.first { $0.window == "7d" },
+            otherWindows: selected.filter { $0.window != "5h" && $0.window != "7d" }
         )
     }
 
@@ -605,6 +619,19 @@ public enum WatchDisplayData {
 }
 
 public struct ProviderUsage: Codable, Equatable {
+    public var planType: String? = nil
+
+    public var planLabel: String {
+        switch planType?.lowercased() {
+        case "plus": return "Plus"
+        case "pro", "prolite": return "Pro"
+        case "free": return "Free"
+        case "team", "business": return "Business"
+        case "enterprise": return "Enterprise"
+        case "edu": return "Edu"
+        default: return "套餐未知"
+        }
+    }
     public var remainingPercent: Double?
     public var usedPercent: Double?
     public var resetIn: String?
@@ -624,6 +651,7 @@ public struct ProviderUsage: Codable, Equatable {
     public var buckets: [QuotaBucket]?
 
     enum CodingKeys: String, CodingKey {
+        case planType = "plan_type"
         case remainingPercent = "remaining_percent"
         case usedPercent = "used_percent"
         case resetIn = "reset_in"
@@ -683,6 +711,7 @@ public struct ProviderUsage: Codable, Equatable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        planType = try container.decodeIfPresent(String.self, forKey: .planType)
         remainingPercent = try container.decodeIfPresent(Double.self, forKey: .remainingPercent)
         usedPercent = try container.decodeIfPresent(Double.self, forKey: .usedPercent)
         resetIn = try container.decodeIfPresent(String.self, forKey: .resetIn)
@@ -728,11 +757,11 @@ public struct ProviderUsage: Codable, Equatable {
 public final class SharedUsageStore {
     public static let shared = SharedUsageStore()
 
-    private var defaults: UserDefaults {
-        UserDefaults(suiteName: AppConstants.appGroupID) ?? .standard
-    }
+    private let defaults: UserDefaults
 
-    public init() {}
+    public init(defaults: UserDefaults = UserDefaults(suiteName: AppConstants.appGroupID) ?? .standard) {
+        self.defaults = defaults
+    }
 
     public func save(_ snapshot: WatchSnapshot) {
         guard let data = try? JSONEncoder().encode(snapshot),
@@ -742,11 +771,15 @@ public final class SharedUsageStore {
     }
 
     public func load() -> WatchSnapshot {
+        loadOptional() ?? .placeholder
+    }
+
+    public func loadOptional() -> WatchSnapshot? {
         defaults.synchronize()
         guard let json = defaults.string(forKey: AppConstants.snapshotKey),
               let data = json.data(using: .utf8),
               let snapshot = try? JSONDecoder().decode(WatchSnapshot.self, from: data) else {
-            return .placeholder
+            return nil
         }
         return snapshot
     }
@@ -802,16 +835,25 @@ public enum NumberFormatters {
 }
 
 public enum QuotaDisplayText {
+    public static func windowTitle(_ window: String?) -> String {
+        switch window {
+        case "5h": return "5 小时"
+        case "7d": return "7 天"
+        case .some(let value) where !value.isEmpty: return value
+        default: return "额度"
+        }
+    }
+
     public static func isCriticalRemaining(_ remaining: Double?) -> Bool {
         (remaining ?? 100) <= 10
     }
 
     public static func remainingPercent(bucket: QuotaBucket?, fallback: ProviderUsage) -> Double? {
-        bucket?.remainingPercent ?? fallback.remainingPercent
+        bucket.map { $0.remainingPercent } ?? fallback.remainingPercent
     }
 
     public static func usedPercent(bucket: QuotaBucket?, fallback: ProviderUsage) -> Double? {
-        if let used = bucket?.usedPercent ?? fallback.usedPercent {
+        if let used = bucket.map { $0.usedPercent } ?? fallback.usedPercent {
             return used
         }
         guard let remaining = remainingPercent(bucket: bucket, fallback: fallback) else {
@@ -825,7 +867,7 @@ public enum QuotaDisplayText {
     }
 
     public static func resetLabel(bucket: QuotaBucket?, fallback: ProviderUsage) -> String {
-        guard let reset = bucket?.resetIn ?? fallback.resetIn, !reset.isEmpty else {
+        guard let reset = bucket.map { $0.resetIn } ?? fallback.resetIn, !reset.isEmpty else {
             return "重置 --"
         }
         return "重置 \(reset)"
@@ -850,7 +892,7 @@ public enum QuotaDisplayText {
         timeZone: TimeZone = .current
     ) -> String {
         guard
-            let resetIn = bucket?.resetIn ?? fallback.resetIn,
+            let resetIn = bucket.map { $0.resetIn } ?? fallback.resetIn,
             let interval = resetInterval(resetIn),
             let updatedAt = parseDate(snapshot.updatedAt)
         else {
@@ -884,7 +926,7 @@ public enum QuotaDisplayText {
 
     private static func modelLabel(for bucket: QuotaBucket) -> String? {
         if limitID(for: bucket).lowercased() == "codex" {
-            return "GPT-5.5"
+            return "Codex"
         }
         let label = cleanedModelLabel(bucket.label ?? "")
         if !label.isEmpty && !isGenericCodexLabel(label) {
@@ -1034,8 +1076,10 @@ public struct WidgetQuotaSummary: Equatable {
 
     public let title: String
     public let status: Status
-    public let fiveHour: WidgetQuotaWindow
-    public let sevenDay: WidgetQuotaWindow?
+    public let windows: [WidgetQuotaWindow]
+    public let planLabel: String
+    public var fiveHour: WidgetQuotaWindow? { windows.first { $0.title == "5 小时" } }
+    public var sevenDay: WidgetQuotaWindow? { windows.first { $0.title == "7 天" } }
     public let updatedLabel: String
     public let modelLabel: String
     public let todayLabel: String
@@ -1044,11 +1088,11 @@ public struct WidgetQuotaSummary: Equatable {
 
     public init(snapshot: WatchSnapshot?, timeZone: TimeZone = .current) {
         title = "Codex Quota"
+        planLabel = snapshot?.codex.planLabel ?? "套餐未知"
         guard let snapshot, snapshot.codex.status != "not_configured" else {
             status = .setup
             let fallback = ProviderUsage.placeholder(status: "not_configured")
-            fiveHour = WidgetQuotaWindow(title: "5 小时", bucket: nil, fallback: fallback)
-            sevenDay = nil
+            windows = [WidgetQuotaWindow(title: "等待额度", bucket: nil, fallback: fallback)]
             updatedLabel = "等待同步"
             modelLabel = "model --"
             todayLabel = "今日 --"
@@ -1059,23 +1103,14 @@ public struct WidgetQuotaSummary: Equatable {
 
         let selection = WatchDisplayData.codexWindows(from: snapshot.codex.buckets)
         status = snapshot.codex.status == "error" ? .error : .ready
-        fiveHour = WidgetQuotaWindow(
-            title: "5 小时",
-            bucket: selection.fiveHour,
-            fallback: snapshot.codex,
-            snapshot: snapshot,
-            timeZone: timeZone
-        )
-        if selection.sevenDay != nil {
-            sevenDay = WidgetQuotaWindow(
-                title: "7 天",
-                bucket: selection.sevenDay,
+        windows = selection.windows.map {
+            WidgetQuotaWindow(
+                title: QuotaDisplayText.windowTitle($0.window),
+                bucket: $0,
                 fallback: snapshot.codex,
                 snapshot: snapshot,
                 timeZone: timeZone
             )
-        } else {
-            sevenDay = nil
         }
         updatedLabel = QuotaDisplayText.watchUpdateLabel(snapshot: snapshot, timeZone: timeZone)
         modelLabel = QuotaDisplayText.codexFooterModelLabel(selection: selection, fallback: snapshot.codex)
@@ -1188,5 +1223,72 @@ public enum WatchDisplayText {
             return "\(rounded / 3_600)h ago"
         }
         return "\(rounded / 86_400)d ago"
+    }
+}
+
+
+/// Applies a deployment-specific URL once, without replacing user-chosen endpoints or credentials.
+public enum RemoteEndpointMigration {
+    public static func apply(defaults: UserDefaults, key: String, destination: String?, previousURLs: [String]) {
+        guard let destination,
+              let url = URLComponents(string: destination),
+              url.scheme == "https", let host = url.host, !host.isEmpty,
+              url.user == nil, url.password == nil,
+              url.query == nil, url.fragment == nil else { return }
+        let marker = "remoteEndpointMigration." + key
+        guard defaults.string(forKey: marker) != destination else { return }
+        let current = defaults.string(forKey: key)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let known = previousURLs.map { $0.trimmingCharacters(in: CharacterSet(charactersIn: "/")) }
+        if current == nil || current == "" || known.contains(current!.trimmingCharacters(in: CharacterSet(charactersIn: "/"))) {
+            defaults.set(destination, forKey: key)
+        }
+        defaults.set(destination, forKey: marker)
+    }
+
+    public static func applyBundled(key: String) {
+        let defaults = UserDefaults(suiteName: AppConstants.appGroupID) ?? .standard
+        apply(defaults: defaults, key: key,
+              destination: Bundle.main.object(forInfoDictionaryKey: "CodexRemoteURL") as? String,
+              previousURLs: Bundle.main.object(forInfoDictionaryKey: "CodexPreviousURLs") as? [String] ?? [])
+    }
+}
+
+
+public struct CodexTaskEvent: Codable, Equatable, Identifiable {
+    public let id: String
+    public let project: String
+    public let updatedAt: String
+    public let startedAt: String
+    public let status: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, project, status
+        case updatedAt = "updated_at"
+        case startedAt = "started_at"
+    }
+
+    public var statusLabel: String {
+        switch status {
+        case "running": return "进行中"
+        case "needs_approval": return "需要确认"
+        case "finished": return "本轮已结束"
+        case "interrupted": return "已中断"
+        default: return "未知状态"
+        }
+    }
+}
+
+public struct TaskNotificationConfig: Codable, Equatable {
+    public let enabled: Bool
+    public let provider: String?
+    public let server: String
+    public let topic: String
+    public let lastDeliveryAt: String?
+    public let pendingCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case enabled, provider, server, topic
+        case lastDeliveryAt = "last_delivery_at"
+        case pendingCount = "pending_count"
     }
 }
