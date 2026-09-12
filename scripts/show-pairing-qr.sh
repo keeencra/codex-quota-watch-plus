@@ -138,6 +138,7 @@ fi
 
 printf '%s\n%s\n%s\n' "$MAC_URL" "$WATCH_TOKEN_VALUE" "$HTML_OUT" | "$PYTHON_BIN" -c '
 import html
+import base64
 from pathlib import Path
 import sys
 from urllib.parse import urlencode
@@ -147,6 +148,11 @@ import qrcode
 mac_url = sys.stdin.readline().strip()
 token = sys.stdin.readline().strip()
 html_out = sys.stdin.readline().strip()
+logo_path = Path(sys.argv[1]) / "ios-watch/Assets.xcassets/BrandIcon.imageset/codecompanion.png"
+logo_html = ""
+if logo_path.exists():
+    logo_data = base64.b64encode(logo_path.read_bytes()).decode("ascii")
+    logo_html = f"<img alt=\"码伴\" width=\"80\" height=\"80\" style=\"border-radius:18px\" src=\"data:image/png;base64,{logo_data}\">"
 pairing_uri = "llmquota://pair?" + urlencode({"url": mac_url, "token": token})
 
 qr = qrcode.QRCode(border=2)
@@ -169,7 +175,7 @@ if html_out:
 <head>
 <meta charset=\"utf-8\">
 <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
-<title>Codex Quota Pairing QR</title>
+<title>码伴 · CodeCompanion Pairing QR</title>
 <style>
   body {{ font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif; margin: 0; background: #f7f7f2; color: #161616; }}
   main {{ min-height: 100vh; display: grid; place-items: center; padding: 32px; box-sizing: border-box; }}
@@ -183,9 +189,11 @@ if html_out:
 <body>
 <main>
 <section>
-<h1>Codex Quota Pairing QR</h1>
+{logo_html}
+<h1>码伴 · CodeCompanion</h1>
+<p>连接 Mac 后即可使用手机功能，Apple Watch 可选。</p>
 <div class=\"qr\">{svg}</div>
-<p>在 iPhone 的 <strong>Codex Quota</strong> 里点 <strong>Scan Pairing QR</strong> 扫这个码。</p>
+<p>在 iPhone 的 <strong>码伴 · CodeCompanion</strong> 里点 <strong>扫描配对二维码</strong> 扫这个码。</p>
 <p>Mac URL: <code>{html.escape(mac_url)}</code></p>
 <p>二维码包含 WATCH_TOKEN，只在本机使用，不要截图公开。</p>
 </section>
@@ -201,10 +209,10 @@ else:
     qr.print_ascii(invert=True)
 
 print()
-print("Scan this QR in the iPhone app: Codex Quota -> Scan Pairing QR")
+print("Scan this QR in the iPhone app: 码伴 · CodeCompanion -> 扫描配对二维码")
 print(f"Mac URL: {mac_url}")
 print("WATCH_TOKEN: hidden in QR")
-'
+' "$ROOT"
 
 if [ "$OPEN_HTML" -eq 1 ]; then
   open "$HTML_OUT"
