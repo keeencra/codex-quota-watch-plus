@@ -234,6 +234,7 @@ public struct TaskListView: View {
             Button("刷新任务") { Task { await model.refresh(base: base, token: token) } }.disabled(model.loading)
         }
         .navigationTitle("任务")
+        .watchReturnButton()
     }
 }
 
@@ -280,6 +281,7 @@ public struct TaskProgressView: View {
                 Text("任务已更新，请返回任务列表查看。")
             }
         }.navigationTitle("任务详情")
+        .watchReturnButton()
     }
 }
 #endif

@@ -156,6 +156,42 @@ public enum ApprovalClient {
 #if canImport(SwiftUI)
 import SwiftUI
 
+#if os(watchOS)
+private struct WatchReturnButtonModifier: ViewModifier {
+    @Environment(\.dismiss) private var dismiss
+
+    func body(content: Content) -> some View {
+        content
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                    }
+                    .accessibilityLabel("返回上一页")
+                }
+            }
+    }
+}
+#endif
+
+extension View {
+    @ViewBuilder
+    func watchReturnButton(enabled: Bool = true) -> some View {
+        #if os(watchOS)
+        if enabled {
+            modifier(WatchReturnButtonModifier())
+        } else {
+            self
+        }
+        #else
+        self
+        #endif
+    }
+}
+
 public struct ApprovalInboxView: View {
     let base: String
     let token: String
@@ -193,6 +229,7 @@ public struct ApprovalInboxView: View {
                 .font(.caption2).foregroundStyle(.secondary)
         }
         .navigationTitle("待审批")
+        .watchReturnButton()
         .task {
             while !Task.isCancelled {
                 await refresh()
@@ -254,6 +291,7 @@ private struct ApprovalDetailView: View {
             }.padding()
         }
         .navigationTitle("确认操作")
+        .watchReturnButton()
         .confirmationDialog("允许上方完整操作执行一次？", isPresented: $confirmation, titleVisibility: .visible) {
             Button("确认批准本次") { Task { await decide(true) } }
             Button("取消", role: .cancel) {}
