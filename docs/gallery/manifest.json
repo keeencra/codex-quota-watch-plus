@@ -1,0 +1,261 @@
+[
+  {
+    "file": "iphone-home-pro-ok.jpg",
+    "platform": "iphone",
+    "screen": "home",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "iphone-home-plus-ok.jpg",
+    "platform": "iphone",
+    "screen": "home",
+    "plan": "plus",
+    "deepseek": "ok"
+  },
+  {
+    "file": "iphone-quota-pro-ok.jpg",
+    "platform": "iphone",
+    "screen": "quota",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "iphone-quota-plus-ok.jpg",
+    "platform": "iphone",
+    "screen": "quota",
+    "plan": "plus",
+    "deepseek": "ok"
+  },
+  {
+    "file": "iphone-home-pro-not_configured.jpg",
+    "platform": "iphone",
+    "screen": "home",
+    "plan": "pro",
+    "deepseek": "not_configured"
+  },
+  {
+    "file": "iphone-home-plus-not_configured.jpg",
+    "platform": "iphone",
+    "screen": "home",
+    "plan": "plus",
+    "deepseek": "not_configured"
+  },
+  {
+    "file": "iphone-tasks-pro-ok.jpg",
+    "platform": "iphone",
+    "screen": "tasks",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "iphone-task-pro-ok.jpg",
+    "platform": "iphone",
+    "screen": "task",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "iphone-tasks-empty-pro-ok.jpg",
+    "platform": "iphone",
+    "screen": "tasks-empty",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "iphone-approvals-pro-ok.jpg",
+    "platform": "iphone",
+    "screen": "approvals",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "iphone-approvals-empty-pro-ok.jpg",
+    "platform": "iphone",
+    "screen": "approvals-empty",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "iphone-approval-pro-ok.jpg",
+    "platform": "iphone",
+    "screen": "approval",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "iphone-balance-pro-ok.jpg",
+    "platform": "iphone",
+    "screen": "balance",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "iphone-balance-pro-not_configured.jpg",
+    "platform": "iphone",
+    "screen": "balance",
+    "plan": "pro",
+    "deepseek": "not_configured"
+  },
+  {
+    "file": "iphone-balance-pro-error.jpg",
+    "platform": "iphone",
+    "screen": "balance",
+    "plan": "pro",
+    "deepseek": "error"
+  },
+  {
+    "file": "iphone-settings-pro-ok.jpg",
+    "platform": "iphone",
+    "screen": "settings",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "iphone-notifications-pro-ok.jpg",
+    "platform": "iphone",
+    "screen": "notifications",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "iphone-diagnostics-pro-ok.jpg",
+    "platform": "iphone",
+    "screen": "diagnostics",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "iphone-about-pro-ok.jpg",
+    "platform": "iphone",
+    "screen": "about",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "iphone-widgets-pro-ok.jpg",
+    "platform": "iphone",
+    "screen": "widgets",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "iphone-widgets-pro-not_configured.jpg",
+    "platform": "iphone",
+    "screen": "widgets",
+    "plan": "pro",
+    "deepseek": "not_configured"
+  },
+  {
+    "file": "iphone-widgets-plus-ok.jpg",
+    "platform": "iphone",
+    "screen": "widgets",
+    "plan": "plus",
+    "deepseek": "ok"
+  },
+  {
+    "file": "iphone-widgets-plus-not_configured.jpg",
+    "platform": "iphone",
+    "screen": "widgets",
+    "plan": "plus",
+    "deepseek": "not_configured"
+  },
+  {
+    "file": "watch-quota-pro-ok.jpg",
+    "platform": "watch",
+    "screen": "quota",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "watch-quota-plus-ok.jpg",
+    "platform": "watch",
+    "screen": "quota",
+    "plan": "plus",
+    "deepseek": "ok"
+  },
+  {
+    "file": "watch-tasks-pro-ok.jpg",
+    "platform": "watch",
+    "screen": "tasks",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "watch-task-pro-ok.jpg",
+    "platform": "watch",
+    "screen": "task",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "watch-tasks-empty-pro-ok.jpg",
+    "platform": "watch",
+    "screen": "tasks-empty",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "watch-approvals-pro-ok.jpg",
+    "platform": "watch",
+    "screen": "approvals",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "watch-approvals-empty-pro-ok.jpg",
+    "platform": "watch",
+    "screen": "approvals-empty",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "watch-approval-pro-ok.jpg",
+    "platform": "watch",
+    "screen": "approval",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "watch-balance-pro-ok.jpg",
+    "platform": "watch",
+    "screen": "balance",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "watch-balance-pro-not_configured.jpg",
+    "platform": "watch",
+    "screen": "balance",
+    "plan": "pro",
+    "deepseek": "not_configured"
+  },
+  {
+    "file": "watch-balance-pro-error.jpg",
+    "platform": "watch",
+    "screen": "balance",
+    "plan": "pro",
+    "deepseek": "error"
+  },
+  {
+    "file": "watch-today-pro-ok.jpg",
+    "platform": "watch",
+    "screen": "today",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "watch-home-pro-ok.jpg",
+    "platform": "watch",
+    "screen": "home",
+    "plan": "pro",
+    "deepseek": "ok"
+  },
+  {
+    "file": "watch-home-plus-ok.jpg",
+    "platform": "watch",
+    "screen": "home",
+    "plan": "plus",
+    "deepseek": "ok"
+  }
+]
