@@ -92,18 +92,6 @@ struct WatchContentView: View {
                         .tag(2)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .always))
-                .toolbar {
-                    if homePage != 0 {
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button {
-                                homePage = 0
-                            } label: {
-                                Image(systemName: "chevron.left")
-                            }
-                            .accessibilityLabel("返回首页")
-                        }
-                    }
-                }
             }
             .environment(\.watchLayoutMetrics, metrics)
         }
