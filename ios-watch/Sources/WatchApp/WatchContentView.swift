@@ -50,6 +50,7 @@ struct WatchContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var receiver = WatchConnectivityReceiver.shared
     @StateObject private var dashboard = TaskDashboardModel()
+    @State private var homePage = 0
     private let foregroundRefreshTimer = Timer.publish(
         every: WatchRefreshPolicy.foregroundRefreshIntervalSeconds,
         on: .main,
@@ -60,8 +61,8 @@ struct WatchContentView: View {
         GeometryReader { proxy in
             let metrics = WatchLayoutMetrics(width: Double(proxy.size.width), height: Double(proxy.size.height))
 
-            TabView {
-                NavigationStack {
+            NavigationStack {
+                TabView(selection: $homePage) {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
@@ -84,11 +85,26 @@ struct WatchContentView: View {
                             }.buttonStyle(.plain)
                         }.padding(.horizontal, 5).padding(.bottom, 20)
                     }
+                    .tag(0)
+                    CodexQuotaPage(snapshot: receiver.snapshot, showsReturnButton: false)
+                        .tag(1)
+                    LocalTodayPage(usage: receiver.snapshot.codex)
+                        .tag(2)
                 }
-                CodexQuotaPage(snapshot: receiver.snapshot)
-                LocalTodayPage(usage: receiver.snapshot.codex)
+                .tabViewStyle(.page(indexDisplayMode: .always))
+                .toolbar {
+                    if homePage != 0 {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button {
+                                homePage = 0
+                            } label: {
+                                Image(systemName: "chevron.left")
+                            }
+                            .accessibilityLabel("返回首页")
+                        }
+                    }
+                }
             }
-            .tabViewStyle(.page(indexDisplayMode: .always))
             .environment(\.watchLayoutMetrics, metrics)
         }
         .background(Color.black.ignoresSafeArea())
@@ -126,6 +142,7 @@ struct WatchContentView: View {
 private struct CodexQuotaPage: View {
     @Environment(\.watchLayoutMetrics) private var metrics
     let snapshot: WatchSnapshot
+    var showsReturnButton = true
 
     private var selection: CodexWindowSelection {
         WatchDisplayData.codexWindows(from: snapshot.codex.buckets)
@@ -135,8 +152,6 @@ private struct CodexQuotaPage: View {
         let isDualWindow = selection.windows.count > 1
 
         VStack(alignment: .leading, spacing: metrics.space(isDualWindow ? 4 : 10)) {
-            WatchPageHeader(title: "Codex", badge: codexBadge, time: nil)
-
             VStack(alignment: .leading, spacing: metrics.space(isDualWindow ? 5 : 15)) {
                 ForEach(selection.windows, id: \.stableID) { bucket in
                     QuotaWindowBlock(
@@ -159,11 +174,26 @@ private struct CodexQuotaPage: View {
             QuotaPageFooter(snapshot: snapshot, selection: selection)
         }
         .padding(.horizontal, metrics.cgOuterHorizontalPadding + metrics.space(4))
-        .padding(.top, CGFloat(metrics.codexPageTopOffset))
+        .padding(.top, metrics.space(4))
         .padding(.bottom, metrics.space(isDualWindow ? 10 : 18))
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .foregroundStyle(.white)
         .background(Color.black)
+        .watchReturnButton(enabled: showsReturnButton)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                HStack(spacing: 4) {
+                    Text("Codex").font(.system(size: 13, weight: .bold, design: .rounded))
+                    if let codexBadge {
+                        Text(codexBadge).font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .accessibilityElement(children: .combine)
+            }
+        }
     }
 
     private var codexBadge: String? {
