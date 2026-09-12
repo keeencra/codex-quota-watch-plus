@@ -445,19 +445,21 @@ public struct WatchSnapshot: Codable, Equatable {
     public var updatedAt: String
     public var codex: ProviderUsage
     public var taskEvents: [CodexTaskEvent]
+    public var deepseek: DeepSeekBalance?
     public var notifications: TaskNotificationConfig?
 
     enum CodingKeys: String, CodingKey {
         case updatedAt = "updated_at"
         case codex
         case taskEvents = "task_events"
-        case notifications
+        case notifications, deepseek
     }
 
-    public init(updatedAt: String, codex: ProviderUsage, taskEvents: [CodexTaskEvent] = [], notifications: TaskNotificationConfig? = nil) {
+    public init(updatedAt: String, codex: ProviderUsage, taskEvents: [CodexTaskEvent] = [], notifications: TaskNotificationConfig? = nil, deepseek: DeepSeekBalance? = nil) {
         self.updatedAt = updatedAt
         self.codex = codex
         self.taskEvents = taskEvents
+        self.deepseek = deepseek
         self.notifications = notifications
     }
 
@@ -466,6 +468,7 @@ public struct WatchSnapshot: Codable, Equatable {
         updatedAt = try container.decode(String.self, forKey: .updatedAt)
         codex = try container.decode(ProviderUsage.self, forKey: .codex)
         taskEvents = try container.decodeIfPresent([CodexTaskEvent].self, forKey: .taskEvents) ?? []
+        deepseek = try? container.decodeIfPresent(DeepSeekBalance.self, forKey: .deepseek)
         notifications = try container.decodeIfPresent(TaskNotificationConfig.self, forKey: .notifications)
     }
 
@@ -1087,7 +1090,7 @@ public struct WidgetQuotaSummary: Equatable {
     public let tokenBins: [TwoHourTokenBin]
 
     public init(snapshot: WatchSnapshot?, timeZone: TimeZone = .current) {
-        title = "Codex Quota"
+        title = "码伴"
         planLabel = snapshot?.codex.planLabel ?? "套餐未知"
         guard let snapshot, snapshot.codex.status != "not_configured" else {
             status = .setup
@@ -1325,3 +1328,119 @@ public struct RemoteApprovalList: Decodable {
     public let enabled: Bool
     public let requests: [RemoteApproval]
 }
+
+public extension WatchSnapshot {
+    /// An absent/unconfigured provider uses the original Codex layout. A configured
+    /// provider keeps its space during errors so transient failures do not change layouts.
+    var showsDeepSeekInWidget: Bool {
+        guard let deepseek else { return false }
+        return deepseek.status != "not_configured"
+    }
+}
+
+public struct DeepSeekBalance: Codable, Equatable {
+    public let status: String
+    public let updatedAt: String?
+    public let isAvailable: Bool?
+    public let balanceInfos: [DeepSeekBalanceInfo]
+    public let error: String?
+    enum CodingKeys: String, CodingKey {
+        case status, error
+        case updatedAt = "updated_at", isAvailable = "is_available", balanceInfos = "balance_infos"
+    }
+    public var summary: String {
+        guard status == "ok", !balanceInfos.isEmpty else { return status == "not_configured" ? "未配置" : "暂不可用" }
+        return balanceInfos.map { $0.currency + " " + $0.totalBalance }.joined(separator: " · ")
+    }
+    public var statusMessage: String {
+        if status == "not_configured" { return "请在 Mac 配置 DeepSeek API Key，然后刷新。" }
+        if status != "ok" { return error ?? "余额查询失败，请稍后刷新。" }
+        return isAvailable == false ? "余额不足，暂不可调用 API" : "API 账户余额"
+    }
+}
+
+public struct DeepSeekBalanceInfo: Codable, Equatable, Identifiable {
+    public let currency: String
+    public let totalBalance: String
+    public let grantedBalance: String
+    public let toppedUpBalance: String
+    public var id: String { currency }
+    public var compactTotal: String {
+        guard totalBalance.contains(".") else { return totalBalance }
+        var result = totalBalance
+        while result.hasSuffix("0") { result.removeLast() }
+        if result.hasSuffix(".") { result.removeLast() }
+        return result
+    }
+    enum CodingKeys: String, CodingKey {
+        case currency
+        case totalBalance = "total_balance", grantedBalance = "granted_balance", toppedUpBalance = "topped_up_balance"
+    }
+}
+
+#if os(iOS) || os(watchOS)
+import SwiftUI
+
+public struct DeepSeekBalanceCard: View {
+    public let balance: DeepSeekBalance?
+    public init(balance: DeepSeekBalance?) { self.balance = balance }
+    public var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Label("DeepSeek", systemImage: "creditcard.fill").font(.headline)
+                Spacer(minLength: 2)
+                Image(systemName: "chevron.right").font(.caption2)
+            }.foregroundStyle(.blue)
+            if let balance, balance.status == "ok", !balance.balanceInfos.isEmpty {
+                ForEach(balance.balanceInfos) { info in
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(info.currency).font(.caption)
+                        Spacer(minLength: 4)
+                        Text(info.totalBalance).font(.system(.headline, design: .rounded)).monospacedDigit()
+                            .minimumScaleFactor(0.6).lineLimit(1)
+                    }
+                }
+                Text("上次采集余额").font(.caption2).foregroundStyle(.secondary)
+            } else {
+                Text(balance?.summary ?? "未同步").font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .padding(10).frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 16))
+        .contentShape(RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+public struct DeepSeekBalanceView: View {
+    public let balance: DeepSeekBalance?
+    public init(balance: DeepSeekBalance?) { self.balance = balance }
+    public var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("DeepSeek").font(.headline).foregroundStyle(.blue)
+                Text(balance?.statusMessage ?? "请更新 Mac 服务并刷新余额。")
+                    .font(.caption).foregroundStyle(.secondary)
+                if let balance, balance.status == "ok" {
+                    ForEach(balance.balanceInfos) { info in
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("总余额 · \(info.currency)").font(.caption).foregroundStyle(.secondary)
+                            Text(info.totalBalance).font(.system(.title2, design: .rounded).bold())
+                                .minimumScaleFactor(0.65).lineLimit(1)
+                            Text("充值余额  \(info.toppedUpBalance)").font(.caption)
+                            Text("赠送余额  \(info.grantedBalance)").font(.caption)
+                        }.frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    if let date = balance.updatedAt {
+                        Text("余额采集 · \(TaskTime.label(date))")
+                            .font(.caption2).foregroundStyle(.secondary)
+                    }
+                    Text("上次采集值，非实时扣费。返回首页刷新可更新。")
+                        .font(.caption2).foregroundStyle(.secondary)
+                }
+            }.frame(maxWidth: .infinity, alignment: .leading).padding()
+        }
+        .navigationTitle("账户余额")
+        .watchReturnButton()
+    }
+}
+#endif
