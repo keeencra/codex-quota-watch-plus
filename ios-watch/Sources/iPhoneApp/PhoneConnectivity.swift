@@ -24,10 +24,10 @@ final class PhoneConnectivity: NSObject, ObservableObject, WCSessionDelegate {
             return "inactive"
         case .activated:
             if !session.isPaired {
-                return "not paired"
+                return "未配对（可选，不影响手机使用）"
             }
             if !session.isWatchAppInstalled {
-                return "app not installed"
+                return "手表 App 未安装（可选）"
             }
             return session.isReachable ? "reachable" : "installed"
         @unknown default:
@@ -36,7 +36,8 @@ final class PhoneConnectivity: NSObject, ObservableObject, WCSessionDelegate {
     }
 
     func send(snapshot: WatchSnapshot, macURL: String, token: String) {
-        guard WCSession.isSupported() else { return }
+        guard WCSession.isSupported(), WCSession.default.activationState == .activated,
+              WCSession.default.isPaired, WCSession.default.isWatchAppInstalled else { return }
         guard let data = try? JSONEncoder().encode(snapshot),
               let json = String(data: data, encoding: .utf8) else { return }
 

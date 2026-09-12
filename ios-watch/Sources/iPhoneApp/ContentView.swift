@@ -34,7 +34,7 @@ struct ContentView: View {
                             Spacer()
                             Text(snapshot.codex.planLabel).font(.caption.bold()).foregroundStyle(.secondary)
                         }
-                        Text("任务进展与关键确认，抬腕也能查看。")
+                        Text("手机掌握任务进展，随时处理关键确认。")
                             .font(.subheadline).foregroundStyle(.secondary)
                     }.padding(.vertical, 8)
                     // Each link must be a separate Form row; links in one VStack share row activation.
@@ -68,6 +68,13 @@ struct ContentView: View {
                         .font(.caption2).foregroundStyle(errorText == nil ? Color.secondary : Color.orange)
                 }
                 .listRowSeparator(.hidden)
+                Section("账户余额") {
+                    NavigationLink {
+                        DeepSeekBalanceView(balance: snapshot.deepseek)
+                    } label: {
+                        DeepSeekBalanceCard(balance: snapshot.deepseek)
+                    }.buttonStyle(.plain)
+                }
                 Section("连接与同步") {
                     DisclosureGroup("Mac 连接设置") {
                     TextField("Mac 服务地址", text: $macURL)
@@ -80,12 +87,12 @@ struct ContentView: View {
                         Label("扫描配对二维码", systemImage: "qrcode.viewfinder")
                     }
                     }
-                    Button(isLoading ? "正在同步…" : "同步额度到手表") {
+                    Button(isLoading ? "正在同步…" : "刷新并同步数据") {
                         Task { await fetch() }
                     }
                     .disabled(isLoading)
                     Toggle("自动刷新额度", isOn: $autoRefreshEnabled)
-                    Text("打开 App 时自动同步额度，任务与审批每 10 秒更新。")
+                    Text("手机可独立查看额度、任务与审批；已连接手表时会自动同步。任务与审批每 10 秒更新。")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     Text(statusText)
@@ -104,7 +111,7 @@ struct ContentView: View {
                             UIPasteboard.general.string = config.topic
                         }
                         Text(config.topic).font(.caption.monospaced()).textSelection(.enabled)
-                        Text("允许 ntfy 通知，并在 Watch App → 通知中开启 ntfy 镜像。")
+                        Text("允许 ntfy 通知即可在手机接收提醒；如有手表，可在 Watch App → 通知中开启 ntfy 镜像。")
                             .font(.footnote).foregroundStyle(.secondary)
                         }
                         if let delivered = config.lastDeliveryAt {
@@ -128,7 +135,7 @@ struct ContentView: View {
                     if let barkStatus {
                         Text(barkStatus).font(.footnote)
                     }
-                    Text("从 Bark 首页复制 api.day.app 的推送地址，粘贴后保存。允许 Bark 通知，并在 Watch App → 通知中开启 Bark 镜像。")
+                    Text("从 Bark 首页复制 api.day.app 的推送地址，粘贴后保存。允许 Bark 通知即可在手机接收提醒；如有手表，可在 Watch App → 通知中开启 Bark 镜像。")
                         .font(.footnote).foregroundStyle(.secondary)
                     Link("安装 Bark－给你的手机发推送", destination: URL(string: "https://apps.apple.com/app/id1403753865")!)
                     Text("推送只包含状态，不发送原始任务、命令和文件路径。")
@@ -137,6 +144,38 @@ struct ContentView: View {
                 }
 
                 Section("更多") {
+                    NavigationLink {
+                        List {
+                            Section {
+                                HStack(spacing: 14) {
+                                    Image("BrandIcon").resizable().frame(width: 64, height: 64)
+                                        .clipShape(RoundedRectangle(cornerRadius: 15))
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("码伴 · CodeCompanion").font(.headline)
+                                        Text("随身的 AI 开发助手").foregroundStyle(.secondary)
+                                    }
+                                }.padding(.vertical, 8)
+                            }
+                            Section("手机即可使用") {
+                                Label("按项目查看任务与进展", systemImage: "folder")
+                                Label("查看并处理远程审批", systemImage: "checkmark.shield")
+                                Label("Codex 额度与可选 DeepSeek 余额", systemImage: "chart.pie")
+                                Label("桌面小组件与任务提醒", systemImage: "bell")
+                            }
+                            Section("Apple Watch 可选") {
+                                Text("没有手表也能使用上述手机功能。有手表时，可增加抬腕查看、通知镜像和快速审批。")
+                            }
+                            Section("连接要求") {
+                                Text("需要运行本项目服务的 Mac 在线提供数据。配置 HTTPS 后可外出访问；任务提醒需要配置 Bark 或 ntfy。")
+                            }
+                            Section("项目与致谢") {
+                                Text("由 keeencra 持续维护，原名 Codex Quota Watch Plus。保留所用开源代码的许可证、版权和上游致谢。")
+                                Link("项目源码与许可证", destination: URL(string: "https://github.com/keeencra/codex-quota-watch-plus")!)
+                            }
+                        }.navigationTitle("关于码伴")
+                    } label: {
+                        Label("关于码伴", systemImage: "info.circle")
+                    }
                     DisclosureGroup("连接诊断") {
                     row("Mac URL", DiagnosticsText.macURLStatus(macURL))
                     row("Token", DiagnosticsText.tokenStatus(tokenInput))
@@ -158,7 +197,7 @@ struct ContentView: View {
                     }
                 }
             }
-            .navigationTitle("Codex Quota")
+            .navigationTitle("码伴")
             .toolbar {
                 Button("刷新") { Task {
                     async let tasks: () = dashboard.refresh(base: macURL, token: tokenInput)
@@ -214,7 +253,7 @@ struct ContentView: View {
         do {
             try await UsageClient().configureBark(macAgentBaseURL: macURL, token: tokenInput, address: barkAddress)
             barkAddress = ""
-            barkStatus = "Bark 配置已保存。测试时请锁定手机并佩戴手表。"
+            barkStatus = "Bark 配置已保存。手机可直接接收提醒；测试手表镜像时请锁定手机并佩戴手表。"
             await fetch()
         } catch {
             barkStatus = "保存失败，请检查 Bark 地址和 Mac 连接后重试。"
