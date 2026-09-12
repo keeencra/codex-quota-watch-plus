@@ -12,6 +12,7 @@ from typing import Annotated, Literal
 import uvicorn
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 
+from .deepseek import get_deepseek_balance
 from .models import QuotaStatus, TokenStats, UsageSnapshot
 from .quota import cached_codex_quota, get_codex_quota
 from .scanner import ScanResult, scan_usage_dir
@@ -53,7 +54,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     yield
 
 
-app = FastAPI(title="Codex Quota Watch Agent", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="CodeCompanion Agent", version="0.1.0", lifespan=lifespan)
 
 _cache: UsageSnapshot | None = None
 _cache_time: datetime | None = None
@@ -139,15 +140,17 @@ async def _safe_quota(provider: ProviderName, getter: Callable[[Settings], Await
 
 
 async def build_snapshot() -> UsageSnapshot:
-    (codex_scan, codex_scan_error), codex_quota = await asyncio.gather(
+    (codex_scan, codex_scan_error), codex_quota, deepseek = await asyncio.gather(
         asyncio.to_thread(_safe_scan, "codex"),
         _safe_quota("codex", get_codex_quota),
+        get_deepseek_balance(),
     )
     if codex_scan_error is not None:
         codex_quota = codex_scan_error
     return UsageSnapshot(
         updated_at=datetime.now(timezone.utc),
         codex_quota=codex_quota,
+        deepseek=deepseek,
         codex_today=codex_scan.today,
         codex_hourly=codex_scan.hourly,
     )

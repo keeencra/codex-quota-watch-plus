@@ -129,7 +129,7 @@ class CodexRPCClient:
                     "params": {
                         "clientInfo": {
                             "name": "coding_quota_watch",
-                            "title": "Codex Quota Watch",
+                            "title": "CodeCompanion",
                             "version": "0.2.0",
                         }
                     },

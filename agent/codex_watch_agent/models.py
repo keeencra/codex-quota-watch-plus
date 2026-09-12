@@ -6,6 +6,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+from .deepseek import DeepSeekBalance
+
 MAX_ERROR_SUMMARY_LENGTH = 240
 
 
@@ -87,6 +89,7 @@ class QuotaStatus(BaseModel):
 class UsageSnapshot(BaseModel):
     updated_at: datetime = Field(default_factory=utc_now)
     codex_quota: QuotaStatus
+    deepseek: DeepSeekBalance = Field(default_factory=DeepSeekBalance)
     codex_today: TokenStats = Field(default_factory=TokenStats)
     codex_hourly: list[HourBucket] = Field(default_factory=list)
 
@@ -198,6 +201,7 @@ class UsageSnapshot(BaseModel):
         return {
             "schema_version": "v1",
             "updated_at": self.updated_at.isoformat(),
+            "deepseek": self.deepseek.model_dump(),
             "stale": False,
             "providers": {
                 "codex": self._provider_snapshot(
@@ -211,6 +215,7 @@ class UsageSnapshot(BaseModel):
     def compact(self) -> dict[str, Any]:
         return {
             "updated_at": self.updated_at.isoformat(),
+            "deepseek": self.deepseek.model_dump(),
             "codex": self._provider_compact(
                 self.codex_quota,
                 self.codex_today,
