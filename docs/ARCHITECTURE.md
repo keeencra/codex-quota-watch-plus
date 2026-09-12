@@ -53,7 +53,7 @@ Mac Agent 是唯一能按桌面服务方式常驻的部分。iPhone、WidgetKit 
 - `WATCH_TOKEN` 必须配置为至少 24 位 URL-safe 随机字符，缺失、太短、非法字符或占位值会拒绝启动。
 - `/usage`、`/v1/snapshot` 和 `/watch` 都要求 `x-watch-token`。
 - iPhone 保存 `WATCH_TOKEN` 使用 Keychain；Mac URL 和最近快照使用 App Group `UserDefaults`。
-- 公开版本不同步最近会话标题、项目路径或消息摘要；客户端只接收 quota、bucket、today 和 hourly token 摘要。
+- 额度接口不包含任务标题或消息摘要；认证 `/tasks` 接口提供侧栏任务标题与项目分组。默认推送只含状态，单独启用 `include_task_identity` 后，结束提醒从本地目录读取该会话的项目名／任务标题；不从事件读取消息正文或工作目录路径。
 - 默认不启用 CORS；原生 iPhone / Watch 客户端不需要浏览器 CORS。
 - 默认只适合本机或可信局域网。不要把 Agent 暴露到公网。
 - 出门访问时优先使用 Tailscale Serve 到 `127.0.0.1:8787`，让 Agent 继续只监听 localhost。

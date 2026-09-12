@@ -58,3 +58,5 @@ Bark 通知本身不能直接批准。`request_user_input` 问答、MCP 引导�
 官方接口依据：[PermissionRequest Hook](https://learn.chatgpt.com/zh-Hans/docs/hooks#permissionrequest)。
 
 如需在提醒标题中显示项目目录名，在私有状态目录的 `notification-preferences.json` 写入 `{"include_project":true}`。默认不发送项目名；开启后仍不发送完整路径、操作详情或回复，声音仍为静音。
+
+结束提醒若需同时显示 Codex 项目名与任务标题，可启用 [`include_task_identity`](enhancements.md#按项目与任务区分结束提醒)；此选项不改变审批提醒或审批权限。

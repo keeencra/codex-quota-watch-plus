@@ -1,12 +1,13 @@
 # 所有版本下载
 
-当前版本 **v0.7.0 · 第 7 次迭代**。以下均为本项目的完整源码，包含 Mac 后端、iPhone／Apple Watch App 和部署文档。
+当前版本 **v0.8.0 · 第 8 次迭代**。以下均为本项目的完整源码，包含 Mac 后端、iPhone／Apple Watch App 和部署文档。
 
 ## 下载入口
 
 | 版本 | 主要变化 | 源码 ZIP | 对应代码 |
 | --- | --- | --- | --- |
-| **v0.7.0** | 版本下载页面与 Release 入口 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v0.7.0.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v0.7.0) |
+| **v0.8.0** | 项目与任务名称结束提醒 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v0.8.0.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v0.8.0) |
+| v0.7.0 | 版本下载页面与 Release 入口 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v0.7.0.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v0.7.0) |
 | v0.6.0 | 版本编号与迭代索引 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/b868fb5ce06917ea4214558357b4113343ac796d.zip) | [固定提交 `b868fb5`](https://github.com/keeencra/codex-quota-watch-plus/tree/b868fb5ce06917ea4214558357b4113343ac796d) |
 | v0.5.0 | 项目分组与任务标题同步 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/330c9b088ba9d945d535856ec7e4c8bb98aa55d1.zip) | [固定提交 `330c9b0`](https://github.com/keeencra/codex-quota-watch-plus/tree/330c9b088ba9d945d535856ec7e4c8bb98aa55d1) |
 | v0.4.0 | 界面图库与功能导览 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/3d35e0e9c828ae3b2306a414e9ac769f34258fdc.zip) | [固定提交 `3d35e0e`](https://github.com/keeencra/codex-quota-watch-plus/tree/3d35e0e9c828ae3b2306a414e9ac769f34258fdc) |
