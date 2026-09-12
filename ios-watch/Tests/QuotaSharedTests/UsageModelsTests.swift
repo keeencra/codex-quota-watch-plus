@@ -675,7 +675,7 @@ final class UsageModelsTests: XCTestCase {
         let summary = WidgetQuotaSummary(snapshot: nil, timeZone: TimeZone(secondsFromGMT: 0)!)
 
         XCTAssertEqual(summary.status, .setup)
-        XCTAssertEqual(summary.title, "Codex Quota")
+        XCTAssertEqual(summary.title, "码伴")
         XCTAssertEqual(summary.windows[0].percentLabel, "--%")
         XCTAssertEqual(summary.windows[0].refillLabel, "↻ --")
         XCTAssertEqual(summary.updatedLabel, "等待同步")
