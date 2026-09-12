@@ -1,6 +1,6 @@
 # 所有版本下载
 
-当前版本 **v1.0.0 · 大更新 · 第 9 次迭代**。以下均为本项目的完整源码，包含 Mac 后端、iPhone／Apple Watch App 和部署文档。
+当前版本 **v2.0.0 · 大更新 · 第 10 次迭代**。以下均为本项目的完整源码，包含 Mac 后端、iPhone／Apple Watch App 和部署文档。
 
 大更新有功能或内容改动，小更新仅修 Bug。v1.0.0 起使用新规则；历史版本只补充类型，不改号或下载内容。[查看版本规则](../CHANGELOG.md#版本号规则)。
 
@@ -8,7 +8,8 @@
 
 | 版本 | 更新类型 | 主要变化 | 源码 ZIP | 对应代码 |
 | --- | --- | --- | --- | --- |
-| **v1.0.0** | 大更新 | 大／小更新分类与版本规则 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v1.0.0.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v1.0.0) |
+| **v2.0.0** | 大更新 | 手表导航修复与长期维护计划 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v2.0.0.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v2.0.0) |
+| v1.0.0 | 大更新 | 大／小更新分类与版本规则 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v1.0.0.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v1.0.0) |
 | v0.8.0 | 大更新 | 项目与任务名称结束提醒 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v0.8.0.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v0.8.0) |
 | v0.7.0 | 大更新 | 版本下载页面与 Release 入口 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v0.7.0.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v0.7.0) |
 | v0.6.0 | 大更新 | 版本编号与迭代索引 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/b868fb5ce06917ea4214558357b4113343ac796d.zip) | [固定提交 `b868fb5`](https://github.com/keeencra/codex-quota-watch-plus/tree/b868fb5ce06917ea4214558357b4113343ac796d) |
