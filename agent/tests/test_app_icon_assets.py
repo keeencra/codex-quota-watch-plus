@@ -12,10 +12,10 @@ APP_ICON_DIR = ROOT / "ios-watch/Assets.xcassets/AppIcon.appiconset"
 WATCH_ICON_DIR = ROOT / "ios-watch/WatchIcons"
 PROJECT_FILE = ROOT / "ios-watch/CodingQuota.xcodeproj/project.pbxproj"
 WATCH_INFO_PLIST = ROOT / "ios-watch/Config/WatchApp-Info.plist"
-SOURCE_BACKGROUND = (244, 241, 234)
-SOURCE_LEFT_ARC_GREEN = (22, 201, 73)
-SOURCE_RIGHT_ARC_ORANGE = (254, 122, 21)
-SOURCE_TERMINAL_BLACK = (22, 24, 29)
+SOURCE_BACKGROUND = (16, 24, 39)
+SOURCE_LEFT_ARC_GREEN = (49, 234, 148)
+SOURCE_RIGHT_ARC_YELLOW = (255, 211, 0)
+SOURCE_TERMINAL_WHITE = (250, 250, 250)
 WATCH_ICON_FILES = [
     "Icon-Watch-24x24@2x.png",
     "Icon-Watch-27.5x27.5@2x.png",
@@ -136,6 +136,7 @@ def test_app_icon_assets_exist_and_are_wired_to_targets() -> None:
 
     for filename in WATCH_ICON_FILES:
         assert (WATCH_ICON_DIR / filename).exists(), filename
+        assert (WATCH_ICON_DIR / filename).read_bytes() == (APP_ICON_DIR / filename).read_bytes(), filename
         assert f"{filename} in Resources" in project
         assert filename.removesuffix(".png") in watch_info
 
@@ -145,10 +146,10 @@ def test_app_icon_gauge_matches_source_logo_colors() -> None:
 
     background = _png_rgb_at(icon_path, 0.08, 0.08)
     left_arc = _png_rgb_at(icon_path, 0.23, 0.75)
-    right_arc = _png_rgb_at(icon_path, 0.77, 0.75)
+    right_arc = _png_rgb_at(icon_path, 0.86, 0.44)
     terminal = _png_rgb_at(icon_path, 0.47, 0.50)
 
     assert _color_distance(background, SOURCE_BACKGROUND) < 10
     assert _color_distance(left_arc, SOURCE_LEFT_ARC_GREEN) < 45
-    assert _color_distance(right_arc, SOURCE_RIGHT_ARC_ORANGE) < 45
-    assert _color_distance(terminal, SOURCE_TERMINAL_BLACK) < 10
+    assert _color_distance(right_arc, SOURCE_RIGHT_ARC_YELLOW) < 45
+    assert _color_distance(terminal, SOURCE_TERMINAL_WHITE) < 10
