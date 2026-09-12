@@ -2,7 +2,7 @@
 
 # Codex Quota Watch Plus
 
-**项目版本 v2.0.0 · 大更新 · 第 10 次迭代** · [查看各版本变化](CHANGELOG.md#版本索引)
+**项目版本 v3.0.0 · 大更新 · 第 11 次迭代** · [查看各版本变化](CHANGELOG.md#版本索引)
 
 新增内容升主版本（大更新），仅修 Bug 升修订号（小更新）；[版本规则](CHANGELOG.md#版本号规则)。
 
@@ -22,7 +22,7 @@ Codex Quota Watch Plus 是一套运行在 **Mac、iPhone 和 Apple Watch** 上�
 
 它适合已经使用 Mac 运行 Codex，希望在离开桌面时仍能掌握任务进展的人。项目由 **keeencra** 持续维护，包含原生 SwiftUI App、iPhone 小组件、Python 后端及部署脚本。
 
-本次更新修复手表重复分页、额度标题遮挡和返回入口，新增[长期维护计划](docs/maintenance.md)。
+本次更新为[更新日志](CHANGELOG.md)新增导航与标题的前后对比图，直观展示 v2.0.0 的修复，并建立后续配图规范。本次仅更新文档，无需重新安装 App。
 
 ## 界面展示
 
