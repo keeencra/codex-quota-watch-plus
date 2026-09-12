@@ -1,65 +1,105 @@
 <div align="center">
 
-# Codex Quota Watch Plus
+# 码伴 · CodeCompanion
 
-**项目版本 v2.0.0 · 大更新 · 第 10 次迭代** · [查看各版本变化](CHANGELOG.md#版本索引)
+**项目版本 v3.0.0 · 大更新 · 第 11 次迭代** · [查看各版本变化](CHANGELOG.md#版本索引)
 
 新增产品功能／行为升主版本，仅修产品 Bug 升修订号；日志、介绍与配图等文档修改不升版本。详见[版本规则](CHANGELOG.md#版本号规则)。
 
-### 离开电脑，也能知道 Codex 跑到哪一步。
+### 随身的 AI 开发助手，手机即可使用。
 
-任务进展 · 手表审批 · 额度监控 · 静音提醒
+项目与任务 · 远程审批 · 额度与余额 · 小组件与提醒
 
 [所有版本下载](docs/downloads.md) · [界面展示](#界面展示) · [开始部署](#开始部署) · [更新日志](CHANGELOG.md) · [功能文档](#功能文档) · [反馈问题](https://github.com/keeencra/codex-quota-watch-plus/issues)
 
-<img src="docs/assets/repo-hero.svg" alt="Codex Quota Watch Plus 功能示意：运行中任务、待审批和剩余额度集中显示在手表上" width="100%">
+<img src="docs/assets/brand/codecompanion-master-v3.0.0.png" alt="码伴新图标：绿黄额度环、终端符号和任务确认勾" width="180">
+
+<img src="docs/assets/brand/codecompanion-hero-v3.0.0.svg" alt="码伴：手机独立使用，Apple Watch 可选，Mac 提供数据" width="100%">
 
 *功能示意图，数字为演示数据。*
 
 </div>
 
-Codex Quota Watch Plus 是一套运行在 **Mac、iPhone 和 Apple Watch** 上的个人 Codex 监控工具。Mac 收集本机任务和额度，手机与手表展示状态；遇到支持的审批请求，可以查看完整操作后，直接在手表上批准本次或拒绝。
+**码伴 · CodeCompanion**（原 Codex Quota Watch Plus）是一套面向 iPhone 的 AI 开发助手。**Mac＋iPhone 即可使用，Apple Watch 为可选扩展。** 手机可以查看项目与任务、处理支持的审批请求、监控 Codex 额度、显示可选 DeepSeek 余额、使用桌面小组件及接收任务提醒；搭配手表后可抬腕查看和审批。
+
+Mac 服务仍需在线提供数据；外出使用需配置 HTTPS。独立品牌保留原有开源许可证、版权与上游致谢。
 
 它适合已经使用 Mac 运行 Codex，希望在离开桌面时仍能掌握任务进展的人。项目由 **keeencra** 持续维护，包含原生 SwiftUI App、iPhone 小组件、Python 后端及部署脚本。
 
-本次更新为[更新日志](CHANGELOG.md)新增导航与标题的前后对比图，直观展示 v2.0.0 的修复，并建立后续配图规范。本次仅补充 v2.0.0 文档，不升级版本或增加迭代，无需重新安装 App。
+**从小红书旧帖来的朋友：你找对项目了。** 本项目原名 **Codex Quota Watch Plus**，现更名为 **码伴 · CodeCompanion**；仓库地址仍为 `keeencra/codex-quota-watch-plus`，旧链接继续有效，v1.0.0 等历史源码仍可下载。
+
+本次 v3.0.0 包含品牌更新、DeepSeek 余额和小组件两套布局。安装只需 Mac＋iPhone，手表可选；[查看新增内容和 Bug 修复](CHANGELOG.md)。
 
 ## 界面展示
 
-下面展示的是 **本项目 SwiftUI 界面**，由 iPhone 与 Apple Watch 模拟器运行并截图。任务名称、72% 额度和待审批请求均为虚构演示数据；审批示例不会执行真实命令。不是借鉴项目的截图，也不是尚未实现的设计稿。点击图片可放大查看。
+以下均为 **v3.0.0 本项目原生 SwiftUI 视图**在隔离模拟器中渲染，任务、审批、额度和余额均为虚构数据。截图不会执行命令，不包含个人账户或配对信息。设置区域直接挂载原页面对应区域，小组件按实际尺寸在宿主中展示，均非真机／桌面截图。
 
-### iPhone：总览、任务、审批，各有入口
+Plus／Pro 截图展示不同数据窗口，**不表示所有该套餐账号固定拥有同样限制**；实际界面以 Codex 返回窗口为准。有／无 DeepSeek 在小组件使用两套布局，App 内未配置时保留配置提示。可点击任意图片查看大图。[完整图库与采集说明](docs/gallery.md)
 
-| 任务总览 | 任务详情 | 确认操作 |
-| :---: | :---: | :---: |
-| <img src="docs/assets/gallery/iphone-overview.jpg" width="250" alt="iPhone 总览：运行中、待审批、剩余额度三个独立入口"> | <img src="docs/assets/gallery/iphone-task.jpg" width="250" alt="iPhone 任务详情：当前阶段、状态与最近事件"> | <img src="docs/assets/gallery/iphone-approval.jpg" width="250" alt="iPhone 审批详情：完整操作、有效期和本次批准或拒绝"> |
-| 一眼查看数量与额度，点不同卡片进入对应内容。 | 查看任务标题、当前活动和最近阶段变化。 | 看清操作后，决定仅对这一条请求生效。 |
+### 手机：任务、审批与账户状态
 
-### 项目分组与侧栏标题同步
+| Pro 总览 | Plus 总览 | 项目分组与任务标题 |
+| --- | --- | --- |
+| <img src="docs/assets/gallery/v3.0.0/iphone-home-pro-ok.jpg" width="230" alt="v3.0.0 Pro 总览，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-home-plus-ok.jpg" width="230" alt="v3.0.0 Plus 总览，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-tasks-pro-ok.jpg" width="230" alt="v3.0.0 项目分组与任务标题，模拟器虚构数据展示"> |
 
-「运行中」入口的任务列表默认展示**全部未归档任务**，按 Codex 项目分组；优先使用你在侧栏设置的任务名称。项目和任务改名后，刷新即可同步。切换「进行中与待处理」可只看需要关注的任务。未采集到活动的任务显示「尚未监测」，不会计入运行中数量。
+| 任务详情 | 待审批列表 | 逐项确认操作 |
+| --- | --- | --- |
+| <img src="docs/assets/gallery/v3.0.0/iphone-task-pro-ok.jpg" width="230" alt="v3.0.0 任务详情，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-approvals-pro-ok.jpg" width="230" alt="v3.0.0 待审批列表，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-approval-pro-ok.jpg" width="230" alt="v3.0.0 逐项确认操作，模拟器虚构数据展示"> |
 
-| iPhone 项目分组 | Apple Watch 项目分组 |
-| :---: | :---: |
-| <img src="docs/assets/gallery/iphone-tasks.jpg" width="260" alt="iPhone 按项目分组并显示侧栏任务标题"> | <img src="docs/assets/gallery/watch-projects.jpg" width="230" alt="Apple Watch 项目分组与任务标题"> |
+| Pro 额度 | Plus 额度 | DeepSeek 双币种详情 |
+| --- | --- | --- |
+| <img src="docs/assets/gallery/v3.0.0/iphone-quota-pro-ok.jpg" width="230" alt="v3.0.0 Pro 额度，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-quota-plus-ok.jpg" width="230" alt="v3.0.0 Plus 额度，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-balance-pro-ok.jpg" width="230" alt="v3.0.0 DeepSeek 双币种详情，模拟器虚构数据展示"> |
 
-截图中的「产品开发」等均为虚构项目。真实界面使用自己 Mac 上的 Codex 项目名称；分组仅显示存在可见任务的项目。
+### 小组件：四种组合，各自保留完整布局
 
-### Apple Watch：抬腕查看，逐项处理
+每张图从上到下依次为小号、中号、刷新失败时的中号。无 DeepSeek 保留 Codex 原版内容与今日用量图；有 DeepSeek 保留额度进度条，并显示分币种余额。
 
-v2.0.0 保留首页「总览、额度、今日用量」三页；总览的三个入口进入各自独立页面，不再附带首页分页。首页三页仅靠左右滑动切换，不显示返回按钮；额度标题位于右侧，任务、审批、额度和详情页均提供返回按钮。下方手表图库采集于 v1.0.0 及之前，展示功能内容，标题和返回按钮布局以新版为准。
+| Pro · 有 DeepSeek | Pro · 无 DeepSeek |
+| --- | --- |
+| <img src="docs/assets/gallery/v3.0.0/iphone-widgets-pro-ok.jpg" width="300" alt="v3.0.0 Pro · 有 DeepSeek，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-widgets-pro-not_configured.jpg" width="300" alt="v3.0.0 Pro · 无 DeepSeek，模拟器虚构数据展示"> |
 
-| 手表总览 | 任务进展 | 额度详情 |
-| :---: | :---: | :---: |
-| <img src="docs/assets/gallery/watch-overview.jpg" width="220" alt="Apple Watch 总览的三张彩色卡片"> | <img src="docs/assets/gallery/watch-task.jpg" width="220" alt="Apple Watch 当前任务阶段与状态"> | <img src="docs/assets/gallery/watch-quota.jpg" width="220" alt="Apple Watch Pro 额度、重置时间与更新时间"> |
-| 蓝色任务、橙色审批、绿色额度。 | 手机上同一套任务，也能在手表查看。 | 显示实际额度窗口和重置时间。 |
+| Plus · 有 DeepSeek | Plus · 无 DeepSeek |
+| --- | --- |
+| <img src="docs/assets/gallery/v3.0.0/iphone-widgets-plus-ok.jpg" width="300" alt="v3.0.0 Plus · 有 DeepSeek，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-widgets-plus-not_configured.jpg" width="300" alt="v3.0.0 Plus · 无 DeepSeek，模拟器虚构数据展示"> |
 
-| 手机任务列表 | 手表待审批 | 手表操作确认 |
-| :---: | :---: | :---: |
-| <img src="docs/assets/gallery/iphone-tasks.jpg" width="230" alt="任务列表及进行中与全部任务筛选"> | <img src="docs/assets/gallery/watch-approvals.jpg" width="220" alt="手表待审批列表"> | <img src="docs/assets/gallery/watch-approval.jpg" width="220" alt="手表确认操作页面"> |
-| 已结束任务可通过筛选查看。 | 通知到达后，在此找到仍有效的请求。 | 操作较长时可滚动查看完整内容。 |
+### Apple Watch：可选扩展，首页三页与独立功能页
 
-更多入口、截图说明和使用步骤见 [界面与功能导览](docs/feature-tour.md)。
+首页通过滑动切换总览、额度和今日用量；进入任务／审批／额度详情后，返回按钮回到上一页，不出现重复分页。
+
+| Pro 总览 | Plus 总览 | 今日用量 |
+| --- | --- | --- |
+| <img src="docs/assets/gallery/v3.0.0/watch-home-pro-ok.jpg" width="220" alt="v3.0.0 Pro 总览，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/watch-home-plus-ok.jpg" width="220" alt="v3.0.0 Plus 总览，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/watch-today-pro-ok.jpg" width="220" alt="v3.0.0 今日用量，模拟器虚构数据展示"> |
+
+| Pro 额度 | Plus 额度 | DeepSeek 详情 |
+| --- | --- | --- |
+| <img src="docs/assets/gallery/v3.0.0/watch-quota-pro-ok.jpg" width="220" alt="v3.0.0 Pro 额度，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/watch-quota-plus-ok.jpg" width="220" alt="v3.0.0 Plus 额度，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/watch-balance-pro-ok.jpg" width="220" alt="v3.0.0 DeepSeek 详情，模拟器虚构数据展示"> |
+
+| 项目与任务 | 任务详情 | 待审批 | 操作确认 |
+| --- | --- | --- | --- |
+| <img src="docs/assets/gallery/v3.0.0/watch-tasks-pro-ok.jpg" width="190" alt="v3.0.0 项目与任务，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/watch-task-pro-ok.jpg" width="190" alt="v3.0.0 任务详情，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/watch-approvals-pro-ok.jpg" width="190" alt="v3.0.0 待审批，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/watch-approval-pro-ok.jpg" width="190" alt="v3.0.0 操作确认，模拟器虚构数据展示"> |
+
+### 配置与项目介绍
+
+| Mac 连接与同步 | Bark 提醒设置 | 连接诊断 | 关于码伴 |
+| --- | --- | --- | --- |
+| <img src="docs/assets/gallery/v3.0.0/iphone-settings-pro-ok.jpg" width="220" alt="v3.0.0 Mac 连接与同步，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-notifications-pro-ok.jpg" width="220" alt="v3.0.0 Bark 提醒设置，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-diagnostics-pro-ok.jpg" width="220" alt="v3.0.0 连接诊断，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-about-pro-ok.jpg" width="220" alt="v3.0.0 关于码伴，模拟器虚构数据展示"> |
+
+<details>
+<summary>展开：无 DeepSeek、空任务／审批、余额查询失败的全部展示</summary>
+
+| Pro · 未配置 DeepSeek | Plus · 未配置 DeepSeek | 未配置余额提示 | 余额查询失败 |
+| --- | --- | --- | --- |
+| <img src="docs/assets/gallery/v3.0.0/iphone-home-pro-not_configured.jpg" width="220" alt="v3.0.0 Pro · 未配置 DeepSeek，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-home-plus-not_configured.jpg" width="220" alt="v3.0.0 Plus · 未配置 DeepSeek，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-balance-pro-not_configured.jpg" width="220" alt="v3.0.0 未配置余额提示，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-balance-pro-error.jpg" width="220" alt="v3.0.0 余额查询失败，模拟器虚构数据展示"> |
+
+| 手机空任务 | 手机无待审批 |
+| --- | --- |
+| <img src="docs/assets/gallery/v3.0.0/iphone-tasks-empty-pro-ok.jpg" width="230" alt="v3.0.0 手机空任务，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-approvals-empty-pro-ok.jpg" width="230" alt="v3.0.0 手机无待审批，模拟器虚构数据展示"> |
+
+| 手表空任务 | 手表无待审批 | 手表未配置余额 | 手表余额查询失败 |
+| --- | --- | --- | --- |
+| <img src="docs/assets/gallery/v3.0.0/watch-tasks-empty-pro-ok.jpg" width="190" alt="v3.0.0 手表空任务，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/watch-approvals-empty-pro-ok.jpg" width="190" alt="v3.0.0 手表无待审批，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/watch-balance-pro-not_configured.jpg" width="190" alt="v3.0.0 手表未配置余额，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/watch-balance-pro-error.jpg" width="190" alt="v3.0.0 手表余额查询失败，模拟器虚构数据展示"> |
+
+</details>
 
 ## 一天中可以怎样使用
 
@@ -68,6 +108,10 @@ v2.0.0 保留首页「总览、额度、今日用量」三页；总览的三个�
 3. **遇到需要确认的操作**：收到提醒后，打开橙色「待审批」，核对完整操作，再批准本次或拒绝。只有已接入且仍在等待的请求可以处理。
 4. **结束后收到静音提醒**：Bark 可镜像到 Apple Watch；已结束的任务仍能在「全部任务」里查看。可开启「项目名 · 任务标题 · 本轮已结束」，多任务并行时能区分来源；不读取或发送消息正文。
 5. **随时检查剩余额度**：绿色入口、小组件和手表额度页显示实际窗口及更新时间。外出访问需要提前配置 HTTPS，并让 Mac 保持运行。
+
+## DeepSeek 账户余额
+
+手机与手表总览新增 DeepSeek 入口，可查看人民币／美元总余额、充值余额、赠送余额和采集时间；手机小号／中号桌面小组件也显示双币种余额。API Key 仅保留在 Mac，沿用原 HTTPS 配对同步。[配置与使用](docs/deepseek-balance.md)。
 
 ## 功能一览
 
@@ -127,7 +171,7 @@ flowchart LR
 
 下载历史版本或当前版本，请进入 [所有版本下载](docs/downloads.md)；每个版本都有固定源码 ZIP 入口。
 
-需要一台运行 Codex 的 Mac、Xcode、iPhone，以及与手机配对的 Apple Watch。原生 App 需要自行构建和签名，本仓库不提供 App Store 安装包。
+需要一台运行 Codex 的 Mac、Xcode 和 iPhone；Apple Watch 可选，没有手表也可完成手机配置。原生 App 需要自行构建和签名，本仓库不提供 App Store 安装包。
 
 ### 1. 下载并启动基础额度服务
 
@@ -167,7 +211,7 @@ iPhone App → **连接与同步 → Mac 连接设置 → 扫描配对二维码*
 <summary>让本机 Codex 协助部署</summary>
 
 ```text
-请按 keeencra/codex-quota-watch-plus 的 README 帮我部署到自己的 Mac、iPhone 和 Apple Watch。
+请按 keeencra/codex-quota-watch-plus 的 README 部署码伴到我的 Mac 和 iPhone；仅在我有 Apple Watch 时额外安装手表端。
 先完成基础额度同步，再配置任务总览、HTTPS 远程访问和 Bark 静音提醒。
 远程审批按 docs/remote-approval.md 的支持范围逐项配置，不启用自动批准。
 保留现有 Codex Hooks，不输出配对 Token、Bark 密钥或签名凭据。
