@@ -32,6 +32,67 @@
           "$ref": "#/$defs/providerSnapshot"
         }
       }
+    },
+    "deepseek": {
+      "type": "object",
+      "description": "Optional DeepSeek API balance; no API credentials are included.",
+      "required": [
+        "status",
+        "balance_infos"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "ok",
+            "error",
+            "not_configured"
+          ]
+        },
+        "updated_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "is_available": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "error": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "balance_infos": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "currency",
+              "total_balance",
+              "granted_balance",
+              "topped_up_balance"
+            ],
+            "properties": {
+              "currency": {
+                "type": "string"
+              },
+              "total_balance": {
+                "type": "string"
+              },
+              "granted_balance": {
+                "type": "string"
+              },
+              "topped_up_balance": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "$defs": {
