@@ -1,7 +1,8 @@
-"""Local task history and a durable, status-only push outbox.
+"""Local task history and a durable push outbox with opt-in task labels.
 
 Inspired by H1234L1/codex-watch-notifier (MIT). No prompts, tool arguments,
-credentials, full paths or assistant replies are persisted or published.
+credentials, full paths or assistant replies are taken from event payloads.
+Task names may be read from the desktop catalog at delivery when enabled.
 """
 from __future__ import annotations
 
@@ -197,20 +198,42 @@ def deliver_pending(store: TaskEventStore, *, client=None, now: float | None = N
     return _deliver(store, config, rows, client, now)
 
 
+def _finished_title(store, row, catalog):
+    from .codex_catalog import label
+    # Resolve this outbox entry's session, never the current/latest task globally.
+    with store.connection() as db:
+        task = db.execute("""SELECT t.project, p.session FROM turns t
+            LEFT JOIN task_progress p ON p.id=t.id WHERE t.id=?""", (row['turn_id'],)).fetchone()
+    session = task['session'] if task else None
+    metadata = catalog.get(session, {})
+    project = label(metadata.get('project'), 80) or label(task['project'] if task else None, 80) or '未分组'
+    short_id = hashlib.sha256(session.encode()).hexdigest()[:8] if session else row['turn_id'][:8]
+    title = label(metadata.get('display_title'), 160) or f'未命名任务 {short_id}'
+    return f'{project} · {title} · 本轮已结束'
+
+
 def _deliver(store, config, rows, client, now):
+    try:
+        preferences = json.loads((store.root / 'notification-preferences.json').read_text())
+    except (OSError, ValueError):
+        preferences = {}
+    preferences = preferences if isinstance(preferences, dict) else {}
+    named_completion = preferences.get('include_task_identity') is True
+    catalog = {}
+    if named_completion and any(row['status'] == 'finished' for row in rows):
+        from .codex_catalog import read_catalog
+        catalog = read_catalog(Path(os.environ.get('CODEX_HOME', '~/.codex')).expanduser().resolve())
     sent = 0
     for row in rows:
         title, message = PUSH_TEXT[row['status']]
-        try:
-            preferences = json.loads((store.root / 'notification-preferences.json').read_text())
-        except (OSError, ValueError):
-            preferences = {}
-        if isinstance(preferences, dict) and preferences.get('include_project') is True:
+        if named_completion and row['status'] == 'finished':
+            title = _finished_title(store, row, catalog)
+        elif preferences.get('include_project') is True:
             with store.connection() as db:
                 task = db.execute('SELECT project FROM turns WHERE id=?', (row['turn_id'],)).fetchone()
             if task:
                 title = f"{task['project']} · {title}"
-        # Fixed destination and allowlisted status text only. No event fields in payload.
+        # Fixed destinations; only opted-in catalog labels and fixed status text.
         bark = config.get('provider') == 'bark'
         if bark:
             url = 'https://api.day.app/push'
