@@ -1,6 +1,8 @@
 # Xcode 真机安装演示
 
-目标：把 `Codex Quota` 安装到自己的 iPhone 和 Apple Watch。这里的步骤只处理 Xcode、签名、设备和配对；Mac Agent 安装见 `docs/setup.md`。
+手机可独立使用，Apple Watch 为可选扩展；无手表时跳过手表连接、信任和安装步骤。历史截图可能仍显示旧名称。
+
+目标：把 `码伴` 安装到自己的 iPhone 和 Apple Watch。这里的步骤只处理 Xcode、签名、设备和配对；Mac Agent 安装见 `docs/setup.md`。
 
 ## 名字对应关系
 
@@ -12,11 +14,11 @@ Xcode 里看到的名字和设备上看到的名字不同，这是正常的：
 | iPhone target | `CodingQuota` |
 | Watch target | `CodingQuota Watch App` |
 | Widget target | `CodingQuotaWidgetExtension` |
-| iPhone 主屏 App 名 | `Codex Quota` |
-| Apple Watch App 名 | `Codex Quota` |
-| iPhone Widget 名 | `Codex Quota` |
+| iPhone 主屏 App 名 | `码伴` |
+| Apple Watch App 名 | `码伴` |
+| iPhone Widget 名 | `码伴` |
 
-如果 Xcode target 叫 `CodingQuota`，但手机上显示 `Codex Quota`，不是注册失败。
+如果 Xcode target 叫 `CodingQuota`，但手机上显示 `码伴`，不是注册失败。
 
 ## Codex 可以帮你做什么
 
@@ -183,11 +185,11 @@ xcodebuild \
 
 安装成功后：
 
-1. iPhone 主屏应出现 `Codex Quota`。
-2. Apple Watch 上应出现 `Codex Quota`；如果没有，打开 iPhone 上的 Watch App，在已安装应用列表里确认。
+1. iPhone 主屏应出现 `码伴`。
+2. Apple Watch 上应出现 `码伴`；如果没有，打开 iPhone 上的 Watch App，在已安装应用列表里确认。
 3. 如果 Watch App 没有立刻出现，等一会儿，或在 Xcode 再运行一次 iPhone target。
 
-如果 iPhone 上已经有 `Codex Quota`，但 Apple Watch 上始终没有，可以把 embedded Watch App 直接安装到手表。先找 Watch 的 device id：
+如果 iPhone 上已经有 `码伴`，但 Apple Watch 上始终没有，可以把 embedded Watch App 直接安装到手表。先找 Watch 的 device id：
 
 ```bash
 xcrun devicectl list devices
@@ -225,10 +227,10 @@ xcrun devicectl device install app \
 再确认：
 
 ```bash
-xcrun devicectl device info apps --device <你的 Apple Watch device id> | grep "Codex Quota"
+xcrun devicectl device info apps --device <你的 Apple Watch device id> | grep "码伴"
 ```
 
-如果命令提示手表锁定，先解锁 Apple Watch，再从手表 app 列表打开 `Codex Quota`。
+如果命令提示手表锁定，先解锁 Apple Watch，再从手表 app 列表打开 `码伴`。
 
 `devicectl` 偶尔会报 tunnel timeout，例如：
 
@@ -252,12 +254,12 @@ scripts/show-pairing-qr.sh --open-html
 scripts/show-pairing-qr.sh
 ```
 
-iPhone 上打开 `Codex Quota`：
+iPhone 上打开 `码伴`：
 
 1. 点 `Scan Pairing QR`。
 2. 扫浏览器页面里的二维码。
 3. 点 `Fetch & Sync to Watch`。
-4. 打开 Apple Watch 上的 `Codex Quota`。
+4. 打开 Apple Watch 上的 `码伴`。
 
 二维码包含 `WATCH_TOKEN`，不要截图公开，不要发给别人。如果浏览器二维码页已经用完，可以直接关闭。
 
@@ -269,7 +271,7 @@ iPhone 上打开 `Codex Quota`：
 
 ### 能装 iPhone，Watch 没出现
 
-先等几分钟，然后打开 iPhone 的 Watch App 查看 `Codex Quota` 是否已安装。仍没有时，在 Xcode 里重新 Run `CodingQuota` scheme 到 iPhone。
+先等几分钟，然后打开 iPhone 的 Watch App 查看 `码伴` 是否已安装。仍没有时，在 Xcode 里重新 Run `CodingQuota` scheme 到 iPhone。
 
 如果 iPhone 已安装但 Watch 仍没有，说明 companion 没有自动下发到手表。按上面的 `xcrun devicectl device install app --device <你的 Apple Watch device id> ...Watch App.app` 手动安装一次。
 
@@ -293,4 +295,4 @@ scripts/configure-ios-identifiers.sh --bundle-id com.yourname.CodexQuota.Dev
 
 ### 安装后找不到 App
 
-设备上显示名是 `Codex Quota`，不是 `CodingQuota`。
+设备上显示名是 `码伴`，不是 `CodingQuota`。

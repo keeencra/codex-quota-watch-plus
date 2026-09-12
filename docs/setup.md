@@ -1,6 +1,6 @@
 # 本机部署指南
 
-目标：在自己的 Mac、iPhone、Apple Watch 上运行 Codex 额度监控。它不是一键安装包，也不会替你跳过 Apple 的签名和设备信任流程。
+目标：在自己的 Mac 和 iPhone 上运行码伴；Apple Watch 可选。它不是一键安装包，也不会替你跳过 Apple 的签名和设备信任流程。
 
 如果你熟悉 Xcode 真机调试，通常 30-60 分钟可以跑通第一版；如果第一次处理 Apple Watch target、App Group、局域网访问和签名，预留 1-2 小时更现实。
 
@@ -9,7 +9,8 @@
 | 项目 | 必需 | 说明 |
 |---|---:|---|
 | Mac | 是 | 运行本地 Agent |
-| iPhone + Apple Watch | 是 | iPhone 拉取数据并同步到手表 |
+| iPhone | 是 | 独立拉取数据、查看任务与审批、显示小组件 |
+| Apple Watch | 否 | 可选：抬腕查看与快速审批 |
 | Xcode | 是 | 安装 iPhone / Watch App |
 | Python 3 | 是 | 运行 Mac Agent |
 | Codex CLI/App 登录 | 建议 | Codex 额度读取需要 |
@@ -17,8 +18,8 @@
 ## 1. 安装 Mac Agent
 
 ```bash
-git clone https://github.com/<owner>/codex-quota-watch.git
-cd codex-quota-watch
+git clone https://github.com/keeencra/codex-quota-watch-plus.git
+cd codex-quota-watch-plus
 scripts/bootstrap-local.sh --lan
 ```
 
@@ -127,10 +128,14 @@ scripts/show-pairing-qr.sh --open-html
 
 ## 3. Xcode 签名和安装
 
+**只有手机时**：选择 `CodingQuota` scheme 和你的 iPhone 作为运行目标，完成手机信任与签名后直接安装；不需要配对手表或等待手表在线。扫码连接 Mac 后即可使用手机功能。有手表时再完成以下手表相关步骤。
+
+项目内仍保留历史 target／Bundle ID 结构，以兼容现有安装和缓存；这不代表手表是必需设备。
+
 如果你第一次用 Xcode 安装 iPhone + Apple Watch App，先看一遍
 `docs/xcode-device-install.md`。Xcode 里的 project / target 名是
 `CodingQuota`，但安装到 iPhone 和 Apple Watch 后显示的 App 名是
-`Codex Quota`，这是正常的。
+`码伴`，这是正常的。
 
 先把仓库里的示例标识改成你自己的。建议使用反向域名格式，例如 `com.yourname.CodexQuota`：
 
@@ -207,7 +212,7 @@ com.example.CodexQuota.widget
 2. 打开 iPhone App。
 3. 填 Mac URL 和 `WATCH_TOKEN`。
 4. 点 `Fetch & Sync to Watch`。
-5. 打开 Watch App `Codex Quota`。
+5. 打开 Watch App `码伴`。
 
 完成后：
 

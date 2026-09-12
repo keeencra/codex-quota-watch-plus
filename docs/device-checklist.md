@@ -1,5 +1,7 @@
 # 真机验收清单
 
+手机可独立使用，Apple Watch 为可选扩展；无手表时跳过手表连接、信任和安装步骤。历史截图可能仍显示旧名称。
+
 目标：确认 Mac Agent、iPhone App、Apple Watch App 和 iPhone Widget 在真实设备上形成完整闭环。
 
 不要在截图或日志里公开 `WATCH_TOKEN`、`agent/.env`、`~/.codex`、Apple Team ID、证书或描述文件。
@@ -32,7 +34,7 @@ scripts/configure-ios-identifiers.sh --bundle-id com.yourname.CodexQuota
 - 通过条件：
   - iPhone target 能安装到真机。
   - Watch App 随 iPhone App 安装到已配对 Apple Watch。
-  - iPhone 主屏可添加 `Codex Quota` small / medium Widget。
+  - iPhone 主屏可添加 `码伴` small / medium Widget。
   - 如果 Watch App 没有自动出现，能用 `xcrun devicectl device install app --device <Apple Watch device id> ".../CodingQuota Watch App.app"` 手动安装。
   - 如果 App Groups 不可用，先记录 limitation；WatchConnectivity 路径仍应可测。
 
@@ -52,7 +54,7 @@ scripts/configure-ios-identifiers.sh --bundle-id com.yourname.CodexQuota
 
 ## 4. Apple Watch App
 
-- 打开 Watch App `Codex Quota`。
+- 打开 Watch App `码伴`。
 - 通过条件：
   - Watch App 能看到最新 snapshot。
   - Watch 打开时会先尝试直连 Mac Agent；如果 Watch 或 iPhone 不可达 Mac Agent，应显示最后一次快照而不是空白。
@@ -61,7 +63,7 @@ scripts/configure-ios-identifiers.sh --bundle-id com.yourname.CodexQuota
 
 ## 5. iPhone Widget
 
-- 长按 iPhone 主屏，添加 `Codex Quota` Widget。
+- 长按 iPhone 主屏，添加 `码伴` Widget。
 - 通过条件：
   - small Widget 显示 5h 剩余额度和刷新时间。
   - medium Widget 显示 5h / 7d、今日 token 和刷新时间。
