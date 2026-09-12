@@ -1,5 +1,6 @@
 import io
 import json
+import sqlite3
 import time
 import httpx
 import pytest
@@ -169,3 +170,102 @@ def test_optional_project_title_keeps_raw_paths_and_content_private(store):
     assert body['title'].startswith('project · ')
     assert '/private' not in calls[0].content.decode()
     assert 'SECRET' not in calls[0].content.decode()
+
+
+def identity_catalog(home):
+    db = sqlite3.connect(home / 'state_5.sqlite')
+    db.execute('CREATE TABLE threads (id TEXT, name TEXT, title TEXT, project_id TEXT)')
+    db.execute('CREATE TABLE projects (id TEXT, name TEXT, position INTEGER)')
+    db.execute('INSERT INTO projects VALUES (?,?,?)', ('p1', '产品开发', 0))
+    db.execute('INSERT INTO projects VALUES (?,?,?)', ('p2', '文档发布', 1))
+    db.execute('INSERT INTO threads VALUES (?,?,?,?)', ('session', '修复小组件', 'Old default title', 'p1'))
+    db.execute('INSERT INTO threads VALUES (?,?,?,?)', ('other-session', '更新使用说明', 'Old second title', 'p2'))
+    db.commit()
+    return db
+
+
+@pytest.mark.parametrize('provider', ['ntfy', 'bark'])
+def test_named_completions_match_each_session_and_keep_deduplication(store, monkeypatch, provider):
+    monkeypatch.setenv('CODEX_HOME', str(store.root))
+    with identity_catalog(store.root):
+        pass
+    (store.root / 'notification-preferences.json').write_text('{"include_task_identity":true,"include_project":true}')
+    if provider == 'bark':
+        save_bark_config('testDeviceKey1234', store.root)
+    for session in ['session', 'other-session']:
+        for _ in range(2):
+            store.record(dict(event('Stop', last_assistant_message='SECRET-REPLY'), session_id=session))
+    calls = []
+    def handle(request):
+        calls.append(json.loads(request.content))
+        return httpx.Response(200, json={'code': 200} if provider == 'bark' else {'id': 'receipt'})
+    with httpx.Client(transport=httpx.MockTransport(handle)) as client:
+        assert deliver_pending(store, client=client) == 2
+        assert deliver_pending(store, client=client) == 0
+    assert {p['title'] for p in calls} == {'产品开发 · 修复小组件 · 本轮已结束', '文档发布 · 更新使用说明 · 本轮已结束'}
+    assert all('/private' not in json.dumps(p) and 'SECRET' not in json.dumps(p) for p in calls)
+    if provider == 'bark':
+        assert all(p['sound'] == 'silence' and p['group'] == 'Codex' for p in calls)
+    assert '修复小组件' not in store.path.read_bytes().decode(errors='ignore')
+    assert '修复小组件' not in json.dumps(store.snapshot(), ensure_ascii=False)
+
+
+def test_named_completion_retry_uses_latest_sidebar_name_not_latest_turn(store, monkeypatch):
+    monkeypatch.setenv('CODEX_HOME', str(store.root))
+    db = identity_catalog(store.root)
+    (store.root / 'notification-preferences.json').write_text('{"include_task_identity":true}')
+    store.record(event('Stop'))
+    now = time.time()
+    calls = []
+    with mock_client(calls, fail=True) as client:
+        assert deliver_pending(store, client=client, now=now) == 0
+    db.execute('UPDATE threads SET name=? WHERE id=?', ('重新命名任务', 'session'))
+    db.commit(); db.close()
+    store.record(dict(event('Activity'), session_id='other-session'))
+    with mock_client(calls) as client:
+        assert deliver_pending(store, client=client, now=now+30) == 1
+    assert json.loads(calls[-1].content)['title'] == '产品开发 · 重新命名任务 · 本轮已结束'
+
+
+def test_missing_catalog_distinguishes_tasks_and_test_alert_stays_generic(store, monkeypatch):
+    monkeypatch.setenv('CODEX_HOME', str(store.root / 'missing'))
+    (store.root / 'notification-preferences.json').write_text('{"include_task_identity":true}')
+    for session in ['session', 'other-session']:
+        store.record(dict(event('Stop', prompt='SECRET'), session_id=session))
+    store.test_notification()
+    calls = []
+    with mock_client(calls) as client:
+        assert deliver_pending(store, client=client) == 3
+    titles = [json.loads(r.content)['title'] for r in calls]
+    assert len(set(titles)) == 3
+    assert sum(t.startswith('project · 未命名任务 ') for t in titles) == 2
+    assert 'Codex 提醒测试' in titles
+    assert all('SECRET' not in t and '/private' not in t for t in titles)
+
+
+@pytest.mark.parametrize('preference', ['{}', '{"include_task_identity":false}', 'invalid', '[]'])
+def test_task_identity_requires_opt_in(store, monkeypatch, preference):
+    monkeypatch.setenv('CODEX_HOME', str(store.root))
+    with identity_catalog(store.root):
+        pass
+    (store.root / 'notification-preferences.json').write_text(preference)
+    store.record(event('Stop'))
+    calls = []
+    with mock_client(calls) as client:
+        assert deliver_pending(store, client=client) == 1
+    assert json.loads(calls[0].content)['title'] == 'Codex 本轮已结束'
+
+
+def test_named_completion_cleans_and_bounds_labels(store, monkeypatch):
+    monkeypatch.setenv('CODEX_HOME', str(store.root))
+    with identity_catalog(store.root) as db:
+        db.execute('UPDATE threads SET name=? WHERE id=?', ('任务\n\t' + '长'*300, 'session'))
+        db.execute('UPDATE projects SET name=? WHERE id=?', ('项目\n' + '长'*200, 'p1'))
+    (store.root / 'notification-preferences.json').write_text('{"include_task_identity":true}')
+    store.record(event('Stop'))
+    calls = []
+    with mock_client(calls) as client:
+        assert deliver_pending(store, client=client) == 1
+    title=json.loads(calls[0].content)['title']
+    assert '\n' not in title and '\t' not in title
+    assert len(title) <= 252 and title.endswith('本轮已结束')
