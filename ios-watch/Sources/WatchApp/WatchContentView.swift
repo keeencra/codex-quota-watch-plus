@@ -66,7 +66,11 @@ struct WatchContentView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
-                                Text("Codex").font(.headline)
+                                if let path = Bundle.main.path(forResource: "Icon-Watch-50x50@2x", ofType: "png"),
+                                   let logo = UIImage(contentsOfFile: path) {
+                                    Image(uiImage: logo).resizable().frame(width: 22, height: 22).clipShape(Circle())
+                                }
+                                Text("码伴").font(.headline)
                                 Spacer()
                                 Text(receiver.snapshot.codex.planLabel).font(.caption2).foregroundStyle(.secondary)
                             }.padding(.horizontal, 4)
@@ -82,6 +86,11 @@ struct WatchContentView: View {
                                 OverviewCard(title: "剩余额度", value: summary.windows.first?.percentLabel ?? "—",
                                              subtitle: summary.windows.first.map { $0.title + " · " + summary.planLabel },
                                              symbol: "chart.pie.fill", tint: .green)
+                            }.buttonStyle(.plain)
+                            NavigationLink {
+                                DeepSeekBalanceView(balance: receiver.snapshot.deepseek)
+                            } label: {
+                                DeepSeekBalanceCard(balance: receiver.snapshot.deepseek)
                             }.buttonStyle(.plain)
                         }.padding(.horizontal, 5).padding(.bottom, 20)
                     }
