@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+CC3110000000000000000003 = {isa = PBXBuildFile; fileRef = CC3100000000000000000003; };
+		CC3110000000000000000002 = {isa = PBXBuildFile; fileRef = CC3100000000000000000002; };
+		CC3110000000000000000001 = {isa = PBXBuildFile; fileRef = CC3100000000000000000001; };
+		CC3110000000000000000000 = {isa = PBXBuildFile; fileRef = CC3100000000000000000000; };
 		A00100000000000000000001 /* Shared/UsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000001 /* Shared/UsageModels.swift */; };
 		A00100000000000000000002 /* Shared/UsageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000002 /* Shared/UsageClient.swift */; };
 		A00100000000000000000003 /* iPhoneApp/QuotaPhoneApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000003 /* iPhoneApp/QuotaPhoneApp.swift */; };
@@ -85,6 +89,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+CC3100000000000000000003 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "../shared-widgets/WidgetAppearance.swift"; sourceTree = SOURCE_ROOT; };
+		CC3100000000000000000002 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "../macos/Sources/Shared/WidgetSnapshot.swift"; sourceTree = SOURCE_ROOT; };
+		CC3100000000000000000001 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "../macos/Sources/Widget/QuotaWidget.swift"; sourceTree = SOURCE_ROOT; };
+		CC3100000000000000000000 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "../shared-widgets/ClassicQuotaView.swift"; sourceTree = SOURCE_ROOT; };
 		A00200000000000000000001 /* Shared/UsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/UsageModels.swift; sourceTree = "<group>"; };
 		A00200000000000000000002 /* Shared/UsageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/UsageClient.swift; sourceTree = "<group>"; };
 		A00200000000000000000003 /* iPhoneApp/QuotaPhoneApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneApp/QuotaPhoneApp.swift; sourceTree = "<group>"; };
@@ -421,6 +429,10 @@
 			files = (
 				A00100000000000000000025 /* Shared/UsageModels.swift in Sources */,
 				A00100000000000000000026 /* WidgetExtension/CodingQuotaWidget.swift in Sources */,
+CC3110000000000000000003,
+				CC3110000000000000000002,
+				CC3110000000000000000001,
+				CC3110000000000000000000,
 				A00100000000000000000028 /* Shared/UsageClient.swift in Sources */,
 				A00100000000000000000032 /* Shared/TaskDashboard.swift in Sources */,
 				A00100000000000000000029 /* iPhoneApp/WatchTokenStore.swift in Sources */,
@@ -567,7 +579,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Config/iPhoneApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
@@ -592,7 +604,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Config/iPhoneApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
@@ -617,7 +629,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Config/WatchApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Config/WatchApp-Info.plist";
@@ -642,7 +654,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Config/WatchApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Config/WatchApp-Info.plist";
@@ -669,7 +681,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = Config/WidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Config/WidgetExtension-Info.plist";
@@ -695,7 +707,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = Config/WidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Config/WidgetExtension-Info.plist";
