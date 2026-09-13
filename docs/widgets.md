@@ -1,6 +1,6 @@
 # 码伴小组件分类
 
-本页对应 v3.1.0。Mac 和 iPhone 使用相同分类名称，按用途选择，无需同时添加所有尺寸。
+本页对应 v3.2.0。Mac 和 iPhone 使用相同分类名称，按用途选择，无需同时添加所有尺寸。
 
 添加列表统一只有「码伴」一个入口，提供三种尺寸：
 
@@ -45,3 +45,11 @@ Mac 点击组件或刷新按钮打开本机应用并更新共享摘要；手机�
 源文件：`shared-widgets/ClassicQuotaView.swift`、`macos/Sources/Widget/QuotaWidget.swift`。两端通过各自的数据适配和刷新机制使用共用布局。渲染脚本在 `macos/scripts/render_classic.py` 与 `render_widgets.py`。
 
 单色／着色状态下使用透明度区分进度条，不强制改动系统外观。实现依据 [Apple 小组件着色适配指南](https://developer.apple.com/documentation/widgetkit/optimizing-your-widget-for-accented-rendering-mode-and-liquid-glass)。
+
+## v3.2.0 大号排版
+
+上半区居中、时间文字放大，新增按时间线计算的小时级重置／到期提示。重置卡总数完整显示，明细最多 2 张、最早到期优先；DeepSeek 固定 CNY 在左、USD 在右。以下为本项目原生离屏渲染、虚构数据。
+
+| Pro | Plus 与多张重置卡 | 未配置 DeepSeek |
+| --- | --- | --- |
+| ![Pro](assets/v3.2.0-widget-large-pro.png) | ![Plus 多卡](assets/v3.2.0-widget-large-many-credits.png) | ![无 DeepSeek](assets/v3.2.0-widget-large-unconfigured.png) |
