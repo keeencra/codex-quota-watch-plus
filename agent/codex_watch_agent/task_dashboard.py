@@ -74,4 +74,5 @@ def task_dashboard(store, *, codex_home=None, now=None):
     # Match project order from the desktop; preserve latest-activity order within each project.
     tasks.sort(key=lambda t: t['updated_at'], reverse=True)
     tasks.sort(key=lambda t: catalog.get(t['id'], {}).get('project_order', 100000))
-    return {'updated_at': datetime.fromtimestamp(now, timezone.utc).isoformat(), 'tasks': tasks}
+    return {'updated_at': datetime.fromtimestamp(now, timezone.utc).isoformat(),
+            'projects': catalog.projects, 'tasks': tasks}

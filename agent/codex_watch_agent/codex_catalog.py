@@ -17,6 +17,10 @@ def _path(value):
 class DesktopCatalog(dict):
     available = False
 
+    def __init__(self):
+        super().__init__()
+        self.projects = []
+
 
 def read_catalog(home):
     try:
@@ -26,6 +30,7 @@ def read_catalog(home):
     except (OSError, ValueError):
         state = {}
     projects, aliases, threads = {}, {}, DesktopCatalog()
+    database_order = []
     try:
         with closing(sqlite3.connect((home / 'state_5.sqlite').as_uri() + '?mode=ro', uri=True, timeout=1)) as db:
             db.row_factory = sqlite3.Row
@@ -36,6 +41,7 @@ def read_catalog(home):
                 threads.available = True
             try:
                 for row in db.execute('SELECT id,name,position FROM projects ORDER BY position'):
+                    database_order.append(row['id'])
                     projects[row['id']] = {'id': row['id'], 'name': label(row['name'], 80) or '未命名项目', 'roots': []}
                 for row in db.execute('SELECT project_id,path FROM project_roots ORDER BY position'):
                     if row['project_id'] in projects:
@@ -50,12 +56,19 @@ def read_catalog(home):
         migration = migrations.get('local:' + str(home), {})
         if isinstance(migration, dict):
             aliases = {k: v for k, v in migration.items() if isinstance(k, str) and isinstance(v, str)}
+    migration_status = state.get('app-server-projects-migration-by-host', {})
+    host_status = migration_status.get('local:' + str(home), {}) if isinstance(migration_status, dict) else {}
+    # Once desktop projects migrate, SQLite positions/names are authoritative.
+    # The legacy JSON may remain on disk after dragging or renaming a project.
+    migrated = isinstance(host_status, dict) and host_status.get('projectsMigrated') is True and bool(database_order)
     legacy = state.get('local-projects', {})
     if isinstance(legacy, dict):
         for key, value in legacy.items():
             if not isinstance(value, dict):
                 continue
             identity = aliases.get(key, key)
+            if migrated:
+                continue
             roots = value.get('rootPaths', [])
             projects[identity] = {'id': identity, 'name': label(value.get('name'), 80) or '未命名项目',
                                   'roots': [_path(p) for p in roots if isinstance(p, str)] if isinstance(roots, list) else []}
@@ -64,7 +77,13 @@ def read_catalog(home):
         values = state.get(key, [])
         if isinstance(values, list):
             order.extend(aliases.get(v, v) for v in values if isinstance(v, str))
-    order = list(dict.fromkeys(order + list(projects)))
+    if migrated:
+        # Pinning is still stored in global state; ordinary order is now in SQLite.
+        pinned = state.get('pinned-project-ids', [])
+        pinned = [aliases.get(v, v) for v in pinned if isinstance(v, str)] if isinstance(pinned, list) else []
+        order = pinned + database_order
+    order = list(dict.fromkeys(pid for pid in order + list(projects) if pid in projects))
+    threads.projects = [{'id': pid, 'name': projects[pid]['name']} for pid in order]
     assignments = state.get('thread-project-assignments', {})
     assignments = assignments if isinstance(assignments, dict) else {}
     projectless = state.get('projectless-thread-ids', [])
