@@ -45,7 +45,7 @@ cat > "$NEXT_APP/Contents/Info.plist" <<'PLIST'
   <key>CFBundleShortVersionString</key>
   <string>3.1.0</string>
   <key>CFBundleVersion</key>
-  <string>26</string>
+  <string>28</string>
   <key>CFBundleURLTypes</key>
   <array><dict><key>CFBundleURLName</key><string>local.codex.usagebar</string><key>CFBundleURLSchemes</key><array><string>codexusagebar</string></array></dict></array>
   <key>LSMinimumSystemVersion</key>

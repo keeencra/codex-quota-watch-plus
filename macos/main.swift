@@ -535,12 +535,16 @@ struct DeepSeekBalance: Decodable {
     let is_available: Bool
     let balance_infos: [Entry]
 
-    // Prefer a funded CNY account, then another funded currency; never add currencies.
+    // Show every funded currency independently; never convert or add currencies.
     var menuBarAmount: String {
         let positive = balance_infos.filter { (Decimal(string: $0.total_balance) ?? 0) > 0 }
-        let entry = positive.first { $0.currency == "CNY" } ?? positive.first
-            ?? balance_infos.first { $0.currency == "CNY" } ?? balance_infos.first
-        return entry?.display ?? "—"
+        let entries = positive.isEmpty ? balance_infos : positive
+        let ordered = entries.sorted {
+            func rank(_ currency: String) -> Int { currency == "CNY" ? 0 : (currency == "USD" ? 1 : 2) }
+            let left = rank($0.currency), right = rank($1.currency)
+            return left == right ? $0.currency < $1.currency : left < right
+        }
+        return ordered.isEmpty ? "—" : ordered.map { $0.display }.joined(separator: " / ")
     }
 }
 
