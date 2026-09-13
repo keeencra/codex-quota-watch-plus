@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="570" viewBox="0 0 1200 570">
+<rect width="1200" height="570" rx="24" fill="#101820"/>
+<g font-family="-apple-system, sans-serif" fill="#f4f7fa"><text x="50" y="64" font-size="32" font-weight="bold">v3.0.1 · 项目顺序跟随 Mac</text><text x="50" y="105" font-size="18" fill="#acb8c4">行为示意图 · 虚构项目 · 非实机截图</text>
+<g font-size="25"><text x="55" y="173">Mac 调整后的顺序</text><text x="453" y="173">之前：可能沿用旧顺序</text><text x="853" y="173">之后：三端一致</text></g>
+<g font-size="23"><text x="60" y="247">1. 项目乙</text><text x="60" y="305">2. 项目甲</text><text x="60" y="363">3. 项目丙（暂无任务）</text>
+<text x="455" y="247" fill="#ffb36b">1. 项目甲</text><text x="455" y="305" fill="#ffb36b">2. 项目乙</text><text x="455" y="363" fill="#acb8c4">项目丙被省略</text>
+<text x="855" y="247" fill="#91deac">1. 项目乙</text><text x="855" y="305" fill="#91deac">2. 项目甲</text><text x="855" y="363" fill="#91deac">3. 项目丙 · 0</text></g>
+<path d="M400 196V403 M810 196V403" stroke="#3f505e"/>
+<text x="50" y="470" font-size="22">Mac 更改顺序 → 服务重新读取 → 手机与手表下一次刷新同步</text>
+<text x="50" y="515" font-size="18" fill="#acb8c4">App 前台约每 10 秒刷新；返回 App 或点击「刷新任务」也可更新。未分组任务放在最后。</text></g></svg>
