@@ -43,15 +43,24 @@ public struct DashboardTask: Decodable, Identifiable, Equatable {
     }
 }
 
+public struct DashboardProject: Decodable, Identifiable {
+    public let id: String
+    public let name: String
+}
+
 public struct TaskDashboardSnapshot: Decodable {
     public let updatedAt: String
     public let tasks: [DashboardTask]
-    enum CodingKeys: String, CodingKey { case tasks; case updatedAt = "updated_at" }
+    public var projects: [DashboardProject]? = nil
+    enum CodingKeys: String, CodingKey { case tasks, projects; case updatedAt = "updated_at" }
     public var runningCount: Int { tasks.filter(\.isRunning).count }
     public var attentionCount: Int { tasks.filter(\.needsAttention).count }
 
     public func projectGroups(activeOnly: Bool) -> [TaskProjectGroup] {
         var groups: [TaskProjectGroup] = []
+        for project in projects ?? [] where !groups.contains(where: { $0.id == project.id }) {
+            groups.append(TaskProjectGroup(id: project.id, name: project.name, tasks: []))
+        }
         for task in tasks where !activeOnly || task.isRunning || task.needsAttention {
             if let index = groups.firstIndex(where: { $0.id == task.groupingID }) {
                 groups[index].tasks.append(task)
@@ -59,7 +68,7 @@ public struct TaskDashboardSnapshot: Decodable {
                 groups.append(TaskProjectGroup(id: task.groupingID, name: task.project, tasks: [task]))
             }
         }
-        return groups
+        return activeOnly ? groups.filter { !$0.tasks.isEmpty } : groups
     }
 }
 
@@ -214,6 +223,9 @@ public struct TaskListView: View {
             }
             ForEach(groups) { group in
                 Section {
+                    if group.tasks.isEmpty {
+                        Text("暂无可显示的 Codex 任务").font(.caption).foregroundStyle(.secondary)
+                    }
                     ForEach(group.tasks) { task in
                         NavigationLink {
                             TaskProgressView(id: task.id, model: model, base: base, token: token)
