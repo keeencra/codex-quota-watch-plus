@@ -200,6 +200,8 @@ def _tokens_from_obj(obj: Any) -> tuple[TokenStats, datetime | None]:
         usage = _get_path(obj, path)
         if isinstance(usage, dict):
             _add_direct_token_fields(stats, usage)
+            if path == ("payload", "info", "last_token_usage"):
+                stats.input_tokens = max(0, stats.input_tokens - stats.cache_read_tokens)
             if stats.total_tokens:
                 return stats, event_ts
 
@@ -219,7 +221,9 @@ def _candidate_files(root: Path, max_files: int) -> list[Path]:
     if not root.exists():
         return []
     files: list[Path] = []
-    for p in root.rglob("*"):
+    session_roots = [root / name for name in ("sessions", "archived_sessions") if (root / name).is_dir()]
+    candidates = (p for folder in (session_roots or [root]) for p in folder.rglob("*"))
+    for p in candidates:
         if not p.is_file():
             continue
         if p.suffix.lower() not in SESSION_EXTENSIONS:
@@ -251,8 +255,20 @@ def scan_usage_dir(
             continue
 
         file_updated_at = datetime.fromtimestamp(mtime, tz=timezone.utc).astimezone()
+        previous_total = None
         for obj in objects:
             token_stats, event_ts = _tokens_from_obj(obj)
+            cumulative = _get_path(obj, ("payload", "info", "total_token_usage"))
+            if isinstance(cumulative, dict):
+                keys = ("input_tokens", "output_tokens", "cached_input_tokens")
+                if all(isinstance(cumulative.get(k, 0), int) and not isinstance(cumulative.get(k, 0), bool) and cumulative.get(k, 0) >= 0 for k in keys):
+                    current = {k: cumulative.get(k, 0) for k in keys}
+                    if previous_total is not None and all(current[k] >= previous_total[k] for k in keys):
+                        diff = {k: current[k] - previous_total[k] for k in keys}
+                        cached = min(diff["cached_input_tokens"], diff["input_tokens"])
+                        token_stats = TokenStats(input_tokens=diff["input_tokens"] - cached,
+                                                 output_tokens=diff["output_tokens"], cache_read_tokens=cached)
+                    previous_total = current
             ts = event_ts or file_updated_at
             if ts and ts.date() == today_date:
                 today.input_tokens += token_stats.input_tokens
