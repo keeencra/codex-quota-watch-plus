@@ -161,3 +161,52 @@ def test_deleted_tasks_do_not_return_from_old_observer_records(tmp_path):
     with sqlite3.connect(tmp_path/'state_5.sqlite') as db:
         db.execute('DELETE FROM threads')
     assert not task_dashboard(store, codex_home=tmp_path, now=110)['tasks']
+
+
+def test_migrated_desktop_order_updates_without_restart_and_ignores_stale_json(tmp_path):
+    with catalog_db(tmp_path) as db:
+        for i in range(3):
+            db.execute('INSERT INTO projects VALUES (?,?,?)', (str(i), 'Project '+str(i), i))
+            db.execute('INSERT INTO threads VALUES (?,?,?,?,?,?,?,?)', ('s'+str(i), 'Task', None, str(i), '/work/'+str(i), 0, 50, 100+i))
+    state = {
+        'app-server-projects-migration-by-host': {'local:' + str(tmp_path): {'projectsMigrated': True}},
+        'app-server-project-id-by-legacy-project-id-by-host': {'local:' + str(tmp_path): {'old-2': '2'}},
+        'local-projects': {'old-2': {'name': 'Outdated name', 'rootPaths': []}},
+        'pinned-project-ids': ['deleted', 'old-2', '2'], 'project-order': ['1', '0'],
+    }
+    path = tmp_path / '.codex-global-state.json'
+    path.write_text(json.dumps(state))
+    store = TaskEventStore(tmp_path/'events')
+    def projects():
+        return [(t['project_id'], t['project']) for t in task_dashboard(store, codex_home=tmp_path)['tasks']]
+    assert projects() == [('2', 'Project 2'), ('0', 'Project 0'), ('1', 'Project 1')]
+    with sqlite3.connect(tmp_path/'state_5.sqlite') as db:
+        db.execute("UPDATE projects SET position=-1, name='Renamed' WHERE id='1'")
+    assert projects() == [('2', 'Project 2'), ('1', 'Renamed'), ('0', 'Project 0')]
+    state['pinned-project-ids'] = []
+    path.write_text(json.dumps(state))
+    assert projects() == [('1', 'Renamed'), ('0', 'Project 0'), ('2', 'Project 2')]
+
+
+def test_legacy_desktop_reorder_is_reread_on_every_request(tmp_path):
+    with catalog_db(tmp_path) as db:
+        for i in range(2):
+            db.execute('INSERT INTO projects VALUES (?,?,?)', (str(i), 'Project '+str(i), i))
+            db.execute('INSERT INTO threads VALUES (?,?,?,?,?,?,?,?)', ('s'+str(i), 'Task', None, str(i), '/work', 0, 50, 100))
+    store = TaskEventStore(tmp_path/'events')
+    path = tmp_path / '.codex-global-state.json'
+    for order in [['1', '0'], ['0', '1']]:
+        path.write_text(json.dumps({'project-order': order}))
+        assert [t['project_id'] for t in task_dashboard(store, codex_home=tmp_path)['tasks']] == order
+
+
+def test_project_manifest_keeps_empty_projects_in_order_without_private_roots(tmp_path):
+    with catalog_db(tmp_path) as db:
+        for i in range(2):
+            db.execute('INSERT INTO projects VALUES (?,?,?)', (str(i), 'Project '+str(i), i))
+            db.execute('INSERT INTO project_roots VALUES (?,?,?)', (str(i), 0, '/private/'+str(i)))
+    (tmp_path/'.codex-global-state.json').write_text(json.dumps({'project-order': ['1','0']}))
+    data = task_dashboard(TaskEventStore(tmp_path/'events'), codex_home=tmp_path)
+    assert data['projects'] == [{'id':'1','name':'Project 1'}, {'id':'0','name':'Project 0'}]
+    assert data['tasks'] == []
+    assert '/private' not in json.dumps(data)
