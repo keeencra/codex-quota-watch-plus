@@ -70,6 +70,7 @@ class QuotaBucket(BaseModel):
 
 
 class QuotaStatus(BaseModel):
+    reset_credits: dict[str, Any] | None = None
     provider: Literal["codex", "openai_api"]
     label: str
     plan_type: str | None = None
@@ -143,6 +144,7 @@ class UsageSnapshot(BaseModel):
                     "used_percent": bucket.used_percent,
                     "reset_at": bucket.reset_at.isoformat() if bucket.reset_at else None,
                     "reset_in": bucket.reset_in,
+                    "reset_at_epoch": bucket.reset_at.timestamp() if bucket.reset_at else None,
                     "window": bucket.window,
                     "status": bucket.status,
                 }
@@ -190,6 +192,7 @@ class UsageSnapshot(BaseModel):
                     "remaining_percent": bucket.remaining_percent,
                     "used_percent": bucket.used_percent,
                     "reset_in": bucket.reset_in,
+                    "reset_at_epoch": bucket.reset_at.timestamp() if bucket.reset_at else None,
                     "window": bucket.window,
                     "status": bucket.status,
                 }
@@ -202,6 +205,7 @@ class UsageSnapshot(BaseModel):
             "schema_version": "v1",
             "updated_at": self.updated_at.isoformat(),
             "deepseek": self.deepseek.model_dump(),
+            "reset_credits": self.codex_quota.reset_credits,
             "stale": False,
             "providers": {
                 "codex": self._provider_snapshot(
@@ -216,6 +220,7 @@ class UsageSnapshot(BaseModel):
         return {
             "updated_at": self.updated_at.isoformat(),
             "deepseek": self.deepseek.model_dump(),
+            "reset_credits": self.codex_quota.reset_credits,
             "codex": self._provider_compact(
                 self.codex_quota,
                 self.codex_today,

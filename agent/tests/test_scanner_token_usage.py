@@ -24,7 +24,7 @@ def test_codex_token_usage_prefers_last_usage_over_cumulative_total() -> None:
         }
     )
 
-    assert stats.input_tokens == 10
+    assert stats.input_tokens == 3
     assert stats.cache_read_tokens == 7
     assert stats.output_tokens == 3
 
@@ -91,3 +91,31 @@ def test_scan_usage_dir_sums_today_tokens(tmp_path, monkeypatch) -> None:
     assert result.today.input_tokens == 10
     assert result.today.output_tokens == 3
     assert sum(bucket.total_tokens for bucket in result.hourly) == 13
+
+
+def test_codex_repeated_totals_and_cached_subset(tmp_path, monkeypatch):
+    from datetime import datetime
+    import codex_watch_agent.scanner as scanner
+    monkeypatch.setattr(scanner, "_now_local", lambda: datetime.fromisoformat("2026-06-12T12:00:00+00:00"))
+    events = []
+    for total in [100, 100, 130]:
+        events.append({"timestamp": "2026-06-12T01:00:00Z", "payload": {"info": {
+            "total_token_usage": {"input_tokens": total, "cached_input_tokens": 70, "output_tokens": 10},
+            "last_token_usage": {"input_tokens": 100, "cached_input_tokens": 70, "output_tokens": 10}
+        }}})
+    (tmp_path / "session.jsonl").write_text("\n".join(json.dumps(e) for e in events))
+    result = scan_usage_dir(tmp_path)
+    assert result.today.total_tokens == 140
+    assert result.today.input_tokens == 60
+    assert result.today.cache_read_tokens == 70
+
+
+def test_codex_session_roots_exclude_backup_copies(tmp_path, monkeypatch):
+    from datetime import datetime
+    import codex_watch_agent.scanner as scanner
+    monkeypatch.setattr(scanner, "_now_local", lambda: datetime.fromisoformat("2026-06-12T12:00:00+00:00"))
+    event = json.dumps({"timestamp": "2026-06-12T01:00:00Z", "usage": {"input_tokens": 10}})
+    (tmp_path / "sessions").mkdir()
+    (tmp_path / "sessions/a.jsonl").write_text(event)
+    (tmp_path / "backup.jsonl").write_text(event)
+    assert scan_usage_dir(tmp_path).today.total_tokens == 10

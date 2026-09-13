@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .reset_credits import normalize_reset_credits
+
 import asyncio
 import json
 import os
@@ -208,6 +210,7 @@ def _normalize_quota(provider: str, label: str, source: str, payload: dict[str, 
         status=status,  # type: ignore[arg-type]
         buckets=buckets,
         details=_safe_details(payload),
+        reset_credits=normalize_reset_credits(payload.get("reset_credits"), normalized=True),
     )
 
 
@@ -268,6 +271,7 @@ def _normalize_codex_app_server(payload: dict[str, Any]) -> QuotaStatus:
         status=status,  # type: ignore[arg-type]
         buckets=buckets,
         details={"raw_keys": sorted(payload.keys())},
+        reset_credits=normalize_reset_credits(payload.get("rateLimitResetCredits")),
     )
 
 

@@ -441,11 +441,18 @@ public struct WatchLayoutMetrics: Equatable {
     }
 }
 
+public struct ResetCreditSummary: Codable, Equatable {
+    public var availableCount: Int
+    public var expirations: [Double]
+    enum CodingKeys: String, CodingKey { case availableCount = "available_count", expirations }
+}
+
 public struct WatchSnapshot: Codable, Equatable {
     public var updatedAt: String
     public var codex: ProviderUsage
     public var taskEvents: [CodexTaskEvent]
     public var deepseek: DeepSeekBalance?
+    public var resetCredits: ResetCreditSummary? = nil
     public var notifications: TaskNotificationConfig?
 
     enum CodingKeys: String, CodingKey {
@@ -453,6 +460,7 @@ public struct WatchSnapshot: Codable, Equatable {
         case codex
         case taskEvents = "task_events"
         case notifications, deepseek
+        case resetCredits = "reset_credits"
     }
 
     public init(updatedAt: String, codex: ProviderUsage, taskEvents: [CodexTaskEvent] = [], notifications: TaskNotificationConfig? = nil, deepseek: DeepSeekBalance? = nil) {
@@ -470,6 +478,7 @@ public struct WatchSnapshot: Codable, Equatable {
         taskEvents = try container.decodeIfPresent([CodexTaskEvent].self, forKey: .taskEvents) ?? []
         deepseek = try? container.decodeIfPresent(DeepSeekBalance.self, forKey: .deepseek)
         notifications = try container.decodeIfPresent(TaskNotificationConfig.self, forKey: .notifications)
+        resetCredits = try? container.decodeIfPresent(ResetCreditSummary.self, forKey: .resetCredits)
     }
 
     public static let placeholder = WatchSnapshot(
@@ -484,6 +493,7 @@ public struct QuotaBucket: Codable, Equatable, Identifiable {
     public var remainingPercent: Double?
     public var usedPercent: Double?
     public var resetIn: String?
+    public var resetAt: Double? = nil
     public var window: String?
     public var status: String?
 
@@ -492,6 +502,7 @@ public struct QuotaBucket: Codable, Equatable, Identifiable {
         case label
         case remainingPercent = "remaining_percent"
         case usedPercent = "used_percent"
+        case resetAt = "reset_at_epoch"
         case resetIn = "reset_in"
         case window
         case status
@@ -625,7 +636,7 @@ public struct ProviderUsage: Codable, Equatable {
     public var planType: String? = nil
 
     public var planLabel: String {
-        switch planType?.lowercased() {
+        switch planType?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased().replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "_", with: "").replacingOccurrences(of: "-", with: "") {
         case "plus": return "Plus"
         case "pro", "prolite": return "Pro"
         case "free": return "Free"
@@ -800,6 +811,7 @@ public final class SharedUsageStore {
 
 public enum NumberFormatters {
     public static func compactTokens(_ value: Int) -> String {
+        if value >= 1_000_000_000 { return String(format: "%.2fB", Double(value) / 1_000_000_000.0) }
         if value >= 1_000_000 {
             return String(format: "%.1fM", Double(value) / 1_000_000.0)
         }

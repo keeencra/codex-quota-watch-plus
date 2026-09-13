@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .reset_credits import normalize_reset_credits
+
 import argparse
 import json
 import os
@@ -296,6 +298,7 @@ def normalize_rate_limits_for_command(result: dict[str, Any]) -> dict[str, Any]:
         chosen = buckets[0]
 
     return {
+        "reset_credits": normalize_reset_credits(result.get("rateLimitResetCredits")),
         "plan_type": rate_limit_plan_type(result),
         "remaining_percent": chosen.get("remaining_percent") if chosen else None,
         "used_percent": chosen.get("used_percent") if chosen else None,

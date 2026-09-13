@@ -25,7 +25,7 @@ final class PlanWindowTests: XCTestCase {
 
     func testPlanLabelsAndMissingMetadata() {
         var usage = ProviderUsage.placeholder(status: "ok")
-        for (raw, label) in [("plus", "Plus"), ("pro", "Pro"), ("prolite", "Pro"), ("future", "套餐未知")] {
+        for (raw, label) in [("plus", "Plus"), ("pro", "Pro"), ("prolite", "Pro"), ("Pro Lite", "Pro"), (" pro_lite ", "Pro"), ("pro-lite", "Pro"), ("future", "套餐未知")] {
             usage.planType = raw
             XCTAssertEqual(usage.planLabel, label)
         }
