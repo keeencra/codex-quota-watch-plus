@@ -37,6 +37,18 @@ let deep = Data(#"{"is_available":true,"balance_infos":[{"currency":"CNY","total
 let balance = try! JSONDecoder().decode(DeepSeekBalance.self,from:deep)
 assert(balance.balance_infos.map { $0.display } == ["¥88.88", "$0.00"])
 assert((try? JSONDecoder().decode(DeepSeekBalance.self,from:Data("{}".utf8))) == nil)
+func menuBalance(_ entries: [(String, String)]) -> DeepSeekBalance {
+    DeepSeekBalance(is_available: true, balance_infos: entries.map {
+        DeepSeekBalance.Entry(currency: $0.0, total_balance: $0.1, granted_balance: "0", topped_up_balance: $0.1)
+    })
+}
+assert(menuBalance([("USD", "20.00"), ("CNY", "88.88")]).menuBarAmount == "¥88.88 / $20.00")
+assert(menuBalance([("CNY", "88.88"), ("USD", "0.00")]).menuBarAmount == "¥88.88")
+assert(menuBalance([("CNY", "0.00"), ("USD", "20.00")]).menuBarAmount == "$20.00")
+assert(menuBalance([("CNY", "0.00"), ("USD", "0.00")]).menuBarAmount == "¥0.00 / $0.00")
+assert(menuBalance([]).menuBarAmount == "—")
+assert(MenuBarSummary.title(codex: "Pro 周16%", balance: menuBalance([("CNY", "88.88"), ("USD", "20.00")])).string == "Pro 周16% · DS ¥88.88 / $20.00")
+print("PASS: menu bar dual currency, CNY only, USD only, zero, empty and final title")
 print("PASS: 7 scenarios — Pro, Plus, empty, invalid, reversed, multiple currencies, invalid balance")
 '''
 p=out/'main.swift';p.write_text(source)

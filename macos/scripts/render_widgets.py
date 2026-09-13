@@ -1,5 +1,8 @@
 from pathlib import Path
 import subprocess
+import os
+# Use a new prefix for unpublished galleries; never overwrite published images.
+prefix = os.environ.get('WIDGET_GALLERY_PREFIX', 'preview-widget')
 root = Path(__file__).resolve().parents[1]
 out = root/'build/widget-gallery'
 out.mkdir(parents=True, exist_ok=True)
@@ -30,11 +33,12 @@ source += r'''
             host.layoutSubtreeIfNeeded()
             let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds)!
             host.cacheDisplay(in: host.bounds, to: rep)
-            try! rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: "docs/assets/v3.1.0-widget-\(name).png"))
+            try! rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: "../docs/assets/__GALLERY_PREFIX__-\(name).png"))
         }
     }
 }
 '''
+source = source.replace('__GALLERY_PREFIX__', prefix)
 p=out/'Gallery.swift';p.write_text(source)
 subprocess.run(['swiftc','-D','WIDGET_GALLERY','-parse-as-library','-target',subprocess.check_output(['uname','-m'],text=True).strip()+'-apple-macos14.0','-framework','SwiftUI','-framework','WidgetKit',str(root/'Sources/Shared/WidgetSnapshot.swift'),str(root.parent/'shared-widgets/WidgetAppearance.swift'),str(p),'-o',str(out/'gallery')],check=True)
 for name in ['small-pro','small-plus','medium','empty','large','large-pro','large-unconfigured','large-many-credits']:
