@@ -44,6 +44,26 @@ final class TaskDashboardTests: XCTestCase {
         XCTAssertTrue(snapshot.projectGroups(activeOnly: true).isEmpty)
         XCTAssertEqual(task("abcdef", "finished").groupingID, "legacy:Project")
     }
+    func testDesktopProjectOrderIncludesEmptyProjectsAndSurvivesActivityFilter() {
+        var a = task("a", "running"); a.projectID = "one"
+        var b = task("b", "running"); b.projectID = "two"
+        var snapshot = TaskDashboardSnapshot(updatedAt: "now", tasks: [a, b])
+        snapshot.projects = [DashboardProject(id: "two", name: "Second"),
+                             DashboardProject(id: "empty", name: "Empty"),
+                             DashboardProject(id: "one", name: "First")]
+        XCTAssertEqual(snapshot.projectGroups(activeOnly: false).map(\.id), ["two", "empty", "one"])
+        XCTAssertTrue(snapshot.projectGroups(activeOnly: false)[1].tasks.isEmpty)
+        XCTAssertEqual(snapshot.projectGroups(activeOnly: true).map(\.id), ["two", "one"])
+        snapshot.projects?.reverse()
+        XCTAssertEqual(snapshot.projectGroups(activeOnly: false).map(\.id), ["one", "empty", "two"])
+    }
+    func testProjectManifestDecodesAndUnknownGroupsRemainVisible() throws {
+        let json = #"{"updated_at":"now","projects":[{"id":"empty","name":"Empty"}],"tasks":[]}"#
+        var snapshot = try JSONDecoder().decode(TaskDashboardSnapshot.self, from: Data(json.utf8))
+        XCTAssertEqual(snapshot.projectGroups(activeOnly: false).map(\.id), ["empty"])
+        snapshot = TaskDashboardSnapshot(updatedAt: "now", tasks: [task("free", "finished")], projects: snapshot.projects)
+        XCTAssertEqual(snapshot.projectGroups(activeOnly: false).map(\.id), ["empty", "legacy:Project"])
+    }
     private func task(_ id: String, _ status: String, stale: Bool = false) -> DashboardTask {
         DashboardTask(id: id, project: "Project", title: nil, status: status, phase: "phase", updatedAt: "now", startedAt: "then", stale: stale, recent: [])
     }
