@@ -52,6 +52,21 @@ struct QuotaWidgetView: View {
         formatter.dateFormat = full ? "yyyy/MM/dd HH:mm" : "MM/dd HH:mm"
         return formatter.string(from: date)
     }
+    private var denseExpanded: Bool { snapshot.windows.count > 1 }
+    private func countdown(_ date: Date?, expired: String) -> String {
+        guard let date else { return "时间未提供" }
+        let seconds = date.timeIntervalSince(entry.date)
+        guard seconds > 0 else { return expired }
+        let hours = Int(ceil(seconds / 3600))
+        if hours >= 24 { return "\(hours / 24)天" + (hours % 24 == 0 ? "" : "\(hours % 24)小时") }
+        return "\(hours)小时内"
+    }
+    private var orderedBalances: [WidgetSnapshot.Balance] {
+        snapshot.balances.sorted {
+            func rank(_ value: String) -> Int { value == "CNY" ? 0 : (value == "USD" ? 1 : 2) }
+            return rank($0.currency) == rank($1.currency) ? $0.currency < $1.currency : rank($0.currency) < rank($1.currency)
+        }
+    }
     private var creditCount: String {
         snapshot.resetCredits.map { "\($0.availableCount) 张" } ?? "—"
     }
@@ -82,13 +97,14 @@ struct QuotaWidgetView: View {
                 Text(window.label == "周" ? "7天" : (window.label == "5h" ? "5小时" : window.label)).font(.system(size: compact ? 10 : 11)).foregroundStyle(.secondary)
                 Spacer(minLength: 2)
                 Text("\(window.remaining)%")
-                    .font(.system(size: expanded ? 32 : (compact ? 21 : 14), weight: .black, design: .rounded)).monospacedDigit().foregroundStyle(quotaColor(window.remaining))
+                    .font(.system(size: expanded ? (denseExpanded ? 28 : 36) : (compact ? 21 : 14), weight: .black, design: .rounded)).monospacedDigit().foregroundStyle(quotaColor(window.remaining))
             }
             quotaBar(window.remaining)
-            Text("重置 " + dateLabel(window.resetsAt, full: expanded))
-                .font(.system(size: compact ? 8 : (expanded ? 11 : 8))).foregroundStyle(.secondary).lineLimit(1)
+            Text("重置 " + dateLabel(window.resetsAt, full: false))
+                .font(.system(size: compact ? 8 : (expanded ? (denseExpanded ? 10 : 12) : 8))).foregroundStyle(.secondary).lineLimit(1)
             if expanded {
-                Text("已用 \(100 - window.remaining)%").font(.caption2).foregroundStyle(.secondary)
+                Text(window.resetsAt == nil ? "重置时间未提供" : (window.resetsAt! <= entry.date ? "已到重置时间 · 待刷新" : "距重置 " + countdown(window.resetsAt, expired: "待刷新")))
+                    .font(.system(size: denseExpanded ? 10 : 12, weight: .medium)).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
             }
         }
     }
@@ -107,9 +123,9 @@ struct QuotaWidgetView: View {
         }
     }
     private var expandedLayout: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center, spacing: 12) {
+                VStack(alignment: .leading, spacing: 10) {
                     if snapshot.windows.isEmpty {
                         Text("等待 Codex 额度").font(.caption).foregroundStyle(.secondary)
                     }
@@ -117,40 +133,40 @@ struct QuotaWidgetView: View {
                         windowRow(window)
                     }
                 }.frame(maxWidth: .infinity, alignment: .leading)
-                Rectangle().fill(Color.white.opacity(0.14)).frame(width: 1)
+                Rectangle().fill(Color.white.opacity(0.14)).frame(width: 1, height: denseExpanded ? 156 : 116)
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("重置卡").font(.system(size: 11, weight: .bold)).foregroundStyle(accent)
-                    Text(creditCount).font(.system(size: 30, weight: .semibold, design: .rounded)).foregroundStyle(accent)
+                    Text("重置卡").font(.system(size: 12, weight: .bold)).foregroundStyle(accent)
+                    Text(creditCount).font(.system(size: 32, weight: .semibold, design: .rounded)).foregroundStyle(accent)
                     if let credits = snapshot.resetCredits, credits.availableCount > 0, !credits.expirations.isEmpty {
-                        ForEach(Array(credits.expirations.sorted().prefix(3).enumerated()), id: \.offset) { index, expiration in
+                        ForEach(Array(credits.expirations.sorted().prefix(2).enumerated()), id: \.offset) { index, expiration in
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("卡 \(index + 1)" + (expiration <= entry.date ? " · 已到期" : " · 到期"))
-                                Text(dateLabel(expiration, full: true)).monospacedDigit()
-                            }.font(.system(size: 11)).foregroundStyle(.secondary)
+                                Text(expiration <= entry.date ? "卡 \(index + 1) · 已到期" : "卡 \(index + 1) · " + countdown(expiration, expired: "已到期") + "到期")
+                                Text(dateLabel(expiration)).monospacedDigit()
+                            }.font(.system(size: 12)).lineLimit(1).minimumScaleFactor(0.8).foregroundStyle(.secondary)
                         }
-                        if credits.expirations.count > 3 {
-                            Text("更多记录见菜单栏").font(.system(size: 9)).foregroundStyle(.secondary)
+                        if credits.expirations.count > 2 {
+                            Text("更多记录见菜单栏").font(.system(size: 10)).foregroundStyle(.secondary)
                         }
                     } else {
                         Text(expirationLabel).font(.system(size: 10)).foregroundStyle(.secondary)
                     }
                 }.frame(width: 126, alignment: .leading)
-            }.frame(height: snapshot.windows.count > 1 || (snapshot.resetCredits?.expirations.count ?? 0) > 2 ? 188 : 146, alignment: .top)
+            }.frame(height: denseExpanded || (snapshot.resetCredits?.expirations.count ?? 0) > 1 ? 178 : 150, alignment: .center)
             Rectangle().fill(Color.white.opacity(0.14)).frame(height: 1)
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("DeepSeek 余额").font(.system(size: 12, weight: .semibold)).foregroundStyle(Color.codexWidgetBlue)
                     Spacer()
-                    Text("官方 API 余额").font(.system(size: 9)).foregroundStyle(.secondary)
+                    Text("官方 API 余额").font(.system(size: 10)).foregroundStyle(.secondary)
                 }
                 if snapshot.balances.isEmpty {
                     Text(snapshot.balanceError == "未配置 API Key" ? "未配置 DeepSeek" : "余额暂不可用 · 等待同步")
                         .font(.system(size: 12)).foregroundStyle(.secondary)
                 } else {
                     HStack(alignment: .top, spacing: 16) {
-                        ForEach(Array(snapshot.balances.prefix(2).enumerated()), id: \.offset) { _, balance in
+                        ForEach(Array(orderedBalances.prefix(2).enumerated()), id: \.offset) { _, balance in
                             VStack(alignment: .leading, spacing: 3) {
-                                Text(balance.currency).font(.system(size: 9)).foregroundStyle(.secondary)
+                                Text(balance.currency).font(.system(size: 10)).foregroundStyle(.secondary)
                                 Text(balance.amount).font(.system(size: 28, weight: .semibold, design: .rounded))
                                     .monospacedDigit().minimumScaleFactor(0.6).lineLimit(1)
                             }.frame(maxWidth: .infinity, alignment: .leading)
