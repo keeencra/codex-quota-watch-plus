@@ -521,6 +521,19 @@ final class CodexUsageReader {
     }
 }
 
+// Display quota timestamps in the Gregorian calendar, regardless of system calendar.
+enum QuotaTimestamp {
+    static func label(_ date: Date?, timeZone: TimeZone = .current) -> String {
+        guard let date else { return "待更新" }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = timeZone
+        formatter.dateFormat = "MM-dd HH:mm"
+        return formatter.string(from: date)
+    }
+}
+
 struct DeepSeekBalance: Decodable {
     struct Entry: Decodable {
         let currency: String
@@ -635,8 +648,7 @@ final class QuotaDashboardView: NSView {
         NSColor(calibratedWhite: 1, alpha: 0.09).setStroke(); path.lineWidth = 1; path.stroke()
     }
     private func stamp(_ date: Date?) -> String {
-        guard let date else { return "待更新" }
-        let formatter = DateFormatter(); formatter.dateFormat = "MM-dd HH:mm"; return formatter.string(from: date)
+        QuotaTimestamp.label(date)
     }
     override func draw(_ dirtyRect: NSRect) {
         NSColor(calibratedRed: 0.035, green: 0.052, blue: 0.083, alpha: 1).setFill()
