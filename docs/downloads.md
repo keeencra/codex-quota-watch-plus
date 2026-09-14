@@ -1,6 +1,6 @@
 # 所有版本下载
 
-当前版本 **v3.2.0 · 小更新 · 第 14 次迭代**。以下均为本项目的完整源码，包含 Mac 后端、iPhone／Apple Watch App 和部署文档。
+当前版本 **v3.2.1 · Bug 修复 · 第 15 次迭代**。以下均为本项目的完整源码，包含 Mac 后端、iPhone／Apple Watch App 和部署文档。
 
 重大升级才升第一位；常规功能与局部改进升第二位，Bug 修复升第三位；日志、介绍与配图等文档修改不升版本。历史有效版本不改号或下载内容。[查看版本规则](versioning.md)。
 
@@ -10,7 +10,8 @@
 
 | 版本 | 更新类型 | 主要变化 | 源码 ZIP | 对应代码 |
 | --- | --- | --- | --- | --- |
-| **v3.2.0** | 小更新 | 大号组件居中、倒计时及菜单栏双币种修复 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v3.2.0.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.2.0) |
+| **v3.2.1** | Bug 修复 | Mac 面板重置／刷新日期固定公历 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v3.2.1.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.2.1) |
+| v3.2.0 | 小更新 | 大号组件居中、倒计时及菜单栏双币种修复 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v3.2.0.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.2.0) |
 | v3.1.0 | 小更新 | Mac 显示端、统一三种组件尺寸、重置卡展示及套餐／统计修复 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v3.1.0.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.1.0) |
 | v3.0.1 | Bug 修复 | 空项目显示、完整项目清单与 Mac 排序同步 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v3.0.1.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.0.1) |
 | v3.0.0 | 大更新 | 码伴品牌、DeepSeek 余额、手机优先与两套组件布局 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v3.0.0.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.0.0) |
