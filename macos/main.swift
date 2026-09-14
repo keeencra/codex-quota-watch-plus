@@ -57,6 +57,152 @@ struct AppSnapshot {
     let checkedAt: Date
     let nextRefreshAt: Date
     let accountError: String?
+    var dailyTokens: DailyTokenUsage = .empty()
+}
+
+
+// Local records only: neither provider's account-wide billing history is inferred.
+struct DailyTokenUsage {
+    struct Day {
+        let date: Date
+        var codex: Int = 0
+        var deepSeek: Int = 0
+    }
+    var days: [Day]
+    var codexStatus: String?
+    var deepSeekStatus: String?
+    static func calendar(_ zone: TimeZone = .current) -> Calendar {
+        var calendar = Calendar(identifier: .gregorian); calendar.timeZone = zone
+        return calendar
+    }
+    static func empty(now: Date = Date(), zone: TimeZone = .current) -> DailyTokenUsage {
+        let calendar = calendar(zone), today = calendar.startOfDay(for: now)
+        return DailyTokenUsage(days: (-6...0).map { Day(date: calendar.date(byAdding: .day, value: $0, to: today)!) },
+                               codexStatus: "读取中", deepSeekStatus: "读取中")
+    }
+    static func number(_ count: Int) -> String {
+        if count >= 1_000_000_000 { return String(format: "%.2fB", Double(count) / 1_000_000_000) }
+        if count >= 1_000_000 { return String(format: "%.2fM", Double(count) / 1_000_000) }
+        if count >= 1000 { return String(format: "%.1fK", Double(count) / 1000) }
+        return String(count)
+    }
+}
+
+final class DailyTokenReader {
+    struct Event { let date: Date; let tokens: Int }
+    private struct Cached { let modified: Date; let size: Int; let inode: UInt64; let offset: UInt64; let previous: (Int, Int)?; let events: [String: Event] }
+    private var cache: [String: Cached] = [:]
+    private let lock = NSLock()
+    private let home: URL
+    init(home: URL = URL(fileURLWithPath: NSHomeDirectory())) { self.home = home }
+    private static let fractionalDate: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+    private static let wholeDate = ISO8601DateFormatter()
+    static func date(_ value: String) -> Date? {
+        fractionalDate.date(from: value) ?? wholeDate.date(from: value)
+    }
+    // Input already includes cached input; reasoning output is already in output.
+    static func counts(_ value: Any?) -> (Int, Int)? {
+        guard let dict = value as? [String: Any], let input = dict["input_tokens"] as? Int,
+              let output = dict["output_tokens"] as? Int, input >= 0, output >= 0,
+              input <= Int.max - output else { return nil }
+        return (input, output)
+    }
+    static func consume(_ line: Data, previous: inout (Int, Int)?, events: inout [String: Event]) {
+        guard let object = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
+              let payload = object["payload"] as? [String: Any], payload["type"] as? String == "token_count",
+              let info = payload["info"] as? [String: Any], let total = counts(info["total_token_usage"]) else { return }
+        let old = previous
+        previous = total
+        let delta: (Int, Int)?
+        if let old, total.0 >= old.0, total.1 >= old.1 { delta = (total.0 - old.0, total.1 - old.1) }
+        else { delta = counts(info["last_token_usage"]) }
+        guard let delta, delta.0 + delta.1 > 0,
+              let stamp = object["timestamp"] as? String, let date = date(stamp) else { return }
+        // The same recorded event may appear in both sessions and archived copies.
+        let key = "\(stamp)|\(total.0)|\(total.1)"
+        events[key] = Event(date: date, tokens: delta.0 + delta.1)
+    }
+    private func scan(_ path: URL, resume: Cached? = nil) throws -> (UInt64, (Int, Int)?, [String: Event]) {
+        let handle = try FileHandle(forReadingFrom: path); defer { try? handle.close() }
+        var buffer = Data(), previous = resume?.previous, events = resume?.events ?? [:]
+        var offset = resume?.offset ?? 0
+        try handle.seek(toOffset: offset)
+        while let chunk = try handle.read(upToCount: 256 * 1024), !chunk.isEmpty {
+            buffer.append(chunk)
+            var start = buffer.startIndex
+            while let end = buffer[start...].firstIndex(of: 10) {
+                let line = buffer[start..<end]
+                if line.range(of: Data("token_count".utf8)) != nil { Self.consume(Data(line), previous: &previous, events: &events) }
+                start = end + 1
+            }
+            offset += UInt64(start)
+            buffer = Data(buffer[start...])
+        }
+        // An unterminated live write is retried when the file changes.
+        return (offset, previous, events)
+    }
+    func read(now: Date = Date(), zone: TimeZone = .current) -> DailyTokenUsage {
+        lock.lock(); defer { lock.unlock() }
+        var result = DailyTokenUsage.empty(now: now, zone: zone)
+        let calendar = DailyTokenUsage.calendar(zone), start = result.days[0].date
+        var events: [String: Event] = [:], paths = Set<String>(), rootsFound = false, failure = false
+        for name in ["sessions", "archived_sessions"] {
+            let root = home.appendingPathComponent(".codex/" + name)
+            guard FileManager.default.fileExists(atPath: root.path) else { continue }
+            rootsFound = true
+            guard let files = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey], errorHandler: { _, _ in failure = true; return true }) else { failure = true; continue }
+            for case let path as URL in files where path.pathExtension == "jsonl" {
+                do {
+                    let values = try path.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey])
+                    let modified = values.contentModificationDate ?? .distantPast, size = values.fileSize ?? 0
+                    guard modified >= start else { continue }
+                    paths.insert(path.path)
+                    if cache[path.path]?.modified != modified || cache[path.path]?.size != size {
+                        let inode = (try FileManager.default.attributesOfItem(atPath: path.path)[.systemFileNumber] as? NSNumber)?.uint64Value ?? 0
+                        let old = cache[path.path]
+                        let resume = old != nil && inode != 0 && old!.inode == inode && size > old!.size ? old : nil
+                        let scanned = try scan(path, resume: resume)
+                        cache[path.path] = Cached(modified: modified, size: size, inode: inode, offset: scanned.0, previous: scanned.1, events: scanned.2)
+                    }
+                    for (key, event) in cache[path.path]?.events ?? [:] where event.date >= start && event.date <= now { events[key] = event }
+                } catch { failure = true }
+            }
+        }
+        cache = cache.filter { paths.contains($0.key) }
+        for event in events.values {
+            if let index = result.days.firstIndex(where: { calendar.isDate($0.date, inSameDayAs: event.date) }) { result.days[index].codex += event.tokens }
+        }
+        result.codexStatus = failure ? "部分记录未读到" : (rootsFound ? nil : "未找到会话记录")
+        let database = home.appendingPathComponent(".codex/tools/deepseek/state/usage.sqlite3")
+        guard FileManager.default.fileExists(atPath: database.path) else { result.deepSeekStatus = "未找到本机记录"; return result }
+        let process = Process(), pipe = Pipe()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/sqlite3")
+        process.arguments = ["-readonly", "-json", database.path,
+            "select started,total_tokens,prompt_tokens,completion_tokens from calls where julianday(started)>=julianday(\(start.timeIntervalSince1970),'unixepoch') and julianday(started)<=julianday(\(now.timeIntervalSince1970),'unixepoch');"]
+        process.standardOutput = pipe; process.standardError = FileHandle.nullDevice
+        do {
+            try process.run()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile(); process.waitUntilExit()
+            guard process.terminationStatus == 0 else { result.deepSeekStatus = "本机记录读取失败"; return result }
+            let rows = data.isEmpty ? [] : (try JSONSerialization.jsonObject(with: data) as? [[String: Any]] ?? [])
+            var incomplete = false
+            for row in rows {
+                guard let stamp = row["started"] as? String, let date = Self.date(stamp),
+                      let index = result.days.firstIndex(where: { calendar.isDate($0.date, inSameDayAs: date) }) else { incomplete = true; continue }
+                let total = row["total_tokens"] as? Int ?? {
+                    guard let input = row["prompt_tokens"] as? Int, let output = row["completion_tokens"] as? Int, input >= 0, output >= 0, input <= Int.max - output else { return nil as Int? }
+                    return input + output
+                }()
+                if let total, total >= 0 { result.days[index].deepSeek += total } else { incomplete = true }
+            }
+            result.deepSeekStatus = incomplete ? "部分调用缺少用量" : nil
+        } catch { result.deepSeekStatus = "本机记录读取失败" }
+        return result
+    }
 }
 
 private enum UsageColors {
@@ -620,23 +766,23 @@ final class QuotaDashboardView: NSView {
     let balance: DeepSeekBalance?
     let balanceError: String?
     let balanceDate: Date?
+    let widgetError: String?
     private let ink = NSColor(calibratedWhite: 0.94, alpha: 1)
     private let muted = NSColor(calibratedRed: 0.54, green: 0.60, blue: 0.69, alpha: 1)
     private let purple = NSColor(calibratedRed: 0.63, green: 0.57, blue: 1, alpha: 1)
     private let teal = NSColor(calibratedRed: 0.35, green: 0.83, blue: 0.79, alpha: 1)
     override var isFlipped: Bool { true }
-    init(snapshot: AppSnapshot, balance: DeepSeekBalance?, error: String?, date: Date?) {
-        self.snapshot = snapshot; self.balance = balance; balanceError = error; balanceDate = date
-        let rows = max(1, snapshot.accountUsage?.windows.count ?? 0)
-        let currencies = max(1, balance?.balance_infos.count ?? 0)
-        super.init(frame: NSRect(x: 0, y: 0, width: 368, height: 352 + rows * 70 + currencies * 62))
+    init(snapshot: AppSnapshot, balance: DeepSeekBalance?, error: String?, date: Date?, widgetError: String? = nil) {
+        self.snapshot = snapshot; self.balance = balance; balanceError = error; balanceDate = date; self.widgetError = widgetError
+        super.init(frame: NSRect(x: 0, y: 0, width: 368, height: 0))
+        setFrameSize(NSSize(width: 368, height: contentHeight))
         setAccessibilityElement(true)
-        setAccessibilityLabel("AI 额度概览。完整数值可在用量与任务详情菜单中查看。")
+        setAccessibilityLabel("AI 额度与用量。向下滚动查看每日精确用量、账户详情和任务记录。" + detailSections.map { $0.0 + "。" + $0.1.map { $0.0 + "：" + $0.1 }.joined(separator: "。") }.joined(separator: "。"))
     }
     required init?(coder: NSCoder) { fatalError() }
     private func text(_ value: String, x: CGFloat, y: CGFloat, width: CGFloat = 310, size: CGFloat = 12,
-                      color: NSColor? = nil, weight: NSFont.Weight = .regular, mono: Bool = false) {
-        let paragraph = NSMutableParagraphStyle(); paragraph.lineBreakMode = .byTruncatingTail
+                      color: NSColor? = nil, weight: NSFont.Weight = .regular, mono: Bool = false, alignment: NSTextAlignment = .left) {
+        let paragraph = NSMutableParagraphStyle(); paragraph.lineBreakMode = .byTruncatingTail; paragraph.alignment = alignment
         (value as NSString).draw(in: NSRect(x: x, y: y, width: width, height: size + 7), withAttributes: [
             .font: mono ? NSFont.monospacedDigitSystemFont(ofSize: size, weight: weight) : NSFont.systemFont(ofSize: size, weight: weight),
             .foregroundColor: color ?? ink, .paragraphStyle: paragraph
@@ -650,71 +796,249 @@ final class QuotaDashboardView: NSView {
     private func stamp(_ date: Date?) -> String {
         QuotaTimestamp.label(date)
     }
+    var overviewHeight: CGFloat { CGFloat(538 + max(1, snapshot.accountUsage?.windows.count ?? 0) * 42) }
+    private var detailSections: [(String, [(String, String)])] {
+        var account: [(String, String)] = []
+        if let usage = snapshot.accountUsage {
+            account.append(("Codex · " + usage.planLabel, "成功更新 " + stamp(usage.lastSuccessAt)))
+            for window in usage.windows {
+                account.append((window.windowLabel + " · 已用 \(window.usedPercent)% / 剩余 \(window.remainingPercent)%", "重置 " + stamp(window.resetsAt)))
+            }
+            if let credits = usage.resetCredits {
+                account.append(("重置卡", "\(credits.availableCount) 张可用"))
+                for (index, expiry) in credits.expirations.enumerated() { account.append(("卡 \(index + 1) · 到期", stamp(expiry))) }
+            }
+        }
+        if let error = snapshot.accountError { account.append(("Codex 状态", error)) }
+        account.append(("下次额度刷新", stamp(snapshot.nextRefreshAt)))
+        if let widgetError { account.append(("小组件同步状态", widgetError)) }
+        if let balance {
+            account.append(("DeepSeek", balance.is_available ? "账户可用 · 更新 " + stamp(balanceDate) : "余额不足"))
+            for entry in balance.balance_infos {
+                account.append((entry.currency + " · 总余额 " + entry.total_balance, "充值 " + entry.topped_up_balance + " · 赠送 " + entry.granted_balance))
+            }
+        } else { account.append(("DeepSeek 状态", balanceError ?? "正在查询")) }
+        var tasks: [(String, String)] = []
+        let usage = snapshot.threadUsage
+        tasks.append(("最近 \(usage.recent.count) 个任务 · 累计 token", "\(usage.totalRecentTokens) · 属于任务累计值，不是今日消耗"))
+        if let error = usage.error { tasks.append(("读取失败", error)) }
+        else if let current = usage.current {
+            let context = CodexUsageReader().contextRemainingPercent(for: current)
+            tasks.append(("最近更新任务", current.title))
+            tasks.append(("上下文剩余（本地估算）", context.map { "\($0)% · 模型 " + current.model } ?? "未知"))
+        }
+        for thread in usage.recent {
+            tasks.append((thread.title, "\(thread.tokens) tokens · \(thread.model)\n更新 " + stamp(Date(timeIntervalSince1970: Double(thread.updatedAtMs) / 1000))))
+        }
+        if usage.recent.isEmpty && usage.error == nil { tasks.append(("暂无任务", "没有找到本地 Codex 任务记录")) }
+        return [("账户与重置卡详情", account), ("用量与任务详情", tasks)]
+    }
+    private func wrappedHeight(_ value: String, size: CGFloat) -> CGFloat {
+        let paragraph = NSMutableParagraphStyle(); paragraph.lineBreakMode = .byWordWrapping
+        let bounds = (value as NSString).boundingRect(with: NSSize(width: 310, height: CGFloat.greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: [.font: NSFont.systemFont(ofSize: size), .paragraphStyle: paragraph])
+        return max(size + 5, ceil(bounds.height) + 3)
+    }
+    private func sectionHeight(_ rows: [(String, String)]) -> CGFloat {
+        43 + rows.reduce(CGFloat(0)) { $0 + wrappedHeight($1.0, size: 11) + wrappedHeight($1.1, size: 10) + 14 }
+    }
+    var anchors: [CGFloat] {
+        [0, overviewHeight, overviewHeight + 236, overviewHeight + 244 + sectionHeight(detailSections[0].1)]
+    }
+    var contentHeight: CGFloat { anchors[3] + sectionHeight(detailSections[1].1) + 16 }
+    private func wrapped(_ value: String, y: CGFloat, size: CGFloat, color: NSColor) -> CGFloat {
+        let height = wrappedHeight(value, size: size)
+        let paragraph = NSMutableParagraphStyle(); paragraph.lineBreakMode = .byWordWrapping
+        (value as NSString).draw(in: NSRect(x: 28, y: y, width: 310, height: height), withAttributes: [.font: NSFont.systemFont(ofSize: size), .foregroundColor: color, .paragraphStyle: paragraph])
+        return height
+    }
+    private func drawDetails() {
+        var y = overviewHeight
+        card(y: y, height: 228)
+        text("每日 token · 精确数值", x: 28, y: y + 12, size: 13, weight: .semibold)
+        text("日期", x: 28, y: y + 40, width: 58, size: 10, color: muted)
+        text("Codex", x: 98, y: y + 40, width: 111, size: 11, color: purple, alignment: .right)
+        text("DeepSeek", x: 220, y: y + 40, width: 118, size: 11, color: teal, alignment: .right)
+        for (index, day) in snapshot.dailyTokens.days.enumerated() {
+            let row = y + 61 + CGFloat(index) * 20
+            text(index == 6 ? "今天" : String(QuotaTimestamp.label(day.date).prefix(5)), x: 28, y: row, width: 58, size: 10, color: muted)
+            text(snapshot.dailyTokens.codexStatus == nil || day.codex > 0 ? String(day.codex) : "—", x: 89, y: row, width: 120, size: 10, mono: true, alignment: .right)
+            text(snapshot.dailyTokens.deepSeekStatus == nil || day.deepSeek > 0 ? String(day.deepSeek) : "—", x: 215, y: row, width: 123, size: 10, mono: true, alignment: .right)
+        }
+        text("本机记录 · 含缓存输入 · 非账户全量账单", x: 28, y: y + 205, size: 9, color: muted)
+        y += 236
+        for (title, rows) in detailSections {
+            let height = sectionHeight(rows)
+            card(y: y, height: height)
+            text(title, x: 28, y: y + 12, size: 13, weight: .semibold)
+            var row = y + 39
+            for (label, value) in rows {
+                row += wrapped(label, y: row, size: 11, color: ink)
+                row += wrapped(value, y: row, size: 10, color: muted) + 14
+            }
+            y += height + 8
+        }
+    }
+    private func tokenChart(y: CGFloat, title: String, values: [Int], status: String?, scope: String, tint: NSColor) {
+        card(y: y, height: 137)
+        text(title, x: 28, y: y + 10, width: 138, size: 13, color: tint, weight: .semibold)
+        let total = values.reduce(0, +)
+        let totalLabel = status == nil || total > 0 ? DailyTokenUsage.number(total) : "—"
+        text("7 天合计 " + totalLabel, x: 180, y: y + 12, width: 158, size: 10, mono: true, alignment: .right)
+        let peak = values.max() ?? 0
+        text(status ?? scope, x: 28, y: y + 30, width: 193, size: 9, color: muted)
+        text(peak > 0 ? "0–" + DailyTokenUsage.number(peak) + " · 独立刻度" : (status == nil ? "无已记录用量" : "暂无刻度"), x: 215, y: y + 30, width: 124, size: 8, color: muted, alignment: .right)
+        let base = y + 110, chartHeight: CGFloat = 51
+        for fraction in [CGFloat(0), 0.5, 1] {
+            NSColor.white.withAlphaComponent(0.07).setFill()
+            NSRect(x: 28, y: base - chartHeight * fraction, width: 310, height: 0.5).fill()
+        }
+        let dates = DateFormatter(); dates.locale = Locale(identifier: "en_US_POSIX")
+        dates.calendar = DailyTokenUsage.calendar(); dates.timeZone = .current; dates.dateFormat = "MM/dd"
+        let days = snapshot.dailyTokens.days
+        let step: CGFloat = 310 / CGFloat(max(1, days.count))
+        for (index, day) in days.enumerated() {
+            let value = values[index], x = 28 + CGFloat(index) * step
+            let today = index == days.count - 1
+            let height = peak > 0 ? chartHeight * CGFloat(value) / CGFloat(peak) : 0
+            if today {
+                tint.withAlphaComponent(0.08).setFill()
+                NSBezierPath(roundedRect: NSRect(x: x + 1, y: y + 48, width: step - 2, height: 82), xRadius: 5, yRadius: 5).fill()
+            }
+            if value > 0 {
+                tint.withAlphaComponent(today ? 1 : 0.70).setFill()
+                NSBezierPath(roundedRect: NSRect(x: x + (step - 21) / 2, y: base - height, width: 21, height: height), xRadius: min(3, height / 2), yRadius: min(3, height / 2)).fill()
+            }
+            let label = status == nil || value > 0 ? DailyTokenUsage.number(value) : "—"
+            text(label, x: x, y: base - height - 13, width: step, size: 8, color: today ? ink : muted, mono: true, alignment: .center)
+            text(today ? "今天" : dates.string(from: day.date), x: x, y: base + 5, width: step, size: 9, color: today ? tint : muted, alignment: .center)
+        }
+    }
     override func draw(_ dirtyRect: NSRect) {
         NSColor(calibratedRed: 0.035, green: 0.052, blue: 0.083, alpha: 1).setFill()
         NSBezierPath(roundedRect: bounds.insetBy(dx: 4, dy: 0), xRadius: 14, yRadius: 14).fill()
-        text("AI 额度", x: 24, y: 18, size: 19, weight: .bold)
-        text("USAGE MONITOR", x: 24, y: 46, size: 9, color: muted, weight: .medium)
-        text("每 60 秒刷新", x: 250, y: 24, width: 95, size: 10, color: muted)
-        var y: CGFloat = 76
+        text("AI 额度与用量", x: 24, y: 13, size: 17, weight: .bold)
+        text("每 60 秒刷新", x: 248, y: 18, width: 96, size: 9, color: muted, alignment: .right)
+        var y: CGFloat = 45
         let windows = snapshot.accountUsage?.windows ?? []
-        let ch = CGFloat(72 + max(1, windows.count) * 70)
+        let ch = CGFloat(58 + max(1, windows.count) * 42)
         card(y: y, height: ch)
-        text("◈", x: 28, y: y + 15, size: 20, color: purple)
-        text("Codex", x: 56, y: y + 18, size: 14, weight: .semibold)
+        text("Codex", x: 28, y: y + 10, size: 14, weight: .semibold)
         let plan = snapshot.accountUsage?.planType == "prolite" ? "Pro" : (snapshot.accountUsage?.planLabel ?? "—")
-        text(plan, x: 275, y: y + 19, width: 60, size: 11, color: purple, weight: .semibold)
-        var row = y + 52
+        text(plan, x: 251, y: y + 12, width: 87, size: 11, color: purple, weight: .semibold, alignment: .right)
+        var row = y + 34
         if windows.isEmpty { text("额度暂不可用", x: 28, y: row, color: muted) }
         for window in windows {
             let label = window.windowLabel == "1周" ? "周额度" : (window.windowLabel == "5小时" ? "5h 额度" : window.windowLabel)
-            text(label, x: 28, y: row, size: 11, color: muted)
-            text("\(window.remainingPercent)% 剩余", x: 238, y: row - 2, width: 102, size: 14, weight: .semibold, mono: true)
+            text(label, x: 28, y: row, width: 90, size: 10, color: muted)
+            text("\(window.remainingPercent)%", x: 258, y: row - 4, width: 80, size: 19, weight: .semibold, mono: true, alignment: .right)
+            text("重置 " + stamp(window.resetsAt), x: 28, y: row + 16, width: 230, size: 9, color: muted)
             let tint = window.remainingPercent <= 10 ? NSColor.systemRed : (window.remainingPercent <= 50 ? NSColor.systemOrange : purple)
-            for index in 0..<24 {
-                let segment = NSBezierPath(roundedRect: NSRect(x: 28 + CGFloat(index) * 13, y: row + 25, width: 10, height: 5), xRadius: 1.5, yRadius: 1.5)
-                let fraction = max(0, min(1, CGFloat(window.remainingPercent) / 100 * 24 - CGFloat(index)))
-                tint.withAlphaComponent(0.12).setFill(); segment.fill()
-                if fraction > 0 {
-                    tint.setFill()
-                    NSBezierPath(roundedRect: NSRect(x: 28 + CGFloat(index) * 13, y: row + 25, width: 10 * fraction, height: 5), xRadius: 1, yRadius: 1).fill()
-                }
+            let track = NSRect(x: 28, y: row + 32, width: 310, height: 4)
+            tint.withAlphaComponent(0.15).setFill()
+            NSBezierPath(roundedRect: track, xRadius: 2, yRadius: 2).fill()
+            let progress = max(0, min(1, CGFloat(window.remainingPercent) / 100))
+            if progress > 0 {
+                tint.setFill()
+                NSBezierPath(roundedRect: NSRect(x: track.minX, y: track.minY, width: track.width * progress, height: 4), xRadius: 2, yRadius: 2).fill()
             }
-            text("重置  " + stamp(window.resetsAt), x: 28, y: row + 38, size: 10, color: muted)
-            row += 70
+            row += 42
         }
-        let state = snapshot.accountError == nil ? "已更新 " + stamp(snapshot.accountUsage?.lastSuccessAt) : "缓存数据 · 暂未连接"
-        text(state, x: 28, y: y + ch - 20, size: 9, color: muted)
-        y += ch + 12
-        let dh = CGFloat(62 + max(1, balance?.balance_infos.count ?? 0) * 62)
-        card(y: y, height: dh)
-        text("◉", x: 28, y: y + 15, size: 19, color: teal)
-        text("DeepSeek", x: 56, y: y + 18, size: 14, weight: .semibold)
-        text(balance == nil ? "未连接" : (balance!.is_available ? "可用" : "余额不足"), x: 276, y: y + 20, width: 65, size: 10, color: balance?.is_available == false ? .systemOrange : teal)
-        row = y + 48
-        if let balance {
-            for entry in balance.balance_infos {
-                text(entry.display, x: 28, y: row, size: 24, weight: .semibold, mono: true)
-                text(entry.currency, x: 287, y: row + 9, width: 50, size: 10, color: muted)
-                text("充值 \(entry.topped_up_balance)  ·  赠送 \(entry.granted_balance)", x: 28, y: row + 33, size: 10, color: muted)
-                row += 62
+        text(snapshot.accountError == nil ? "已更新 " + stamp(snapshot.accountUsage?.lastSuccessAt) : "缓存数据 · 暂未连接", x: 28, y: y + ch - 16, size: 8, color: muted)
+        y += ch + 8
+        card(y: y, height: 86)
+        text("DeepSeek 余额", x: 28, y: y + 10, size: 13, weight: .semibold)
+        text(balance == nil ? "未连接" : (balance!.is_available ? "官方 API" : "余额不足"), x: 253, y: y + 12, width: 85, size: 9, color: balance?.is_available == false ? .systemOrange : teal, alignment: .right)
+        if let balance, !balance.balance_infos.isEmpty {
+            // Show balances side-by-side. Detailed credit breakdown stays in the submenu.
+            let entries = balance.balance_infos.sorted { $0.currency < $1.currency }
+            for (index, entry) in entries.prefix(2).enumerated() {
+                let x: CGFloat = index == 0 ? 28 : 195
+                text(entry.currency, x: x, y: y + 31, width: 143, size: 9, color: muted)
+                text(entry.display, x: x, y: y + 44, width: 143, size: 20, weight: .semibold, mono: true)
             }
-        } else { text(balanceError ?? "正在查询余额", x: 28, y: row + 5, color: muted) }
-        y += dh + 12
-        card(y: y, height: 70)
-        text("最近任务用量", x: 28, y: y + 14, size: 11, color: muted)
-        let tokens = snapshot.threadUsage.totalRecentTokens
-        let count = tokens >= 1_000_000 ? String(format: "%.2fM", Double(tokens) / 1_000_000) : (tokens >= 1000 ? String(format: "%.1fK", Double(tokens) / 1000) : String(tokens))
-        text(count + " tokens", x: 28, y: y + 33, size: 18, weight: .semibold, mono: true)
-        text("最近 8 个任务", x: 243, y: y + 38, width: 96, size: 10, color: muted)
-        text("本机读取  ·  DeepSeek " + stamp(balanceDate), x: 24, y: y + 85, size: 9, color: muted)
+        } else { text(balanceError ?? "正在查询余额", x: 28, y: y + 40, size: 11, color: muted) }
+        text("更新 " + stamp(balanceDate), x: 28, y: y + 70, size: 8, color: muted)
+        y += 94
+        text("近 7 天 · 每日 tokens", x: 24, y: y + 1, size: 12, weight: .semibold)
+        text("含今天 · 本地公历日", x: 217, y: y + 3, width: 127, size: 9, color: muted, alignment: .right)
+        y += 25
+        let daily = snapshot.dailyTokens
+        tokenChart(y: y, title: "Codex", values: daily.days.map(\.codex), status: daily.codexStatus, scope: "本机会话 · 含缓存输入", tint: purple)
+        y += 145
+        tokenChart(y: y, title: "DeepSeek", values: daily.days.map(\.deepSeek), status: daily.deepSeekStatus, scope: "本机工具 · 不含其他软件", tint: teal)
+        text("0 无已记录用量 · — 记录不可用 · 向下滚动查看精确明细", x: 24, y: y + 145, width: 324, size: 8, color: muted)
+        drawDetails()
     }
+
+}
+
+final class QuotaPanelController: NSViewController {
+    private let scroll = NSScrollView()
+    private var dashboard: QuotaDashboardView?
+    private var callbacks: [() -> Void] = []
+    var panelHeight: CGFloat = 720
+    override func loadView() {
+        view = NSView(frame: NSRect(x: 0, y: 0, width: 368, height: panelHeight))
+        view.wantsLayer = true
+        view.layer?.backgroundColor = NSColor(calibratedRed: 0.035, green: 0.052, blue: 0.083, alpha: 1).cgColor
+        view.appearance = NSAppearance(named: .darkAqua)
+        scroll.frame = NSRect(x: 0, y: 63, width: 368, height: panelHeight - 101)
+        scroll.hasVerticalScroller = true; scroll.autohidesScrollers = true; scroll.drawsBackground = false
+        scroll.scrollerStyle = .overlay
+        view.addSubview(scroll)
+        for (index, title) in ["总览", "每日明细", "账户详情", "任务"].enumerated() {
+            let button = NSButton(title: title, target: self, action: #selector(jump(_:)))
+            button.tag = index; styleButton(button, size: 11)
+            button.frame = NSRect(x: 16 + CGFloat(index) * 86, y: panelHeight - 32, width: 80, height: 24)
+            view.addSubview(button)
+        }
+    }
+    private func styleButton(_ button: NSButton, size: CGFloat) {
+        button.isBordered = false
+        button.attributedTitle = NSAttributedString(string: button.title, attributes: [.font: NSFont.systemFont(ofSize: size, weight: .medium), .foregroundColor: NSColor(calibratedWhite: 0.86, alpha: 1)])
+        button.wantsLayer = true
+        button.layer?.cornerRadius = 5
+        button.layer?.backgroundColor = NSColor(calibratedRed: 0.065, green: 0.09, blue: 0.135, alpha: 1).cgColor
+    }
+    func setActions(_ actions: [(String, () -> Void)]) {
+        _ = view
+        callbacks = actions.map(\.1)
+        for (index, item) in actions.enumerated() {
+            let button = NSButton(title: item.0, target: self, action: #selector(performAction(_:)))
+            button.tag = index; styleButton(button, size: 10)
+            button.frame = NSRect(x: 16 + CGFloat(index % 3) * 113, y: index < 3 ? 32 : 7, width: 105, height: 22)
+            view.addSubview(button)
+        }
+    }
+    func update(_ dashboard: QuotaDashboardView) {
+        _ = view
+        let offset = scroll.contentView.bounds.origin.y
+        self.dashboard = dashboard
+        scroll.documentView = dashboard
+        scroll.contentView.scroll(to: NSPoint(x: 0, y: min(offset, max(0, dashboard.frame.height - scroll.contentSize.height))))
+        scroll.reflectScrolledClipView(scroll.contentView)
+    }
+    func scrollToTop() {
+        scroll.contentView.scroll(to: .zero)
+        scroll.reflectScrolledClipView(scroll.contentView)
+    }
+    @objc private func jump(_ sender: NSButton) {
+        guard let dashboard else { return }
+        scroll.contentView.scroll(to: NSPoint(x: 0, y: min(dashboard.anchors[sender.tag], max(0, dashboard.frame.height - scroll.contentSize.height))))
+        scroll.reflectScrolledClipView(scroll.contentView)
+    }
+    @objc private func performAction(_ sender: NSButton) { callbacks[sender.tag]() }
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+    private let popover = NSPopover()
+    private var panelController: QuotaPanelController?
     private let accountReader = AccountUsageReader()
     private let reader = CodexUsageReader()
+    private let dailyReader = DailyTokenReader()
+    private var dailyLoading = false
+    private var latestDailyTokens = DailyTokenUsage.empty()
     private let deepSeekReader = DeepSeekBalanceReader()
     private var deepSeekBalance: DeepSeekBalance?
     private var deepSeekError: String? = "正在查询"
@@ -728,6 +1052,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.button?.font = .monospacedDigitSystemFont(ofSize: 12, weight: .medium)
         statusItem.button?.toolTip = "码伴 Mac · Codex 本地用量"
         statusItem.button?.imagePosition = .imageLeft
+        statusItem.button?.target = self
+        statusItem.button?.action = #selector(togglePanel)
         refresh()
         timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             self?.refresh()
@@ -735,6 +1061,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func refresh() {
+        if !dailyLoading {
+            dailyLoading = true
+            DispatchQueue.global(qos: .utility).async {
+                let daily = self.dailyReader.read()
+                DispatchQueue.main.async {
+                    self.dailyLoading = false
+                    self.latestDailyTokens = daily
+                    if var snapshot = self.latestSnapshot {
+                        snapshot.dailyTokens = daily
+                        self.latestSnapshot = snapshot
+                        self.updatePanel(snapshot)
+                    }
+                }
+            }
+        }
         if !deepSeekLoading {
             deepSeekLoading = true
             deepSeekReader.read { [weak self] balance, error in
@@ -746,7 +1087,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.deepSeekUpdatedAt = balance == nil ? nil : Date()
                     if let snapshot = self.latestSnapshot {
                         self.updateTitle(snapshot)
-                        self.updateMenu(snapshot)
+                        self.updatePanel(snapshot)
                     }
                 }
             }
@@ -762,9 +1103,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 accountError: account.1
             )
             DispatchQueue.main.async {
+                var snapshot = snapshot
+                snapshot.dailyTokens = self.latestDailyTokens
                 self.latestSnapshot = snapshot
                 self.updateTitle(snapshot)
-                self.updateMenu(snapshot)
+                self.updatePanel(snapshot)
             }
         }
     }
@@ -822,110 +1165,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func updateMenu(_ snapshot: AppSnapshot) {
-        let menu = NSMenu()
-        menu.addItem(disabled("DeepSeek · 官方 API"))
-        if let balance = deepSeekBalance {
-            for entry in balance.balance_infos {
-                menu.addItem(disabled("余额：\(entry.display)（\(entry.currency)）"))
-                menu.addItem(disabled("充值：\(entry.topped_up_balance) · 赠送：\(entry.granted_balance)"))
-            }
-            menu.addItem(disabled(balance.is_available ? "状态：可用" : "状态：余额不足"))
-            if let date = deepSeekUpdatedAt {
-                menu.addItem(disabled("更新：\(timeFormatter.string(from: date))"))
-            }
-        } else {
-            menu.addItem(disabled(deepSeekError ?? "正在查询"))
+    private func updatePanel(_ snapshot: AppSnapshot) {
+        if panelController == nil {
+            let controller = QuotaPanelController()
+            let available = (statusItem.button?.window?.screen ?? NSScreen.main)?.visibleFrame.height ?? 900
+            controller.panelHeight = min(760, max(340, available - 60))
+            controller.setActions([
+                ("刷新", { [weak self] in self?.manualRefresh() }),
+                ("添加小组件", { [weak self] in self?.popover.performClose(nil); self?.showWidgetHelp() }),
+                ("手机与手表", { [weak self] in self?.popover.performClose(nil); self?.showMobileHelp() }),
+                ("关于码伴", { [weak self] in self?.popover.performClose(nil); self?.showAbout() }),
+                ("回到顶部", { [weak self] in self?.panelController?.scrollToTop() }),
+                ("退出", { [weak self] in self?.quit() })
+            ])
+            panelController = controller
+            popover.behavior = .transient
+            popover.contentViewController = controller
+            popover.contentSize = controller.view.frame.size
+            popover.appearance = NSAppearance(named: .darkAqua)
         }
-        menu.addItem(.separator())
+        panelController?.update(QuotaDashboardView(snapshot: snapshot, balance: deepSeekBalance, error: deepSeekError, date: deepSeekUpdatedAt, widgetError: widgetError))
+    }
 
-        if let accountUsage = snapshot.accountUsage {
-            menu.addItem(disabled("剩余用量"))
-            if let short = accountUsage.shortWindow {
-                menu.addItem(disabled("\(short.windowLabel)    \(short.remainingPercent)%    重置：\(resetDateTimeFullLabel(short.resetsAt))"))
-                menu.addItem(disabled("\(short.windowLabel)已用：\(short.usedPercent)%"))
-            }
-            if let total = accountUsage.totalWindow {
-                menu.addItem(disabled("\(total.windowLabel)    \(total.remainingPercent)%    重置：\(resetDateTimeFullLabel(total.resetsAt))"))
-                menu.addItem(disabled("\(total.windowLabel)已用：\(total.usedPercent)%"))
-            }
-            menu.addItem(disabled("计划：\(accountUsage.planLabel)"))
-            if let resetCredits = accountUsage.resetCredits {
-                menu.addItem(disabled("完整重置：\(resetCredits.availableCount) 次可用"))
-                for (index, expiration) in resetCredits.expirations.prefix(3).enumerated() {
-                    menu.addItem(disabled("重置券 \(index + 1) 过期：\(resetDateTimeLabel(expiration))"))
-                }
-            }
-            if let accountError = snapshot.accountError {
-                menu.addItem(disabled("状态：\(accountError)"))
-            }
-            menu.addItem(disabled("成功更新：\(timeFormatter.string(from: accountUsage.lastSuccessAt))"))
-            menu.addItem(disabled("下次刷新：\(timeFormatter.string(from: snapshot.nextRefreshAt))"))
-        } else {
-            menu.addItem(disabled("剩余用量：读取中"))
-            if let error = snapshot.accountError {
-                menu.addItem(disabled(error))
-            }
+    @objc private func togglePanel() {
+        guard let button = statusItem.button else { return }
+        if popover.isShown { popover.performClose(nil); return }
+        if panelController == nil {
+            let now = Date()
+            updatePanel(AppSnapshot(accountUsage: nil, threadUsage: UsageSnapshot(current: nil, recent: [], totalRecentTokens: 0, checkedAt: now, error: nil), checkedAt: now, nextRefreshAt: now, accountError: "正在读取"))
         }
-
-        menu.addItem(.separator())
-
-        let threadUsage = snapshot.threadUsage
-        if let error = threadUsage.error {
-            menu.addItem(disabled("读取失败：\(error)"))
-        } else if let current = threadUsage.current {
-            let percent = reader.contextRemainingPercent(for: current) ?? 0
-            menu.addItem(disabled("当前任务剩余上下文：\(percent)%"))
-            menu.addItem(disabled("当前任务已用：\(formatTokens(current.tokens)) tokens"))
-            menu.addItem(disabled("模型：\(current.model)"))
-            menu.addItem(disabled("任务：\(shorten(current.title, max: 42))"))
-        } else {
-            menu.addItem(disabled("没有找到 Codex 任务记录"))
-        }
-
-        menu.addItem(.separator())
-        menu.addItem(disabled("最近 8 个任务合计：\(formatTokens(threadUsage.totalRecentTokens)) tokens"))
-        menu.addItem(disabled("更新：\(timeFormatter.string(from: snapshot.checkedAt))"))
-
-        if !threadUsage.recent.isEmpty {
-            menu.addItem(.separator())
-            menu.addItem(disabled("最近任务"))
-            for thread in threadUsage.recent.prefix(5) {
-                menu.addItem(disabled("\(formatTokens(thread.tokens))  \(shorten(thread.title, max: 36))"))
-            }
-        }
-
-        let rootMenu = NSMenu()
-        rootMenu.appearance = NSAppearance(named: .darkAqua)
-        rootMenu.addItem(disabled("码伴 · Mac"))
-        menu.appearance = NSAppearance(named: .darkAqua)
-        let overview = NSMenuItem()
-        overview.view = QuotaDashboardView(snapshot: snapshot, balance: deepSeekBalance, error: deepSeekError, date: deepSeekUpdatedAt)
-        rootMenu.addItem(overview)
-        let details = NSMenuItem(title: "用量与任务详情", action: nil, keyEquivalent: "")
-        details.submenu = menu
-        rootMenu.addItem(details)
-        #if WIDGET_SUPPORT
-        let widgetHelp = NSMenuItem(title: "添加 macOS 小组件…", action: #selector(showWidgetHelp), keyEquivalent: "")
-        widgetHelp.target = self
-        rootMenu.addItem(widgetHelp)
-        if let widgetError { rootMenu.addItem(disabled(widgetError)) }
-        #endif
-        let about = NSMenuItem(title: "关于码伴 Mac…", action: #selector(showAbout), keyEquivalent: "")
-        about.target = self
-        rootMenu.addItem(about)
-        let mobileHelp = NSMenuItem(title: "手机与手表连接说明…", action: #selector(showMobileHelp), keyEquivalent: "")
-        mobileHelp.target = self
-        rootMenu.addItem(mobileHelp)
-        rootMenu.addItem(.separator())
-        let refreshItem = NSMenuItem(title: "刷新", action: #selector(manualRefresh), keyEquivalent: "r")
-        refreshItem.target = self
-        rootMenu.addItem(refreshItem)
-        let quitItem = NSMenuItem(title: "退出", action: #selector(quit), keyEquivalent: "q")
-        quitItem.target = self
-        rootMenu.addItem(quitItem)
-
-        statusItem.menu = rootMenu
+        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        popover.contentViewController?.view.window?.makeKey()
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -936,7 +1206,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func application(_ application: NSApplication, open urls: [URL]) {
         guard urls.contains(where: { $0.scheme == "codexusagebar" && $0.host == "refresh" }) else { return }
         refresh()
-        statusItem.button?.performClick(nil)
+        if !popover.isShown { togglePanel() }
     }
 
     @objc private func showWidgetHelp() {
@@ -967,12 +1237,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.terminate(nil)
     }
 
-    private func disabled(_ title: String) -> NSMenuItem {
-        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
-        item.isEnabled = false
-        return item
-    }
-
     private func formatTokens(_ value: Int) -> String {
         if value >= 1_000_000 {
             return String(format: "%.1fM", Double(value) / 1_000_000)
@@ -983,59 +1247,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return "\(value)"
     }
 
-    private func shorten(_ value: String, max: Int) -> String {
-        guard value.count > max else { return value }
-        let end = value.index(value.startIndex, offsetBy: max)
-        return String(value[..<end]) + "..."
-    }
 
-    private func resetDateLabel(_ date: Date?) -> String {
-        guard let date else { return "--" }
-        let formatter = DateFormatter()
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.timeZone = .current
-        formatter.dateFormat = "M月d日"
-        return formatter.string(from: date)
-    }
-
-    private func resetDateTimeFullLabel(_ date: Date?) -> String {
-        guard let date else { return "--" }
-        let formatter = DateFormatter()
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.timeZone = .current
-        formatter.dateFormat = "M月d日 HH:mm:ss"
-        return formatter.string(from: date)
-    }
-
-    private func resetDateTimeLabel(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.timeZone = .current
-        formatter.dateFormat = "M月d日 HH:mm:ss"
-        return formatter.string(from: date)
-    }
-
-    private var timeFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = .current
-        formatter.dateFormat = "HH:mm:ss"
-        return formatter
-    }
-
-    private func clockLabelWithSeconds(_ date: Date?) -> String {
-        guard let date else { return "--:--:--" }
-        let formatter = DateFormatter()
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = .current
-        formatter.dateFormat = "HH:mm:ss"
-        return formatter.string(from: date)
-    }
 }
 
 let app = NSApplication.shared
