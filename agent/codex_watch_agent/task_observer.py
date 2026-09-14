@@ -30,7 +30,9 @@ class TaskObserver:
 
     def scan(self, now=None):
         now = time.time() if now is None else now
-        paths = [p for name in ('sessions', 'archived_sessions') for p in (self.home / name).rglob('*.jsonl') if not p.is_symlink()]
+        # Archived rollouts can be moved or copied with a new path. They are
+        # history, never evidence of a currently running task.
+        paths = [p for p in (self.home / 'sessions').rglob('*.jsonl') if not p.is_symlink()]
         with self.store.connection() as db:
             initialized = db.execute("SELECT value FROM observer_meta WHERE key='started'").fetchone()
             if initialized is None:
@@ -48,7 +50,27 @@ class TaskObserver:
             except (OSError, ValueError, TypeError, KeyError):
                 # A malformed/local file must not stop the notification worker.
                 continue
-        self.check_stalled(now)
+        live_sessions, catching_up = set(), set()
+        with self.store.connection() as db:
+            for path in paths:
+                row = db.execute('SELECT session, offset FROM observer_files WHERE key=?', (self.file_key(path),)).fetchone()
+                if not row or not row['session']:
+                    continue
+                try:
+                    size = path.stat().st_size
+                except OSError:
+                    continue
+                live_sessions.add(row['session'])
+                if row['offset'] < size:
+                    catching_up.add(row['session'])
+            # Remove abandoned archive timers and invalidate their queued alerts.
+            for row in db.execute('SELECT key, session FROM observer_activity').fetchall():
+                if row['session'] not in live_sessions:
+                    db.execute('DELETE FROM observer_activity WHERE key=?', (row['key'],))
+            for row in db.execute("SELECT o.id, p.session FROM outbox o LEFT JOIN task_progress p ON p.id=o.turn_id WHERE o.status='stalled' AND o.delivered_at IS NULL AND o.expired=0").fetchall():
+                if row['session'] not in live_sessions or row['session'] in catching_up:
+                    db.execute('UPDATE outbox SET expired=1 WHERE id=?', (row['id'],))
+        self.check_stalled(now, live_sessions - catching_up)
 
     @staticmethod
     def file_key(path):
@@ -129,6 +151,18 @@ class TaskObserver:
             status_event = 'Activity'
         if status_event is None:
             return
+        if status_event in ('Activity', 'NeedsInput'):
+            with self.store.connection() as db:
+                current = db.execute('SELECT started_at FROM turns WHERE id=?', (key,)).fetchone()
+                started = current['started_at'] if current else datetime.fromtimestamp(stamp, timezone.utc).isoformat()
+                newer = db.execute('''SELECT 1 FROM turns t JOIN task_progress p ON p.id=t.id
+                    WHERE p.session=? AND t.id<>? AND t.started_at>? LIMIT 1''', (session, key, started)).fetchone()
+                if newer:
+                    # Rotated/copied files can arrive out of order. A previous
+                    # turn must not become current again after a newer turn.
+                    db.execute('DELETE FROM observer_activity WHERE key=?', (key,))
+                    db.execute("UPDATE outbox SET expired=1 WHERE turn_id=? AND status IN ('stalled','needs_input') AND delivered_at IS NULL", (key,))
+                    return
         event['hook_event_name'] = status_event
         event['activity'] = {'task_started': 'started', 'reasoning': 'thinking',
                              'function_call': 'tool', 'custom_tool_call': 'tool',
@@ -136,22 +170,30 @@ class TaskObserver:
                              'message': 'responding'}.get(kind)
         if status_event == 'NeedsInput':
             event['request_id'] = str(payload.get('call_id') or payload.get('id') or turn)
-        self.store.record(event, occurred_at=stamp)
+        if not self.store.record(event, occurred_at=stamp):
+            return
         with self.store.connection() as db:
             if status_event in ('Stop', 'Interrupt', 'NeedsInput'):
                 db.execute('DELETE FROM observer_activity WHERE key=?', (key,))
             else:
+                # A new turn supersedes timers from older turns in this session.
+                older = db.execute('SELECT key FROM observer_activity WHERE session=? AND key<>? AND last<=?', (session, key, stamp)).fetchall()
+                for row in older:
+                    db.execute('DELETE FROM observer_activity WHERE key=?', (row['key'],))
+                    db.execute("UPDATE outbox SET expired=1 WHERE turn_id=? AND status='stalled' AND delivered_at IS NULL", (row['key'],))
                 db.execute('''INSERT INTO observer_activity VALUES (?,?,?,?,?,0) ON CONFLICT(key) DO UPDATE SET
                     last=MAX(observer_activity.last,excluded.last), warned=CASE WHEN excluded.last>observer_activity.last THEN 0 ELSE observer_activity.warned END''', (key, session, turn, project, stamp))
         if status_event in ('Stop', 'Interrupt'):
             from .approvals import ApprovalStore
             ApprovalStore(self.store.root).cancel_turn(event)
 
-    def check_stalled(self, now):
+    def check_stalled(self, now, live_sessions):
         with self.store.connection() as db:
             rows = db.execute('''SELECT a.* FROM observer_activity a JOIN turns t ON t.id=a.key
                 WHERE a.warned=0 AND a.last<=? AND t.status='running' ''', (now - 600,)).fetchall()
         for row in rows:
+            if row['session'] not in live_sessions:
+                continue
             self.store.record({'hook_event_name': 'Stalled', 'session_id': row['session'], 'turn_id': row['turn'], 'cwd': row['project']}, occurred_at=now)
             with self.store.connection() as db:
                 db.execute('UPDATE observer_activity SET warned=1 WHERE key=?', (row['key'],))

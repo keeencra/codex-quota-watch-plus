@@ -90,6 +90,12 @@ class TaskEventStore:
         timestamp = datetime.fromtimestamp(occurred_at if occurred_at is not None else now, timezone.utc).isoformat()
         with self.connection() as db:
             previous = db.execute('SELECT * FROM turns WHERE id=?', (key,)).fetchone()
+            if status == 'stalled':
+                if not previous or previous['status'] != 'running':
+                    return False
+                # A synthetic timeout must not advance the source-event clock:
+                # a real completion discovered later still supersedes it.
+                timestamp = previous['updated_at']
             if previous and occurred_at is not None and datetime.fromisoformat(previous['updated_at']).timestamp() > occurred_at:
                 return False
             if previous and (previous['status'] == 'interrupted' or (previous['status'] == 'finished' and kind != 'Stop')):
@@ -191,6 +197,9 @@ def deliver_pending(store: TaskEventStore, *, client=None, now: float | None = N
     now = time.time() if now is None else now
     with store.connection() as db:
         db.execute('UPDATE outbox SET expired=1 WHERE delivered_at IS NULL AND created < ?', (now - 900,))
+        # A newly discovered historical end is not a new completion alert.
+        cutoff = datetime.fromtimestamp(now - 900, timezone.utc).isoformat()
+        db.execute("UPDATE outbox SET expired=1 WHERE delivered_at IS NULL AND status IN ('finished','interrupted') AND turn_id IN (SELECT id FROM turns WHERE updated_at < ?)", (cutoff,))
         rows = db.execute('SELECT * FROM outbox WHERE delivered_at IS NULL AND expired=0 AND due<=? ORDER BY created LIMIT 10', (now,)).fetchall()
     if client is None:
         with httpx.Client(timeout=8, trust_env=False, follow_redirects=False) as session:
