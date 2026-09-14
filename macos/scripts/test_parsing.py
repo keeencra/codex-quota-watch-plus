@@ -60,6 +60,47 @@ assert(menuBalance([("CNY", "0.00"), ("USD", "0.00")]).menuBarAmount == "¥0.00 
 assert(menuBalance([]).menuBarAmount == "—")
 assert(MenuBarSummary.title(codex: "Pro 周16%", balance: menuBalance([("CNY", "88.88"), ("USD", "20.00")])).string == "Pro 周16% · DS ¥88.88 / $20.00")
 print("PASS: menu bar dual currency, CNY only, USD only, zero, empty and final title")
+
+let sessionRoot = temp.appendingPathComponent(".codex/sessions")
+try! FileManager.default.createDirectory(at: sessionRoot, withIntermediateDirectories: true)
+func event(_ stamp: String, _ input: Int, _ output: Int, _ lastInput: Int, _ lastOutput: Int) -> String {
+    return "{\"timestamp\":\"\(stamp)\",\"payload\":{\"type\":\"token_count\",\"info\":{\"total_token_usage\":{\"input_tokens\":\(input),\"output_tokens\":\(output),\"cached_input_tokens\":80},\"last_token_usage\":{\"input_tokens\":\(lastInput),\"output_tokens\":\(lastOutput)}}}}\n"
+}
+let beforeMidnight = event("2026-09-13T15:59:00Z", 100, 10, 100, 10)
+let afterMidnight = event("2026-09-13T16:01:00Z", 140, 15, 40, 5)
+let unchanged = event("2026-09-13T16:02:00Z", 140, 15, 40, 5)
+let reset = event("2026-09-13T16:03:00Z", 20, 2, 20, 2)
+let fixture = beforeMidnight + afterMidnight + unchanged + reset
+let log = sessionRoot.appendingPathComponent("test.jsonl")
+try! fixture.write(to: log, atomically: true, encoding: .utf8)
+try! fixture.write(to: sessionRoot.appendingPathComponent("duplicate.jsonl"), atomically: true, encoding: .utf8)
+let dailyReader = DailyTokenReader(home: temp)
+let daily = dailyReader.read(now: timestamp, zone: shanghai)
+assert(daily.days.count == 7 && daily.days[5].codex == 110 && daily.days[6].codex == 67)
+assert(daily.days[0].codex == 0 && daily.codexStatus == nil)
+assert(daily.deepSeekStatus == "未找到本机记录")
+let cached = dailyReader.read(now: timestamp, zone: shanghai)
+assert(cached.days.map(\.codex) == daily.days.map(\.codex))
+let extra = event("2026-09-14T06:00:00Z", 30, 5, 10, 3)
+try! (fixture + extra).write(to: log, atomically: true, encoding: .utf8)
+assert(dailyReader.read(now: timestamp, zone: shanghai).days[6].codex == 80)
+
+let append = try! FileHandle(forWritingTo: log); try! append.seekToEnd()
+let tail = Data(event("2026-09-14T06:02:00Z", 40, 7, 10, 2).utf8)
+try! append.write(contentsOf: tail.prefix(tail.count / 2))
+assert(dailyReader.read(now: timestamp, zone: shanghai).days[6].codex == 80)
+try! append.write(contentsOf: tail.suffix(tail.count - tail.count / 2)); try! append.close()
+assert(dailyReader.read(now: timestamp, zone: shanghai).days[6].codex == 92)
+let db = temp.appendingPathComponent(".codex/tools/deepseek/state/usage.sqlite3")
+try! FileManager.default.createDirectory(at: db.deletingLastPathComponent(), withIntermediateDirectories: true)
+let sql = Process(); sql.executableURL = URL(fileURLWithPath: "/usr/bin/sqlite3")
+sql.arguments = [db.path, "CREATE TABLE calls(started TEXT,total_tokens INTEGER,prompt_tokens INTEGER,completion_tokens INTEGER); INSERT INTO calls VALUES('2026-09-13T23:59:00+08:00',110,100,10),('2026-09-14T00:01:00+08:00',NULL,40,5),('2026-09-14T01:00:00+08:00',NULL,NULL,NULL),('2026-09-15T00:01:00+08:00',999,900,99);"]
+try! sql.run(); sql.waitUntilExit(); assert(sql.terminationStatus == 0)
+let withDeepSeek = dailyReader.read(now: timestamp, zone: shanghai)
+assert(withDeepSeek.days[5].deepSeek == 110 && withDeepSeek.days[6].deepSeek == 45)
+assert(withDeepSeek.deepSeekStatus == "部分调用缺少用量")
+assert(DailyTokenUsage.number(1_200_000_000) == "1.20B")
+print("PASS: daily tokens — midnight, Gregorian days, cached input, duplicates, reset, cache invalidation, SQLite totals/fallback/missing/future records")
 print("PASS: 7 scenarios — Pro, Plus, empty, invalid, reversed, multiple currencies, invalid balance")
 '''
 p=out/'main.swift';p.write_text(source)
