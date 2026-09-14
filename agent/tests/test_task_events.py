@@ -269,3 +269,11 @@ def test_named_completion_cleans_and_bounds_labels(store, monkeypatch):
     title=json.loads(calls[0].content)['title']
     assert '\n' not in title and '\t' not in title
     assert len(title) <= 252 and title.endswith('本轮已结束')
+
+
+def test_historical_completion_is_not_pushed_as_new(store):
+    store.record(event('Stop'), occurred_at=time.time()-3600)
+    calls=[]
+    with mock_client(calls) as client:
+        assert deliver_pending(store,client=client)==0
+    assert not calls

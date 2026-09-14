@@ -80,3 +80,73 @@ def test_oversized_tool_result_does_not_block_later_progress(tmp_path):
         row=db.execute('SELECT offset,discarding FROM observer_files').fetchone()
         assert row['offset']==path.stat().st_size
         assert row['discarding']==0
+
+
+def test_archiving_does_not_replay_history_or_keep_stall_timer(tmp_path):
+    path,store,observer=setup(tmp_path);observer.scan(100)
+    append(path,line('task_started',110));observer.scan(120)
+    archived=observer.home/'archived_sessions';archived.mkdir()
+    path.rename(archived/path.name)
+    observer.scan(1000)
+    with store.connection() as db:
+        assert db.execute('SELECT count(*) FROM outbox').fetchone()[0]==0
+        assert db.execute('SELECT count(*) FROM observer_activity').fetchone()[0]==0
+    observer.scan(2000)
+    with store.connection() as db:
+        assert db.execute('SELECT count(*) FROM outbox').fetchone()[0]==0
+
+
+def test_backlog_cannot_stall_before_later_completion_is_read(tmp_path):
+    path,store,observer=setup(tmp_path);observer.scan(100)
+    append(path,line('task_started',110))
+    append(path,line('custom_tool_call_output',120,'response_item',output='x'*(5*1024*1024)))
+    append(path,line('task_complete',130))
+    for now in (1000,1010,1020,1030,1040):
+        observer.scan(now)
+        with store.connection() as db:
+            assert db.execute("SELECT count(*) FROM outbox WHERE status='stalled'").fetchone()[0]==0
+    assert store.snapshot()['task_events'][0]['status']=='finished'
+
+
+def test_real_end_discovered_after_timeout_is_not_rejected(tmp_path):
+    path,store,observer=setup(tmp_path);observer.scan(100)
+    append(path,line('task_started',110));observer.scan(111);observer.scan(800)
+    assert store.snapshot()['task_events'][0]['status']=='stalled'
+    append(path,line('task_complete',120));observer.scan(810)
+    assert store.snapshot()['task_events'][0]['status']=='finished'
+    with store.connection() as db:
+        assert db.execute("SELECT expired FROM outbox WHERE status='stalled'").fetchone()[0]==1
+
+
+def test_new_turn_retires_old_timer_without_completion_event(tmp_path):
+    path,store,observer=setup(tmp_path);observer.scan(100)
+    append(path,line('task_started',110));observer.scan(120)
+    append(path,line('task_started',200,turn_id='new'));observer.scan(210)
+    with store.connection() as db:
+        assert [r['turn'] for r in db.execute('SELECT turn FROM observer_activity')]==['new']
+    observer.scan(750)
+    with store.connection() as db:
+        assert db.execute("SELECT count(*) FROM outbox WHERE status='stalled'").fetchone()[0]==0
+
+
+def test_old_turn_from_another_rollout_cannot_restart_after_newer_end(tmp_path):
+    path,store,observer=setup(tmp_path);observer.scan(100)
+    observer.observe(json.loads(line('task_started',200,turn_id='new')), 'session','new','project',200)
+    observer.observe(json.loads(line('task_complete',220,turn_id='new')), 'session','new','project',220)
+    observer.observe(json.loads(line('reasoning',150,'response_item')), 'session','turn','project',150)
+    observer.check_stalled(1000, {'session'})
+    with store.connection() as db:
+        assert db.execute('SELECT count(*) FROM observer_activity').fetchone()[0]==0
+        assert db.execute("SELECT count(*) FROM outbox WHERE status='stalled'").fetchone()[0]==0
+
+
+def test_late_old_tool_result_after_newer_turn_does_not_restart_timer(tmp_path):
+    path,store,observer=setup(tmp_path);observer.scan(100)
+    observer.observe(json.loads(line('task_started',110)), 'session','turn','project',110)
+    observer.observe(json.loads(line('task_started',200,turn_id='new')), 'session','new','project',200)
+    observer.observe(json.loads(line('task_complete',220,turn_id='new')), 'session','new','project',220)
+    observer.observe(json.loads(line('function_call_output',300,'response_item')), 'session','turn','project',300)
+    observer.check_stalled(1000, {'session'})
+    with store.connection() as db:
+        assert db.execute('SELECT count(*) FROM observer_activity').fetchone()[0]==0
+        assert db.execute("SELECT count(*) FROM outbox WHERE status='stalled'").fetchone()[0]==0
