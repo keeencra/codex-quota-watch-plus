@@ -18,6 +18,17 @@ assert(DeepSeekBalanceReader.configuredKey(environment: [:], home: temp) == "sha
 assert(DeepSeekBalanceReader.configuredKey(environment: ["DEEPSEEK_API_KEY":"env-fixture"], home: temp) == "env-fixture")
 assert(DeepSeekBalanceReader.configuredKey(environment: ["DEEPSEEK_API_KEY":"  "], home: temp) == "shared-fixture")
 print("PASS: shared key lookup, legacy fallback, environment override, whitespace and missing configuration")
+let timestamp = ISO8601DateFormatter().date(from: "2026-09-14T07:59:00Z")!
+let shanghai = TimeZone(identifier: "Asia/Shanghai")!
+let persian = DateFormatter()
+persian.calendar = Calendar(identifier: .persian)
+persian.timeZone = shanghai
+persian.dateFormat = "MM-dd HH:mm"
+assert(persian.string(from: timestamp) == "06-23 15:59")
+assert(QuotaTimestamp.label(timestamp, timeZone: shanghai) == "09-14 15:59")
+assert(QuotaTimestamp.label(timestamp, timeZone: TimeZone(secondsFromGMT: 0)!) == "09-14 07:59")
+assert(QuotaTimestamp.label(nil) == "待更新")
+print("PASS: Gregorian timestamps under Persian system calendar, timezone and missing date")
 let reader = AccountUsageReader()
 func parse(_ limit: String, modern: Bool = true) -> AccountUsage? {
     let payload = modern ? "\"rateLimitsByLimitId\":{\"codex\":\(limit)}" : "\"rateLimits\":\(limit)"
