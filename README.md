@@ -6,9 +6,9 @@
 
 重大升级才升第一位；常规功能与局部改进升第二位，Bug 修复升第三位；日志、介绍与配图等文档修改不升版本。详见[版本规则](docs/versioning.md)。
 
-### 随身的 AI 开发助手，手机即可使用。
+### 桌面看额度，出门看任务。
 
-项目与任务 · 远程审批 · 额度与余额 · 小组件与提醒
+Mac 菜单栏 · 每日 token · 项目与任务 · 远程审批 · 三种尺寸小组件
 
 [所有版本下载](docs/downloads.md) · [界面展示](#界面展示) · [开始部署](#开始部署) · [更新日志](CHANGELOG.md) · [功能文档](#功能文档) · [反馈问题](https://github.com/keeencra/codex-quota-watch-plus/issues)
 
@@ -20,41 +20,55 @@
 
 </div>
 
-**码伴 · CodeCompanion**（原 Codex Quota Watch Plus）是一套面向 iPhone 的 AI 开发助手。**Mac＋iPhone 即可使用，Apple Watch 为可选扩展。** 手机可以查看项目与任务、处理支持的审批请求、监控 Codex 额度、显示可选 DeepSeek 余额、使用桌面小组件及接收任务提醒；搭配手表后可抬腕查看和审批。
+**码伴 · CodeCompanion**（原 Codex Quota Watch Plus）是一套连接 Mac、iPhone 与 Apple Watch 的 AI 开发助手。**Mac 显示端可独立使用；配合 iPhone 查看任务和处理审批，Apple Watch 为可选扩展。** 手机可以查看项目与任务、处理支持的审批请求、监控 Codex 额度、显示可选 DeepSeek 余额、使用桌面小组件及接收任务提醒；搭配手表后可抬腕查看和审批。
 
 Mac 服务仍需在线提供数据；外出使用需配置 HTTPS。独立品牌保留原有开源许可证、版权与上游致谢。
 
-它适合已经使用 Mac 运行 Codex，希望在离开桌面时仍能掌握任务进展的人。项目由 **keeencra** 持续维护，包含原生 SwiftUI App、iPhone 小组件、Python 后端及部署脚本。
+它适合已经使用 Mac 运行 Codex，希望在离开桌面时仍能掌握任务进展的人。项目由 **keeencra** 持续维护，包含原生 Mac 菜单栏面板、Mac／iPhone 小组件、手机与手表 SwiftUI App、Python 后端及部署脚本。
 
 **从小红书旧帖来的朋友：你找对项目了。** 本项目原名 **Codex Quota Watch Plus**，现更名为 **码伴 · CodeCompanion**；仓库地址仍为 `keeencra/codex-quota-watch-plus`，旧链接继续有效，v1.0.0 等历史源码仍可下载。
 
-最新 v3.3.1 修复旧聊天归档、日志积压与乱序读取导致的“可能停滞”误报，保留 v3.3.0 的每日 token 趋势与统一滚动面板。[查看更新说明](CHANGELOG.md)。
+## 当前版本能做什么
 
-v3.2.0 优化大号组件居中与倒计时，修复菜单栏漏显示美元余额。[查看本次演示图](docs/widgets.md)。
+| 使用场景 | 当前能力 |
+| --- | --- |
+| 只在 Mac 使用 | 菜单栏查看 Codex 额度与 DeepSeek 双币余额，展开统一滚动面板，查看最近 7 天每日 token、精确明细和任务记录 |
+| 手机看进展 | 查看项目分组、任务标题、运行阶段和待审批请求；通过已配置的 HTTPS 连接访问 Mac |
+| 桌面随时查看 | Mac 与 iPhone 均从一个「码伴」入口添加小／中／大号组件，显示额度、余额和重置卡信息 |
+| 手表抬腕查看 | 查看额度和任务，处理已接入且仍有效的审批；Apple Watch 为可选扩展 |
+| 接收任务提醒 | Bark 静音通知、完成提醒带任务名称；已归档历史和积压日志不触发“可能停滞”误报 |
 
-v3.1.0 集成 Mac 菜单栏显示端，统一小／中／大号组件，新增重置卡只读展示，并修复套餐识别、组件单色显示及 token 重复统计。Mac 显示端可独立使用，手机与手表按需部署；[查看新增内容和 Bug 修复](CHANGELOG.md)。
+**最近更新：** v3.3.1 修复旧任务停滞误报；v3.3.0 新增每日 token 趋势与统一滚动面板；v3.2.1 修复公历日期显示；v3.2.0 改进大号组件排版、倒计时与菜单栏双币种显示。[完整变化与验证说明](CHANGELOG.md) · [当前版本源码](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.3.1)
 
-## 小组件统一分类（v3.1.0）
+## Mac：余额、每日用量与任务详情连续查看
 
-Mac 与 iPhone 均通过一个 **码伴** 入口添加小号／中号／大号组件。速览保留分段进度条和有／无 DeepSeek 两套布局；总览集中展示额度、重置卡到期记录与账户余额。Mac 显示近期任务用量，手机显示今日用量，保留准确的统计口径。
+点击菜单栏打开同一个深色滚动面板：先看 Codex 额度和 DeepSeek 人民币／美元余额，再向下查看用量趋势、每日精确整数、账户与重置卡以及最近任务。顶部快捷定位，刷新保留阅读位置，长任务标题自动换行。
 
-[查看组件分类、添加方法及各场景展示图](docs/widgets.md)
+| 额度与最近 7 天趋势 | 每日精确用量与账户详情 | 任务用量与完整标题 |
+| --- | --- | --- |
+| <img src="docs/assets/v3.3.0-daily-tokens-plus.png" width="260" alt="当前 Mac 面板总览与每日 token 趋势，v3.3.0 原生离屏渲染、虚构数据"> | <img src="docs/assets/v3.3.0-daily-tokens-detail.png" width="260" alt="同一面板下滚后的每日精确用量和账户详情，v3.3.0 原生离屏渲染、虚构数据"> | <img src="docs/assets/v3.3.0-daily-tokens-tasks.png" width="260" alt="同一面板的任务完整标题及累计用量，v3.3.0 原生离屏渲染、虚构数据"> |
 
-## Mac 显示端已集成（v3.1.0）
+以上是本项目 AppKit 原生视图的离屏渲染，展示同一面板的三个滚动位置；不是桌面实机截图。v3.3.1 仅修改通知判断，沿用这些面板界面。
 
-码伴现在也有原生 Mac 显示模块：菜单栏圆环和紧凑数字、深色额度面板，以及小／中／大号桌面小组件。可以只在 Mac 使用；需要手机或手表时，再部署对应服务。本版源码已包含 Mac 显示模块。
+每日 token 按本地最近 7 个公历日统计。Codex 来自本机会话增量，含缓存输入但不重复相加；DeepSeek 来自本机工具调用记录，不包含其他软件或设备。两张图使用独立刻度，0 表示无已记录用量，— 表示记录不可用；这些数值不是账户全量账单。最近任务累计用量与按日用量分别标注。
+
+只使用 Mac 显示端时运行：
 
 ```bash
 bash scripts/install-macos.sh
 ```
 
-[Mac 构建、安装与数据关系](macos/README.md)。已有 Codex Usage Bar 用户沿用签名标识和共享容器；DeepSeek 优先复用码伴本地凭据。Mac 菜单栏和桌面组件共享摘要，手机／手表保持现有采集服务与刷新周期。
+[Mac 构建、安装与数据关系](macos/README.md)。现有用户沿用签名标识与共享容器；DeepSeek 优先复用码伴本地凭据。需要手机与手表的任务功能时，继续完成下方服务与配对部署。
 
-| Mac 额度面板 | 大号桌面小组件 |
-| --- | --- |
-| <img src="docs/assets/v3.1.0-mac-plus.png" width="300" alt="v3.1.0 码伴 Mac 原生 AppKit 额度面板，离屏虚构数据演示"> | <img src="docs/assets/v3.1.0-mac-widget-large.png" width="364" alt="v3.1.0 码伴 Mac 大号 WidgetKit 余额和重置券，离屏虚构数据演示"> |
+## 小组件：一个入口，三种尺寸
 
-以上来自本项目实际原生视图的离屏渲染，并非桌面实机截图；菜单栏的「码伴 Mac」菜单标题、关于和连接帮助入口不包含在面板图中。
+Mac 和 iPhone 均通过一个 **码伴** 入口添加小号／中号／大号组件。小号快速看额度，中号兼顾余额与用量，大号展示额度、重置卡与余额详情。未配置 DeepSeek 时保留相应的 Codex 布局；套餐窗口以实际返回数据为准。
+
+| 小号 · 额度速览 | 中号 · 额度与余额 | 大号 · 账户总览 |
+| --- | --- | --- |
+| <img src="docs/assets/v3.2.0-widget-small-plus.png" width="200" alt="小号组件，v3.2.0 原生离屏渲染、虚构数据"> | <img src="docs/assets/v3.2.0-widget-medium.png" width="320" alt="中号组件，v3.2.0 原生离屏渲染、虚构数据"> | <img src="docs/assets/v3.2.0-widget-large-pro.png" width="300" alt="大号组件额度、重置卡倒计时和余额，v3.2.0 原生离屏渲染、虚构数据"> |
+
+以上为本项目 SwiftUI 视图离屏渲染及虚构数据；v3.3.1 沿用这套组件布局，实际系统着色效果可能不同。Mac 组件显示近期任务用量，手机组件显示今日用量，采样口径不同；菜单栏每日统计另行展示。[添加方法、刷新与其他场景](docs/widgets.md)
 
 ## 界面展示
 
@@ -80,17 +94,7 @@ Plus／Pro 截图展示不同数据窗口，**不表示所有该套餐账号固�
 | --- | --- | --- |
 | <img src="docs/assets/gallery/v3.0.0/iphone-quota-pro-ok.jpg" width="230" alt="v3.0.0 Pro 额度，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-quota-plus-ok.jpg" width="230" alt="v3.0.0 Plus 额度，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-balance-pro-ok.jpg" width="230" alt="v3.0.0 DeepSeek 双币种详情，模拟器虚构数据展示"> |
 
-### 小组件：四种组合，各自保留完整布局
-
-每张图从上到下依次为小号、中号、刷新失败时的中号。无 DeepSeek 保留 Codex 原版内容与今日用量图；有 DeepSeek 保留额度进度条，并显示分币种余额。
-
-| Pro · 有 DeepSeek | Pro · 无 DeepSeek |
-| --- | --- |
-| <img src="docs/assets/gallery/v3.0.0/iphone-widgets-pro-ok.jpg" width="300" alt="v3.0.0 Pro · 有 DeepSeek，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-widgets-pro-not_configured.jpg" width="300" alt="v3.0.0 Pro · 无 DeepSeek，模拟器虚构数据展示"> |
-
-| Plus · 有 DeepSeek | Plus · 无 DeepSeek |
-| --- | --- |
-| <img src="docs/assets/gallery/v3.0.0/iphone-widgets-plus-ok.jpg" width="300" alt="v3.0.0 Plus · 有 DeepSeek，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-widgets-plus-not_configured.jpg" width="300" alt="v3.0.0 Plus · 无 DeepSeek，模拟器虚构数据展示"> |
+小组件请查看上方当前三种尺寸展示；v3.0.0 的早期组件图片保留在[历史图库](docs/gallery.md)，不作为当前组件入口与布局说明。
 
 ### Apple Watch：可选扩展，首页三页与独立功能页
 
@@ -141,7 +145,7 @@ Plus／Pro 截图展示不同数据窗口，**不表示所有该套餐账号固�
 
 ## DeepSeek 账户余额
 
-手机与手表总览新增 DeepSeek 入口，可查看人民币／美元总余额、充值余额、赠送余额和采集时间；手机小号／中号桌面小组件也显示双币种余额。API Key 仅保留在 Mac，沿用原 HTTPS 配对同步。[配置与使用](docs/deepseek-balance.md)。
+Mac、手机与手表均可显示 DeepSeek 余额；手机与手表总览提供 DeepSeek 入口，可查看人民币／美元总余额、充值余额、赠送余额和采集时间；Mac／iPhone 小组件按尺寸显示余额信息。API Key 仅保留在 Mac，沿用原 HTTPS 配对同步。[配置与使用](docs/deepseek-balance.md)。
 
 ## 功能一览
 
@@ -151,7 +155,8 @@ Plus／Pro 截图展示不同数据窗口，**不表示所有该套餐账号固�
 | 任务进展 | 项目分组、侧栏标题、筛选、阶段与事件 | 项目分组及任务详情 | Hooks + 增量日志观察，处理旧状态 |
 | 逐项审批 | 查看完整操作、批准或拒绝 | 查看完整操作、批准或拒绝 | 接收支持的请求、检验有效期并返回决定 |
 | 额度监控 | 套餐、窗口、重置、今日 Tokens | 额度页与今日用量页 | 读取本机 Codex 返回的额度与用量 |
-| 手机桌面小组件 | 小号／中号，独立刷新与缓存提示 | 本项目未提供表盘复杂功能 | 通过认证接口提供额度数据 |
+| 桌面小组件 | 小号／中号／大号，一个入口添加 | 本项目未提供表盘复杂功能 | 本机也提供三种尺寸，共享摘要与系统刷新 |
+| 每日 token 趋势 | 保留手机今日用量口径 | 保留手表今日用量页 | 菜单栏最近 7 天 Codex／DeepSeek 独立柱状图与精确明细 |
 | 任务提醒 | Bark 静音通知，兼容 ntfy | 镜像 iPhone 通知 | 去重、重试、过期和停滞检查 |
 | 外出访问 | 通过固定 HTTPS 地址连接 | 通过配置的互联网连接访问 | 运行认证网关与隧道，Mac 必须在线 |
 | 自动续签 | 满足条件时重新安装签名包 | 随配套流程续签安装 | 检查签名、构建、安装并记录结果 |
@@ -170,7 +175,7 @@ Plus／Pro 截图展示不同数据窗口，**不表示所有该套餐账号固�
 
 ## 从查看状态，到处理关键节点
 
-**任务进展与提醒。** 结束提醒可显示「产品开发 · 修复小组件 · 本轮已结束」，名称随 Codex 侧栏同步。Hooks 与增量日志观察器共同记录运行、等待回复、结束和中断等状态，并去重。活动任务约 10 分钟没有新事件时，可发送“可能停滞”提醒。Bark 默认为静音通知，保留 ntfy 兼容；Apple Watch 可镜像手机通知。
+**任务进展与提醒。** 结束提醒可显示「产品开发 · 修复小组件 · 本轮已结束」，名称随 Codex 侧栏同步。Hooks 与增量日志观察器共同记录运行、等待回复、结束和中断等状态，并去重。仅未归档且日志已读到末尾的活动任务，约 10 分钟无新事件时可发送一次“可能停滞”提醒；归档历史、积压日志和已被新轮次替代的旧记录不触发误报。Bark 默认为静音通知，保留 ntfy 兼容；Apple Watch 可镜像手机通知。
 
 **手表远程审批。** 支持已接入的桌面原生命令审批和 `PermissionRequest` Hook。每次展示具体操作，再由你确认；请求过期、失去等待进程或任务结束后失效。不会自动批准，也不会把批准扩展为永久授权。原生文件变更审批和文字问答等仍需在 Mac 处理，详见 [审批支持范围](docs/remote-approval.md)。
 
@@ -201,7 +206,7 @@ flowchart LR
 
 下载历史版本或当前版本，请进入 [所有版本下载](docs/downloads.md)；每个版本都有固定源码 ZIP 入口。
 
-需要一台运行 Codex 的 Mac、Xcode 和 iPhone；Apple Watch 可选，没有手表也可完成手机配置。原生 App 需要自行构建和签名，本仓库不提供 App Store 安装包。
+只使用 Mac 面板与桌面组件可按上方 Mac 安装入口配置。以下手机／手表部署需要一台运行 Codex 的 Mac、Xcode 和 iPhone；Apple Watch 可选，没有手表也可完成手机配置。原生 App 需要自行构建和签名，本仓库不提供 App Store 安装包。
 
 ### 1. 下载并启动基础额度服务
 
