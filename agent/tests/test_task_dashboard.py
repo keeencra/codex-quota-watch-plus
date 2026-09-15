@@ -210,3 +210,57 @@ def test_project_manifest_keeps_empty_projects_in_order_without_private_roots(tm
     assert data['projects'] == [{'id':'1','name':'Project 1'}, {'id':'0','name':'Project 0'}]
     assert data['tasks'] == []
     assert '/private' not in json.dumps(data)
+
+
+def sidebar_state(home, sections, order):
+    (home / '.codex-global-state.json').write_text(json.dumps({
+        'electron-persisted-atom-state': {'sidebar-custom-sections-v3': {
+            'account': {'sections': sections, 'sectionOrder': order}}},
+        'app-server-project-id-by-legacy-project-id-by-host': {'local:' + str(home): {'old': '1'}},
+    }))
+
+
+def test_sidebar_sections_preserve_mixed_items_aliases_and_empty_projects(tmp_path):
+    with catalog_db(tmp_path) as db:
+        for i in range(3):
+            db.execute('INSERT INTO projects VALUES (?,?,?)', (str(i), 'Project '+str(i), i))
+        for tid, pid, archived in [('a', '0', 0), ('b', None, 0), ('gone', None, 1)]:
+            db.execute('INSERT INTO threads VALUES (?,?,?,?,?,?,?,?)', (tid, 'Title', None, pid, '/private/work', archived, 50, 100))
+    sidebar_state(tmp_path, [
+        {'id': 'work', 'name': 'Work', 'itemKeys': ['codex:thread:local:b', 'codex:project:0', 'codex:thread:remote:a', 'codex:thread:local:gone']},
+        {'id': 'invest', 'name': 'Invest', 'itemKeys': ['codex:project:old', 'codex:project:1', 'chatgpt:project:2']},
+    ], ['custom:invest', 'custom:work', 'threads', 'chats'])
+    data = task_dashboard(TaskEventStore(tmp_path/'events'), codex_home=tmp_path)
+    assert [s['name'] for s in data['sections']] == ['Invest', 'Work', '项目']
+    assert data['sections'][1]['items'] == [{'kind':'task','id':'b'}, {'kind':'project','id':'0'}]
+    assert [p['id'] for p in data['projects']] == ['1', '0', '2']
+    assert [t['id'] for t in data['tasks']] == ['b', 'a']
+    assert '/private' not in json.dumps(data)
+    sidebar_state(tmp_path, [{'id':'work','name':'Renamed','itemKeys':['codex:project:0']}], ['threads', 'custom:work'])
+    refreshed = task_dashboard(TaskEventStore(tmp_path/'events'), codex_home=tmp_path)
+    assert [s['name'] for s in refreshed['sections']] == ['项目', 'Renamed', '任务']
+
+
+def test_sections_use_current_account_and_fail_closed_for_ambiguous_accounts(tmp_path):
+    with catalog_db(tmp_path):
+        pass
+    accounts = {'one': {'sections':[{'id':'a','name':'A'}]}, 'two': {'sections':[{'id':'b','name':'B'}]}}
+    (tmp_path/'.codex-global-state.json').write_text(json.dumps({'electron-persisted-atom-state': {'sidebar-custom-sections-v3':accounts}}))
+    store = TaskEventStore(tmp_path/'events')
+    assert task_dashboard(store, codex_home=tmp_path)['sections'] == []
+    (tmp_path/'auth.json').write_text(json.dumps({'tokens': {'account_id':'two'}}))
+    assert [s['name'] for s in task_dashboard(store, codex_home=tmp_path)['sections']] == ['B']
+    (tmp_path/'auth.json').write_text(json.dumps({'tokens': {'account_id':'unknown'}}))
+    assert task_dashboard(store, codex_home=tmp_path)['sections'] == []
+
+
+def test_sqlite_section_membership_and_pins_keep_tasks_unique(tmp_path):
+    with catalog_db(tmp_path) as db:
+        for column in ['thread_section_id TEXT', 'section_position INTEGER', 'is_pinned INTEGER']:
+            db.execute('ALTER TABLE threads ADD COLUMN '+column)
+        for tid, pos, pin in [('a',2,0), ('b',1,0), ('p',0,1)]:
+            db.execute('INSERT INTO threads VALUES (?,?,?,?,?,?,?,?,?,?,?)', (tid,'Task',None,None,'/work',0,50,100,'native',pos,pin))
+    sidebar_state(tmp_path, [{'id':'custom','name':'Custom','hostSectionIds':{'local':'native'},'itemKeys':[]}], ['custom:custom'])
+    data = task_dashboard(TaskEventStore(tmp_path/'events'), codex_home=tmp_path)
+    assert [s['id'] for s in data['sections']] == ['pinned','custom']
+    assert [i['id'] for i in data['sections'][1]['items']] == ['b','a']
