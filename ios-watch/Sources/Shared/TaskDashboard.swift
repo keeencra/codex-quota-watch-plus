@@ -48,13 +48,74 @@ public struct DashboardProject: Decodable, Identifiable {
     public let name: String
 }
 
+public struct DashboardSection: Decodable, Identifiable {
+    public let id: String
+    public let name: String
+    public let items: [DashboardSectionItem]
+}
+
+public struct DashboardSectionItem: Decodable {
+    public let kind: String
+    public let id: String
+}
+
+public struct TaskSidebarSection: Identifiable {
+    public let id: String
+    public let name: String?
+    public var groups: [TaskProjectGroup]
+}
+
 public struct TaskDashboardSnapshot: Decodable {
     public let updatedAt: String
     public let tasks: [DashboardTask]
     public var projects: [DashboardProject]? = nil
-    enum CodingKeys: String, CodingKey { case tasks, projects; case updatedAt = "updated_at" }
+    public var sections: [DashboardSection]? = nil
+    enum CodingKeys: String, CodingKey { case tasks, projects, sections; case updatedAt = "updated_at" }
     public var runningCount: Int { tasks.filter(\.isRunning).count }
     public var attentionCount: Int { tasks.filter(\.needsAttention).count }
+
+    public func sidebarSections(activeOnly: Bool) -> [TaskSidebarSection] {
+        guard let sections, !sections.isEmpty else {
+            let groups = projectGroups(activeOnly: activeOnly)
+            return groups.isEmpty ? [] : [TaskSidebarSection(id: "legacy", name: nil, groups: groups)]
+        }
+        let visible = tasks.filter { !activeOnly || $0.isRunning || $0.needsAttention }
+        let directIDs = Set(sections.flatMap(\.items).filter { $0.kind == "task" }.map(\.id))
+        var usedTasks = Set<String>()
+        var usedProjects = Set<String>()
+        var usedSections = Set<String>()
+        var result: [TaskSidebarSection] = []
+        for section in sections where usedSections.insert(section.id).inserted {
+            var groups: [TaskProjectGroup] = []
+            for item in section.items {
+                if item.kind == "project", usedProjects.insert(item.id).inserted {
+                    let members = visible.filter { $0.groupingID == item.id && !directIDs.contains($0.id) }
+                    let project = projects?.first { $0.id == item.id }
+                    guard project != nil || !members.isEmpty else { continue }
+                    if activeOnly && members.isEmpty { continue }
+                    groups.append(TaskProjectGroup(id: "project:" + item.id,
+                        name: project?.name ?? members.first?.project ?? "未命名项目", tasks: members))
+                    usedTasks.formUnion(members.map(\.id))
+                } else if item.kind == "task", let task = visible.first(where: { $0.id == item.id }),
+                          usedTasks.insert(task.id).inserted {
+                    groups.append(TaskProjectGroup(id: "task:" + task.id, name: "", tasks: [task], isProject: false))
+                }
+            }
+            if !groups.isEmpty || !activeOnly {
+                result.append(TaskSidebarSection(id: section.id, name: section.name, groups: groups))
+            }
+        }
+        // Preserve tasks/projects arriving between independent desktop updates.
+        var remainder = projectGroups(activeOnly: activeOnly)
+        for index in remainder.indices {
+            remainder[index].tasks.removeAll { usedTasks.contains($0.id) }
+        }
+        remainder.removeAll { $0.tasks.isEmpty && (activeOnly || usedProjects.contains($0.id)) }
+        if !remainder.isEmpty {
+            result.append(TaskSidebarSection(id: "fallback", name: "其他任务", groups: remainder))
+        }
+        return result
+    }
 
     public func projectGroups(activeOnly: Bool) -> [TaskProjectGroup] {
         var groups: [TaskProjectGroup] = []
@@ -76,6 +137,7 @@ public struct TaskProjectGroup: Identifiable {
     public let id: String
     public let name: String
     public var tasks: [DashboardTask]
+    public var isProject: Bool = true
 }
 
 #if canImport(SwiftUI)
@@ -216,31 +278,41 @@ public struct TaskListView: View {
             if let error = model.taskError {
                 Text(error + "；以下为上次读取的记录。").font(.caption).foregroundStyle(.orange)
             }
-            let groups = model.snapshot?.projectGroups(activeOnly: activeOnly) ?? []
-            if groups.isEmpty {
+            let sections = model.snapshot?.sidebarSections(activeOnly: activeOnly) ?? []
+            if sections.isEmpty {
                 Label(model.snapshot == nil ? "等待任务数据" : activeOnly ? "当前没有进行中的任务" : "当前没有任务", systemImage: "tray")
                     .font(.callout).foregroundStyle(.secondary)
             }
-            ForEach(groups) { group in
+            ForEach(sections) { section in
                 Section {
-                    if group.tasks.isEmpty {
-                        Text("暂无可显示的 Codex 任务").font(.caption).foregroundStyle(.secondary)
+                    if section.groups.isEmpty {
+                        Text("此分区暂无可显示的任务").font(.caption).foregroundStyle(.secondary)
                     }
-                    ForEach(group.tasks) { task in
-                        NavigationLink {
-                            TaskProgressView(id: task.id, model: model, base: base, token: token)
-                        } label: {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(task.displayTitle).font(.headline).lineLimit(2)
-                                Text(task.statusLabel).font(.caption.weight(.semibold))
-                                    .foregroundStyle(task.needsAttention ? Color.orange : task.isRunning ? Color.cyan : Color.secondary)
-                                Text(task.phase).font(.caption).foregroundStyle(.secondary).lineLimit(2)
-                            }.padding(.vertical, 4)
+                    ForEach(section.groups) { group in
+                        if group.isProject {
+                            Label("\(group.name) · \(group.tasks.count)", systemImage: "folder")
+                                .font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
+                        }
+                        if group.tasks.isEmpty {
+                            Text("暂无可显示的 Codex 任务").font(.caption).foregroundStyle(.secondary)
+                        }
+                        ForEach(group.tasks) { task in
+                            NavigationLink {
+                                TaskProgressView(id: task.id, model: model, base: base, token: token)
+                            } label: {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text(task.displayTitle).font(.headline).lineLimit(2)
+                                    Text(task.statusLabel).font(.caption.weight(.semibold))
+                                        .foregroundStyle(task.needsAttention ? Color.orange : task.isRunning ? Color.cyan : Color.secondary)
+                                    Text(task.phase).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                                }.padding(.vertical, 4)
+                            }
                         }
                     }
                 } header: {
-                    Label("\(group.name) · \(group.tasks.count)", systemImage: "folder")
-                        .textCase(nil)
+                    if let name = section.name {
+                        Text(name).font(.headline).textCase(nil)
+                    }
                 }
             }
             Button("刷新任务") { Task { await model.refresh(base: base, token: token) } }.disabled(model.loading)
