@@ -64,6 +64,31 @@ final class TaskDashboardTests: XCTestCase {
         snapshot = TaskDashboardSnapshot(updatedAt: "now", tasks: [task("free", "finished")], projects: snapshot.projects)
         XCTAssertEqual(snapshot.projectGroups(activeOnly: false).map(\.id), ["empty", "legacy:Project"])
     }
+    func testSidebarSectionsKeepHierarchyMixedOrderAndDirectTasksUnique() throws {
+        var a = task("a", "running"); a.projectID = "p"
+        var b = task("b", "finished"); b.projectID = "p"
+        let json = #"[{"id":"custom","name":"Work","items":[{"kind":"task","id":"a"},{"kind":"project","id":"p"}]},{"id":"threads","name":"项目","items":[{"kind":"project","id":"empty"}]}]"#
+        var snapshot = TaskDashboardSnapshot(updatedAt: "now", tasks: [a, b], projects: [
+            DashboardProject(id: "p", name: "Project"), DashboardProject(id: "empty", name: "Empty")])
+        snapshot.sections = try JSONDecoder().decode([DashboardSection].self, from: Data(json.utf8))
+        let sections = snapshot.sidebarSections(activeOnly: false)
+        XCTAssertEqual(sections.map(\.name), ["Work", "项目"])
+        XCTAssertEqual(sections[0].groups.map(\.id), ["task:a", "project:p"])
+        XCTAssertEqual(sections[0].groups[1].tasks.map(\.id), ["b"])
+        XCTAssertFalse(sections[0].groups[0].isProject)
+        XCTAssertTrue(sections[1].groups[0].tasks.isEmpty)
+        let active = snapshot.sidebarSections(activeOnly: true)
+        XCTAssertEqual(active.count, 1)
+        XCTAssertEqual(active[0].groups.map(\.id), ["task:a"])
+    }
+    func testSidebarMissingItemsAndLegacyPayloadKeepTasksVisible() throws {
+        var snapshot = TaskDashboardSnapshot(updatedAt: "now", tasks: [task("a", "running")])
+        XCTAssertEqual(snapshot.sidebarSections(activeOnly: false)[0].id, "legacy")
+        let json = #"[{"id":"empty","name":"Empty","items":[{"kind":"project","id":"deleted"},{"kind":"task","id":"deleted"}]}]"#
+        snapshot.sections = try JSONDecoder().decode([DashboardSection].self, from: Data(json.utf8))
+        XCTAssertEqual(snapshot.sidebarSections(activeOnly: false).map(\.id), ["empty", "fallback"])
+        XCTAssertEqual(snapshot.sidebarSections(activeOnly: true)[0].groups[0].tasks.map(\.id), ["a"])
+    }
     private func task(_ id: String, _ status: String, stale: Bool = false) -> DashboardTask {
         DashboardTask(id: id, project: "Project", title: nil, status: status, phase: "phase", updatedAt: "now", startedAt: "then", stale: stale, recent: [])
     }
