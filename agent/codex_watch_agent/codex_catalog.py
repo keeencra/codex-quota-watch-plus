@@ -20,6 +20,7 @@ class DesktopCatalog(dict):
     def __init__(self):
         super().__init__()
         self.projects = []
+        self.sections = []
 
 
 def read_catalog(home):
@@ -35,7 +36,7 @@ def read_catalog(home):
         with closing(sqlite3.connect((home / 'state_5.sqlite').as_uri() + '?mode=ro', uri=True, timeout=1)) as db:
             db.row_factory = sqlite3.Row
             columns = {r['name'] for r in db.execute('PRAGMA table_info(threads)')}
-            fields = [c for c in ('id', 'name', 'title', 'cwd', 'project_id', 'archived', 'created_at', 'updated_at') if c in columns]
+            fields = [c for c in ('id', 'name', 'title', 'cwd', 'project_id', 'archived', 'created_at', 'updated_at', 'thread_section_id', 'section_position', 'is_pinned') if c in columns]
             if 'id' in fields:
                 threads.update({r['id']: dict(r) for r in db.execute('SELECT ' + ','.join(fields) + ' FROM threads')})
                 threads.available = True
@@ -106,9 +107,97 @@ def read_catalog(home):
         thread['project'] = project['name'] if project else '未分组'
         thread['project_id'] = project['id'] if project else 'ungrouped'
         thread['project_order'] = order.index(project['id']) if project else len(order)
+    _read_sections(home, state, aliases, threads)
     return threads
 
 
 def fallback_project(name):
     name = label(name, 80) or '其他任务'
     return name, 'legacy-' + hashlib.sha256(name.encode()).hexdigest()[:16]
+
+
+def _read_sections(home, state, aliases, catalog):
+    """Translate the current account's unified sidebar, without exposing host paths."""
+    atoms = state.get('electron-persisted-atom-state', {})
+    if not isinstance(atoms, dict):
+        return
+    accounts = atoms.get('sidebar-custom-sections-v3', {})
+    if not isinstance(accounts, dict):
+        return
+    try:
+        account = json.loads((home / 'auth.json').read_text()).get('tokens', {}).get('account_id')
+    except (OSError, ValueError, AttributeError):
+        account = None
+    config = accounts.get(account) if account else next(iter(accounts.values()), None) if len(accounts) == 1 else None
+    if not isinstance(config, dict) or not isinstance(config.get('sections'), list):
+        return
+    projects = {p['id']: p for p in catalog.projects}
+    specs = {'pinned': {'id': 'pinned', 'name': '置顶', 'items': []},
+             'threads': {'id': 'threads', 'name': '项目', 'items': []},
+             'chats': {'id': 'chats', 'name': '任务', 'items': []}}
+    custom, host_sections = [], {}
+    for section in config['sections']:
+        if not isinstance(section, dict) or not label(section.get('id')):
+            continue
+        sid = section['id']
+        if sid in specs:
+            continue
+        custom.append(sid)
+        specs[sid] = {'id': sid, 'name': label(section.get('name'), 80) or '未命名分区', 'items': []}
+        hosts = section.get('hostSectionIds', {})
+        if isinstance(hosts, dict) and isinstance(hosts.get('local'), str):
+            host_sections[hosts['local']] = sid
+    order = config.get('sectionOrder', [])
+    order = order if isinstance(order, list) else []
+    order = [v.removeprefix('custom:') for v in order if isinstance(v, str)]
+    order = list(dict.fromkeys(v for v in ['pinned'] + order + custom + ['threads', 'chats'] if v in specs))
+    used_projects, used_tasks = set(), set()
+
+    def add(sid, kind, identity):
+        if kind == 'project':
+            identity = aliases.get(identity, identity)
+            if identity not in projects or identity in used_projects:
+                return
+            used_projects.add(identity)
+        else:
+            if identity not in catalog or catalog[identity].get('archived') or identity in used_tasks:
+                return
+            used_tasks.add(identity)
+        specs[sid]['items'].append({'kind': kind, 'id': identity})
+
+    # Explicit pinning wins over stale section entries.
+    pinned = state.get('pinned-project-ids', [])
+    for pid in pinned if isinstance(pinned, list) else []:
+        if isinstance(pid, str):
+            add('pinned', 'project', pid)
+    for tid, task in catalog.items():
+        if task.get('is_pinned'):
+            add('pinned', 'task', tid)
+    for section in config['sections']:
+        if not isinstance(section, dict) or section.get('id') not in custom:
+            continue
+        keys = section.get('itemKeys', [])
+        for key in keys if isinstance(keys, list) else []:
+            if not isinstance(key, str):
+                continue
+            if key.startswith('codex:project:'):
+                add(section['id'], 'project', key[len('codex:project:'):])
+            elif key.startswith('codex:thread:local:'):
+                add(section['id'], 'task', key[len('codex:thread:local:'):])
+    # Newly moved local tasks can arrive in SQLite before the UI item list.
+    for tid, task in sorted(catalog.items(), key=lambda pair: pair[1].get('section_position') or 0):
+        if task.get('thread_section_id') in host_sections:
+            add(host_sections[task['thread_section_id']], 'task', tid)
+    for pid in projects:
+        add('threads', 'project', pid)
+    for tid, task in catalog.items():
+        if task['project_id'] not in projects:
+            add('chats', 'task', tid)
+    catalog.sections = [specs[sid] for sid in order if specs[sid]['items'] or sid in custom]
+    rank = {}
+    for section in catalog.sections:
+        for item in section['items']:
+            rank[(item['kind'], item['id'])] = len(rank)
+    catalog.projects.sort(key=lambda p: rank.get(('project', p['id']), len(rank)))
+    for tid, task in catalog.items():
+        task['project_order'] = rank.get(('task', tid), rank.get(('project', task['project_id']), len(rank)))
