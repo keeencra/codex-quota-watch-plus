@@ -1,6 +1,6 @@
 # 所有版本下载
 
-当前版本 **v3.3.1 · Bug 修复 · 第 17 次迭代**。以下均为本项目的完整源码，包含 Mac 后端、iPhone／Apple Watch App 和部署文档。
+当前版本 **v3.3.2 · Bug 修复 · 第 18 次迭代**。以下均为本项目的完整源码，包含 Mac 后端、iPhone／Apple Watch App 和部署文档。
 
 重大升级才升第一位；常规功能与局部改进升第二位，Bug 修复升第三位；日志、介绍与配图等文档修改不升版本。历史有效版本不改号或下载内容。[查看版本规则](versioning.md)。
 
@@ -10,7 +10,8 @@
 
 | 版本 | 更新类型 | 主要变化 | 源码 ZIP | 对应代码 |
 | --- | --- | --- | --- | --- |
-| **v3.3.1** | Bug 修复 | 旧聊天与乱序日志不再触发停滞误报 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v3.3.1.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.3.1) |
+| **v3.3.2** | Bug 修复 | 侧栏分区与混合任务排序，兼容 iOS 26／27 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v3.3.2.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.3.2) |
+| v3.3.1 | Bug 修复 | 旧聊天与乱序日志不再触发停滞误报 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v3.3.1.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.3.1) |
 | v3.3.0 | 小更新 | Mac 每日 token 趋势与统一滚动面板 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v3.3.0.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.3.0) |
 | v3.2.1 | Bug 修复 | Mac 面板重置／刷新日期固定公历 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v3.2.1.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.2.1) |
 | v3.2.0 | 小更新 | 大号组件居中、倒计时及菜单栏双币种修复 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v3.2.0.zip) | [Release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.2.0) |
