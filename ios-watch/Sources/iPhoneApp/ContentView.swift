@@ -75,6 +75,11 @@ struct ContentView: View {
                         DeepSeekBalanceCard(balance: snapshot.deepseek)
                     }.buttonStyle(.plain)
                 }
+                Section("实验性接入") {
+                    NavigationLink("Antigravity") {
+                        AntigravityStatusView(base: macURL, token: tokenInput)
+                    }
+                }
                 Section("连接与同步") {
                     DisclosureGroup("Mac 连接设置") {
                     TextField("Mac 服务地址", text: $macURL)
