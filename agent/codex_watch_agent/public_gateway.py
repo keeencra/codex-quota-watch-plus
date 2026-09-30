@@ -124,6 +124,13 @@ async def configure_bark(request: Request):
     return {'ok': True, 'provider': 'bark'}
 
 
+
+@app.get("/antigravity", dependencies=[Depends(require_token)])
+def antigravity_status():
+    from .antigravity import AntigravityStore
+    return AntigravityStore().snapshot()
+
+
 def run():
     uvicorn.run("codex_watch_agent.public_gateway:app", host="127.0.0.1", port=8788, access_log=False)
 

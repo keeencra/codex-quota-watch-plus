@@ -218,6 +218,13 @@ async def watch_compact(force: Annotated[bool, Query()] = False) -> dict[str, ob
     return payload
 
 
+
+@app.get("/antigravity", dependencies=[Depends(require_token)])
+def antigravity_status():
+    from .antigravity import AntigravityStore
+    return AntigravityStore().snapshot()
+
+
 def run() -> None:
     validate_runtime_settings()
     uvicorn.run("codex_watch_agent.main:app", host=settings.host, port=settings.port, reload=False)
