@@ -79,6 +79,10 @@ struct WatchContentView: View {
                             } else {
                                 Text("请先在手机完成配对和同步").font(.caption).foregroundStyle(.secondary)
                             }
+                            NavigationLink("Antigravity · 实验性") {
+                                let config = WatchAgentConfigStore().load()
+                                AntigravityStatusView(base: config?.macURL ?? "", token: config?.token ?? "")
+                            }
                             NavigationLink {
                                 CodexQuotaPage(snapshot: receiver.snapshot)
                             } label: {
