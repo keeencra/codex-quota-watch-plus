@@ -277,3 +277,30 @@ def test_historical_completion_is_not_pushed_as_new(store):
     with mock_client(calls) as client:
         assert deliver_pending(store,client=client)==0
     assert not calls
+
+
+def test_observer_replay_keeps_history_without_alert(store):
+    now = time.time()
+    store.record(event('Stop', source='observer'), occurred_at=now-1800)
+    with store.connection() as db:
+        assert db.execute('SELECT status FROM turns').fetchone()[0] == 'finished'
+        assert db.execute('SELECT COUNT(*) FROM outbox').fetchone()[0] == 0
+
+
+def test_distinct_live_observer_completions_are_not_throttled(store):
+    now = time.time()
+    for turn in ('a', 'b'):
+        payload = event('Stop', source='observer')
+        payload['turn_id'] = turn
+        store.record(payload, occurred_at=now)
+        store.record(payload, occurred_at=now)
+    with store.connection() as db:
+        assert db.execute('SELECT COUNT(*) FROM outbox').fetchone()[0] == 2
+
+
+def test_observer_without_source_clock_is_history_only_but_hooks_remain_live(store):
+    store.record(event('Stop', source='observer'))
+    payload = event('Stop');payload['turn_id'] = 'hook'
+    store.record(payload)
+    with store.connection() as db:
+        assert db.execute('SELECT COUNT(*) FROM outbox').fetchone()[0] == 1
