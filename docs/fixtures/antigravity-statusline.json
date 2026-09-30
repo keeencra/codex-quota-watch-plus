@@ -1,0 +1,8 @@
+{
+  "product": "antigravity",
+  "conversation_id": "codecompanion-synthetic-session",
+  "model": {"id": "demo-model", "display_name": "演示模型"},
+  "quota": {"demo-weekly": {"remaining_fraction": 0.72, "reset_time": "2026-10-07T00:00:00Z"}},
+  "agent_state": "working",
+  "tool_confirmation_pending": false
+}
