@@ -112,9 +112,17 @@ class TaskEventStore:
                 request_id = event.get('tool_use_id') or event.get('request_id') or action
                 if status == 'stalled':
                     request_id = timestamp  # One warning per observed idle interval.
-                alert_id = hashlib.sha256(f'{key}\0{status}\0{request_id}'.encode()).hexdigest()
-                db.execute('INSERT OR IGNORE INTO outbox(id,turn_id,status,created,due) VALUES(?,?,?,?,?)',
-                           (alert_id, key, status, now, now))
+                # Log copies/rotations can replay completed turns. Preserve their
+                # history but do not enqueue old alerts as newly-created work.
+                # Match the delivery TTL without throttling unrelated live turns.
+                historical_completion = (
+                    event.get('source') == 'observer' and status in ('finished', 'interrupted')
+                    and (occurred_at is None or now - occurred_at > 900 or occurred_at > now + 60)
+                )
+                if not historical_completion:
+                    alert_id = hashlib.sha256(f'{key}\0{status}\0{request_id}'.encode()).hexdigest()
+                    db.execute('INSERT OR IGNORE INTO outbox(id,turn_id,status,created,due) VALUES(?,?,?,?,?)',
+                               (alert_id, key, status, now, now))
             if status in ('finished', 'interrupted'):
                 # An approval that was never delivered is no longer actionable.
                 db.execute("UPDATE outbox SET expired=1 WHERE turn_id=? AND status IN ('needs_approval','needs_input','stalled') AND delivered_at IS NULL", (key,))

@@ -135,6 +135,7 @@ class TaskObserver:
         payload = record['payload']
         kind, record_type = payload.get('type'), record.get('type')
         event = {'session_id': session, 'turn_id': turn, 'cwd': project}
+        event['source'] = 'observer'
         key = hashlib.sha256(f'{session}\0{turn}'.encode()).hexdigest()[:24]
         status_event = None
         if kind == 'task_complete':
