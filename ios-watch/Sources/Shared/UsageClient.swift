@@ -109,7 +109,7 @@ public enum ApprovalClient {
         guard var parts = URLComponents(string: base.trimmingCharacters(in: .whitespacesAndNewlines)),
               parts.scheme == "https", let host = parts.host, !host.isEmpty,
               parts.user == nil, parts.password == nil,
-              (path.hasPrefix("/approvals") || path == "/tasks") else { return nil }
+              (path.hasPrefix("/approvals") || path == "/tasks" || path == "/antigravity") else { return nil }
         parts.path = path
         parts.query = nil
         parts.fragment = nil
@@ -137,6 +137,9 @@ public enum ApprovalClient {
 
     public static func list(base: String, token: String) async throws -> RemoteApprovalList {
         try JSONDecoder().decode(RemoteApprovalList.self, from: await send(base: base, token: token, path: "/approvals"))
+    }
+    public static func antigravity(base: String, token: String) async throws -> AntigravitySnapshot {
+        try JSONDecoder().decode(AntigravitySnapshot.self, from: await send(base: base, token: token, path: "/antigravity"))
     }
     public static func tasks(base: String, token: String) async throws -> TaskDashboardSnapshot {
         try JSONDecoder().decode(TaskDashboardSnapshot.self, from: await send(base: base, token: token, path: "/tasks"))
@@ -325,6 +328,112 @@ private struct ApprovalDetailView: View {
         } catch {
             current = nil
             message = "尚不能确认结果，请核对最新状态；不会自动重发批准。"
+        }
+    }
+}
+#endif
+
+#if canImport(SwiftUI)
+/// Same read-only surface on phone and watch; demo never enters shared caches.
+public struct AntigravityStatusView: View {
+    let base: String
+    let token: String
+    @State private var snapshot: AntigravitySnapshot?
+    @State private var demo = false
+    @State private var loading = false
+    @State private var message = "尚未读取"
+
+    public init(base: String, token: String, demo: Bool = false) {
+        self.base = base; self.token = token; self._demo = State(initialValue: demo)
+    }
+
+    public var body: some View {
+        List {
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                #if os(watchOS)
+                Text(demo ? "演示数据 · 全部虚构" : "实验性 · 只读状态")
+                    .font(.caption2).foregroundStyle(.orange)
+                #else
+                Text(demo ? "离线演示 · 全部数据虚构" : "实验性 · Antigravity CLI")
+                    .font(.headline).foregroundStyle(.orange)
+                Text("模型额度与最近会话状态。真实环境尚待验收；不提供现金余额、回复或远程审批。")
+                    .font(.caption)
+                #endif
+                Toggle("离线演示", isOn: $demo)
+                }
+            }
+            if demo {
+                sessions(AntigravitySnapshot.demo().sessions)
+            } else if let snapshot, !snapshot.sessions.isEmpty {
+                sessions(snapshot.sessions)
+            } else {
+                Text(message).font(.callout)
+            }
+            if !demo {
+                Button(loading ? "读取中…" : "刷新状态") { Task { await refresh() } }
+                    .disabled(loading)
+                Text("刷新读取 Mac 最近收到的状态，不会向 Google 查询新额度。超过 15 分钟未更新会标记过期。")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Section("任务操作") {
+                Text("等待确认时，请回到 Antigravity。码伴暂不发送回复、批准或拒绝，也不发送 Antigravity 的 Bark 提醒。")
+                    .font(.caption)
+                #if os(iOS)
+                Link("打开官方远程控制网页", destination: URL(string: "https://antigravity.google.com")!)
+                Text("需另行登录并在 Antigravity 启用远程控制；与码伴的配对无关。")
+                    .font(.caption).foregroundStyle(.secondary)
+                #endif
+            }
+        }
+        .navigationTitle("Antigravity")
+        .watchReturnButton()
+        .task(id: demo) { await refresh() }
+        .refreshable { if !demo { await refresh() } }
+    }
+
+    @ViewBuilder private func sessions(_ rows: [AntigravitySession]) -> some View {
+        ForEach(Array(rows.enumerated()), id: \.element.id) { index, session in
+            Section("会话 \(index + 1)") {
+                VStack(alignment: .leading, spacing: 8) {
+                Text(session.model.isEmpty ? "模型未知" : session.model).font(.headline)
+                TimelineView(.periodic(from: .now, by: 30)) { context in
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(session.stateLabel(at: context.date)).font(.caption)
+                            .foregroundStyle(session.isStale(at: context.date) ? Color.secondary : Color.primary)
+                        ForEach(Array(session.quotas.enumerated()), id: \.offset) { _, quota in
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(quota.name).font(.caption)
+                                Text("\(session.isStale(at: context.date) ? "上次剩余" : "剩余") \(quota.percentLabel)")
+                                    .font(.headline).monospacedDigit()
+                                if let date = quota.resetDate {
+                                    Text("重置：\(date.formatted(date: .abbreviated, time: .shortened))")
+                                        .font(.caption2)
+                                }
+                            }
+                        }
+                    }
+                }
+                if session.quotas.isEmpty { Text("未提供模型额度").font(.caption) }
+                Text(Date(timeIntervalSince1970: session.observedAt), style: .relative)
+                    .font(.caption2).foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    @MainActor private func refresh() async {
+        guard !loading, !demo else { return }
+        loading = true
+        defer { loading = false }
+        do {
+            let result = try await ApprovalClient.antigravity(base: base, token: token)
+            snapshot = result
+            message = result.status == "unavailable" ? "Mac 无法读取接入数据，请检查本地采集配置。" :
+                "尚未连接 Antigravity CLI。请在 Mac 配置状态采集，也可以先开启离线演示。"
+        } catch {
+            snapshot = nil
+            message = "连接失败或 Mac 服务尚未更新。请检查码伴配对；离线演示仍可使用。"
         }
     }
 }

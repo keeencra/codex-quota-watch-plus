@@ -1456,3 +1456,69 @@ public struct DeepSeekBalanceView: View {
     }
 }
 #endif
+
+/// Contract for the opt-in AGY statusLine bridge. No remote action credentials.
+public struct AntigravitySnapshot: Decodable, Equatable {
+    public let status: String
+    public let sessions: [AntigravitySession]
+
+    public static func demo(now: Date = Date()) -> Self {
+        Self(status: "demo", sessions: [
+            AntigravitySession(id: "demo-active", observedAt: now.timeIntervalSince1970,
+                               state: "working", needsConfirmation: false, model: "演示模型 A", stale: false,
+                               quotas: [AntigravityQuota(name: "演示周额度", remaining: 0.72, reset: nil)]),
+            AntigravitySession(id: "demo-confirm", observedAt: now.timeIntervalSince1970,
+                               state: "tool_use", needsConfirmation: true, model: "演示模型 B", stale: false,
+                               quotas: [AntigravityQuota(name: "演示额度已耗尽", remaining: 0, reset: nil)]),
+            AntigravitySession(id: "demo-stale", observedAt: now.addingTimeInterval(-3600).timeIntervalSince1970,
+                               state: "idle", needsConfirmation: false, model: "历史演示会话", stale: true, quotas: [])
+        ])
+    }
+}
+
+public struct AntigravitySession: Decodable, Equatable, Identifiable {
+    public let id: String
+    public let observedAt: Double
+    public let state: String
+    public let needsConfirmation: Bool
+    public let model: String
+    public let stale: Bool
+    public let quotas: [AntigravityQuota]
+    enum CodingKeys: String, CodingKey {
+        case id, state, model, stale, quotas
+        case observedAt = "observed_at", needsConfirmation = "needs_confirmation"
+    }
+    public func isStale(at date: Date = Date()) -> Bool {
+        let age = date.timeIntervalSince1970 - observedAt
+        return stale || age >= 900 || age < -60
+    }
+    public func stateLabel(at date: Date = Date()) -> String {
+        if isStale(at: date) { return "状态已过期" }
+        if needsConfirmation { return "等待确认 · 请在 Antigravity 处理" }
+        return ["idle": "空闲（不代表任务完成）", "working": "处理中", "thinking": "思考中",
+                "tool_use": "正在使用工具", "initializing": "初始化中"][state] ?? "未知状态"
+    }
+}
+
+public struct AntigravityQuota: Decodable, Equatable {
+    public let name: String
+    public let remaining: Double
+    public let reset: String?
+    public var percentLabel: String {
+        guard remaining.isFinite, (0...1).contains(remaining) else { return "—" }
+        if remaining > 0 && remaining < 0.01 { return "<1%" }
+        if remaining > 0.99 && remaining < 1 { return ">99%" }
+        return "\(Int((remaining * 100).rounded()))%"
+    }
+}
+
+
+extension AntigravityQuota {
+    public var resetDate: Date? {
+        guard let reset else { return nil }
+        let formatter = ISO8601DateFormatter()
+        if let date = formatter.date(from: reset) { return date }
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.date(from: reset)
+    }
+}
