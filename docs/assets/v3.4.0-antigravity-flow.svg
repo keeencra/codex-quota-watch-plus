@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="390" viewBox="0 0 900 390">
+<rect width="900" height="390" fill="#121820"/>
+<g font-family="sans-serif" fill="#f0f3f7">
+<text x="35" y="44" font-size="25">Antigravity · 实验性预发布 · beta.1</text>
+<text x="35" y="76" font-size="16" fill="#ffcc66">行为示意图 · 非实机截图 · 真实接口待验收</text>
+<g fill="#223047" stroke="#657991"><rect x="35" y="112" width="245" height="125" rx="16"/><rect x="325" y="112" width="245" height="125" rx="16"/><rect x="615" y="112" width="250" height="125" rx="16"/></g>
+<g font-size="19"><text x="57" y="147">官方 AGY CLI</text><text x="347" y="147">Mac 码伴采集</text><text x="637" y="147">iPhone / Apple Watch</text></g>
+<g font-size="16" fill="#c4d0df"><text x="57" y="180">statusLine 状态输出</text><text x="57" y="210">额度 · 阶段 · 等待确认</text><text x="347" y="180">白名单字段 · 既有鉴权</text><text x="347" y="210">过期标记 · 不发通知</text><text x="637" y="180">原生只读页面</text><text x="637" y="210">可切换离线虚构演示</text></g>
+<g font-size="30" fill="#6fe1aa"><text x="287" y="183">→</text><text x="578" y="183">→</text></g>
+<text x="35" y="293" font-size="19">已实现：只读采集、状态显示、离线演示、脱敏诊断</text>
+<text x="35" y="333" font-size="18" fill="#ffcc66">未实现：现金余额、任务回复、审批回传、手表远程操作</text>
+<text x="35" y="365" font-size="15" fill="#c4d0df">源码验证不等于真机验收；官方远程网页与码伴原生控制是不同能力。</text>
+</g></svg>
