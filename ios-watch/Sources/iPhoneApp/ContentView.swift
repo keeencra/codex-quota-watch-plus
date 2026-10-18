@@ -68,12 +68,15 @@ struct ContentView: View {
                         .font(.caption2).foregroundStyle(errorText == nil ? Color.secondary : Color.orange)
                 }
                 .listRowSeparator(.hidden)
-                Section("账户余额") {
-                    NavigationLink {
-                        DeepSeekBalanceView(balance: snapshot.deepseek)
-                    } label: {
-                        DeepSeekBalanceCard(balance: snapshot.deepseek)
-                    }.buttonStyle(.plain)
+                if snapshot.showsDeepSeek {
+                    Section("账户余额") {
+                        NavigationLink {
+                            DeepSeekBalanceView(balance: snapshot.deepseek)
+                        } label: {
+                            DeepSeekBalanceCard(balance: snapshot.deepseek)
+                        }.buttonStyle(.plain)
+                    }
+
                 }
                 Section("实验性接入") {
                     NavigationLink("Antigravity") {
