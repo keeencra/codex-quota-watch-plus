@@ -6,7 +6,8 @@ final class WatchComplicationTests: XCTestCase {
         let value = WatchComplicationSummary(snapshot: nil)
         XCTAssertNil(value.progress)
         XCTAssertEqual(value.quota, "Codex 等待同步")
-        XCTAssertEqual(value.balance, "DeepSeek 未配置")
+        XCTAssertEqual(value.balance, "")
+        XCTAssertFalse(value.showsDeepSeek)
         XCTAssertFalse(value.cached)
     }
 
