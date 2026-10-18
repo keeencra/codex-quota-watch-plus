@@ -1,6 +1,6 @@
 # 所有版本下载
 
-当前稳定版本 **v3.3.3 · Bug 修复 · 第 19 次迭代**。另提供 **v3.5.0-beta.1 小更新预发布（第 22 次迭代）**，手表组件已通过用户真机显示验收，Antigravity 真实接入仍未完成。以下均为本项目的完整源码，包含 Mac 后端、iPhone／Apple Watch App 和部署文档。
+当前稳定版本 **v3.3.3 · Bug 修复 · 第 19 次迭代**。另提供 **v3.5.0-beta.2 Bug 修复预发布（第 23 次迭代）**，新增纯 Codex 适配修复已通过测试与构建、尚未真机验收；前版四行手表组件已通过用户真机显示验收，Antigravity 真实接入仍未完成。以下均为本项目的完整源码，包含 Mac 后端、iPhone／Apple Watch App 和部署文档。
 
 重大升级才升第一位；常规功能与局部改进升第二位，Bug 修复升第三位；日志、介绍与配图等文档修改不升版本。历史有效版本不改号或下载内容。[查看版本规则](versioning.md)。
 
@@ -10,6 +10,7 @@
 
 | 版本 | 更新类型 | 主要变化 | 源码 ZIP | 对应代码 |
 | --- | --- | --- | --- | --- |
+| **v3.5.0-beta.2** | Bug 修复预发布 | 纯 Codex 跨端适配，已配置失败保留异常 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v3.5.0-beta.2.zip) | [Pre-release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.5.0-beta.2) |
 | **v3.5.0-beta.1** | 小更新预发布 | 手表四行表盘组件；保留实验性 Antigravity | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v3.5.0-beta.1.zip) | [Pre-release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.5.0-beta.1) |
 | **v3.4.0-beta.2** | Bug 修复预发布 | Mac 额度刷新路径兼容与缓存提示；保留实验性 Antigravity | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v3.4.0-beta.2.zip) | [Pre-release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.4.0-beta.2) |
 | v3.4.0-beta.1 | 实验性预发布 | Antigravity 只读状态与离线演示，真实接入未验证 | [下载 ZIP](https://github.com/keeencra/codex-quota-watch-plus/archive/refs/tags/v3.4.0-beta.1.zip) | [Pre-release](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.4.0-beta.1) |
