@@ -1522,3 +1522,57 @@ extension AntigravityQuota {
         return formatter.date(from: reset)
     }
 }
+
+/// Small, privacy-safe presentation shared by the watch face and its timeline.
+public struct WatchComplicationSummary {
+    public let quota: String
+    public let percent: String
+    public let resetLabel: String
+    public let progress: Double?
+    public let balance: String
+    public let cached: Bool
+
+    public init(snapshot: WatchSnapshot?, failed: Bool = false, now: Date = Date(), timeZone: TimeZone = .current) {
+        let summary = WidgetQuotaSummary(snapshot: snapshot)
+        let window = summary.sevenDay ?? summary.fiveHour ?? summary.windows.first ?? snapshot.map {
+            WidgetQuotaWindow(title: QuotaDisplayText.windowTitle($0.codex.window), bucket: nil, fallback: $0.codex)
+        }
+        if snapshot == nil || summary.status == .setup {
+            quota = "Codex 等待同步"
+            progress = nil
+        } else {
+            quota = "Codex \(window?.title ?? "额度") \(window?.percentLabel ?? "--%")"
+            progress = window?.tone == .unavailable ? nil : window?.progress
+        }
+        percent = progress == nil ? "--%" : (window?.percentLabel ?? "--%")
+        let selection = WatchDisplayData.codexWindows(from: snapshot?.codex.buckets)
+        let bucket = selection.sevenDay ?? selection.fiveHour ?? selection.otherWindows.first
+        if summary.status != .setup, let epoch = bucket?.resetAt, epoch.isFinite, epoch > 0 {
+            if epoch <= now.timeIntervalSince1970 {
+                resetLabel = "Codex 重置待刷新"
+            } else {
+                let dateFormat = DateFormatter()
+                dateFormat.locale = Locale(identifier: "en_US_POSIX")
+                dateFormat.calendar = Calendar(identifier: .gregorian)
+                dateFormat.timeZone = timeZone
+                dateFormat.dateFormat = "MM/dd HH:mm"
+                resetLabel = "Codex " + dateFormat.string(from: Date(timeIntervalSince1970: epoch)) + " 重置"
+            }
+        } else {
+            resetLabel = "Codex 重置时间 --"
+        }
+        let formatter = ISO8601DateFormatter()
+        let date = snapshot.flatMap { formatter.date(from: $0.codex.quotaUpdatedAt ?? $0.updatedAt) } ?? {
+            formatter.formatOptions.insert(.withFractionalSeconds)
+            return snapshot.flatMap { formatter.date(from: $0.codex.quotaUpdatedAt ?? $0.updatedAt) }
+        }()
+        cached = snapshot != nil && (failed || summary.status == .error || snapshot?.codex.error != nil || date == nil || now.timeIntervalSince(date ?? .distantPast) >= 900)
+        if let ds = snapshot?.deepseek, ds.status == "ok", !ds.balanceInfos.isEmpty {
+            balance = "DeepSeek " + ds.balanceInfos.map {
+                ($0.currency == "CNY" ? "¥" : ($0.currency == "USD" ? "$" : $0.currency + " ")) + $0.compactTotal
+            }.joined(separator: " / ")
+        } else {
+            balance = snapshot?.deepseek == nil || snapshot?.deepseek?.status == "not_configured" ? "DeepSeek 未配置" : "DeepSeek 暂不可用"
+        }
+    }
+}
