@@ -1344,7 +1344,9 @@ public struct RemoteApprovalList: Decodable {
 public extension WatchSnapshot {
     /// An absent/unconfigured provider uses the original Codex layout. A configured
     /// provider keeps its space during errors so transient failures do not change layouts.
-    var showsDeepSeekInWidget: Bool {
+    var showsDeepSeekInWidget: Bool { showsDeepSeek }
+
+    var showsDeepSeek: Bool {
         guard let deepseek else { return false }
         return deepseek.status != "not_configured"
     }
@@ -1530,6 +1532,7 @@ public struct WatchComplicationSummary {
     public let resetLabel: String
     public let progress: Double?
     public let balance: String
+    public var showsDeepSeek: Bool { !balance.isEmpty }
     public let cached: Bool
 
     public init(snapshot: WatchSnapshot?, failed: Bool = false, now: Date = Date(), timeZone: TimeZone = .current) {
@@ -1572,7 +1575,7 @@ public struct WatchComplicationSummary {
                 ($0.currency == "CNY" ? "¥" : ($0.currency == "USD" ? "$" : $0.currency + " ")) + $0.compactTotal
             }.joined(separator: " / ")
         } else {
-            balance = snapshot?.deepseek == nil || snapshot?.deepseek?.status == "not_configured" ? "DeepSeek 未配置" : "DeepSeek 暂不可用"
+            balance = snapshot?.deepseek == nil || snapshot?.deepseek?.status == "not_configured" ? "" : "DeepSeek 暂不可用"
         }
     }
 }

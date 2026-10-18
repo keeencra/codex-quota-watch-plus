@@ -25,6 +25,10 @@ struct WidgetSnapshot: Codable {
     var resetCredits: Credits? = nil
     var recentTokens: Int? = nil
 
+    var showsDeepSeek: Bool {
+        balanceError != "未配置 API Key" && (!balances.isEmpty || balanceError != nil)
+    }
+
     static let empty = WidgetSnapshot(updatedAt: .distantPast, plan: "Codex", windows: [], balances: [], codexError: "请先打开菜单栏应用", balanceError: nil)
     static let preview = WidgetSnapshot(updatedAt: Date(), codexUpdatedAt: Date(), plan: "Plus", windows: [.init(label: "5h", remaining: 42, resetsAt: Date().addingTimeInterval(7200)), .init(label: "周", remaining: 73, resetsAt: Date().addingTimeInterval(86400))], balances: [.init(currency: "CNY", amount: "¥88.88"), .init(currency: "USD", amount: "$0.00")], resetCredits: .init(availableCount: 2, expirations: [Date().addingTimeInterval(172800), Date().addingTimeInterval(604800)]))
     func isStale(at date: Date) -> Bool { date.timeIntervalSince(updatedAt) > 300 }

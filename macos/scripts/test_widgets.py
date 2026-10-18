@@ -10,6 +10,16 @@ sample.recentTokens = 1234
 assert(!sample.isStale(at: now.addingTimeInterval(300)))
 assert(sample.isStale(at: now.addingTimeInterval(301)))
 assert(WidgetSnapshot.empty.isStale(at: now))
+assert(sample.showsDeepSeek)
+var noProvider = sample
+noProvider.balances = []
+noProvider.balanceError = "未配置 API Key"
+assert(!noProvider.showsDeepSeek)
+noProvider.balanceError = "HTTP 401"
+assert(noProvider.showsDeepSeek)
+noProvider.balanceError = nil
+assert(!noProvider.showsDeepSeek)
+assert(!WidgetSnapshot.empty.showsDeepSeek)
 let bytes = try JSONEncoder().encode(sample)
 let restored = try JSONDecoder().decode(WidgetSnapshot.self, from: bytes)
 assert(restored.windows.map { $0.label } == ["5h", "周"])

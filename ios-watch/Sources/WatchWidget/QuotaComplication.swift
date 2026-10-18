@@ -35,7 +35,7 @@ struct QuotaComplicationView: View {
     let entry: QuotaComplicationEntry
     var body: some View {
         let data = WatchComplicationSummary(snapshot: entry.snapshot, failed: entry.failed, now: entry.date)
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: data.showsDeepSeek ? 2 : 5) {
             Text(data.resetLabel)
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.secondary)
@@ -57,14 +57,16 @@ struct QuotaComplicationView: View {
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
             }
-            HStack(spacing: 4) {
-                Text(data.balance)
-                    .font(.system(size: 12, weight: .medium).monospacedDigit())
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-                Spacer(minLength: 0)
-                if data.cached {
-                    Text("缓存").font(.system(size: 9)).foregroundStyle(.secondary).fixedSize()
+            if data.showsDeepSeek || data.cached {
+                HStack(spacing: 4) {
+                    Text(data.balance)
+                        .font(.system(size: 12, weight: .medium).monospacedDigit())
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                    Spacer(minLength: 0)
+                    if data.cached {
+                        Text("缓存").font(.system(size: 9)).foregroundStyle(.secondary).fixedSize()
+                    }
                 }
             }
         }

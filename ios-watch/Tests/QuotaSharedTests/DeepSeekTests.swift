@@ -15,6 +15,22 @@ final class DeepSeekTests: XCTestCase {
         }
     }
 
+    func testProviderVisibilityAcrossConfigurationTransitions() throws {
+        var snapshot = WatchSnapshot.placeholder
+        snapshot.codex.status = "ok"
+        snapshot.codex.remainingPercent = 72
+        for (status, visible) in [("not_configured", false), ("ok", true), ("error", true), ("not_configured", false)] {
+            snapshot.deepseek = try JSONDecoder().decode(DeepSeekBalance.self, from: Data("""
+            {"status":"\(status)","balance_infos":[],"error":"temporary failure"}
+            """.utf8))
+            XCTAssertEqual(snapshot.showsDeepSeek, visible)
+            let face = WatchComplicationSummary(snapshot: snapshot)
+            XCTAssertEqual(face.showsDeepSeek, visible)
+            XCTAssertEqual(face.progress, 0.72)
+            if status == "error" { XCTAssertEqual(face.balance, "DeepSeek 暂不可用") }
+        }
+    }
+
     func testBalanceSurvivesPhoneWatchAndCacheRoundtrip() throws {
         let balance = try JSONDecoder().decode(DeepSeekBalance.self, from: Data("""
         {"status":"ok","updated_at":"2026-09-13T00:00:00Z","is_available":false,

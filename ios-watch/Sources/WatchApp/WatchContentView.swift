@@ -91,11 +91,14 @@ struct WatchContentView: View {
                                              subtitle: summary.windows.first.map { $0.title + " · " + summary.planLabel },
                                              symbol: "chart.pie.fill", tint: .green)
                             }.buttonStyle(.plain)
-                            NavigationLink {
-                                DeepSeekBalanceView(balance: receiver.snapshot.deepseek)
-                            } label: {
-                                DeepSeekBalanceCard(balance: receiver.snapshot.deepseek)
-                            }.buttonStyle(.plain)
+                            if receiver.snapshot.showsDeepSeek {
+                                NavigationLink {
+                                    DeepSeekBalanceView(balance: receiver.snapshot.deepseek)
+                                } label: {
+                                    DeepSeekBalanceCard(balance: receiver.snapshot.deepseek)
+                                }.buttonStyle(.plain)
+
+                            }
                         }.padding(.horizontal, 5).padding(.bottom, 20)
                     }
                     .tag(0)

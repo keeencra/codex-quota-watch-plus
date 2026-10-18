@@ -711,14 +711,15 @@ struct DeepSeekBalance: Decodable {
 }
 
 enum MenuBarSummary {
-    static func title(codex: String, balance: DeepSeekBalance?) -> NSAttributedString {
+    static func title(codex: String, balance: DeepSeekBalance?, error: String? = nil) -> NSAttributedString {
         let text = NSMutableAttributedString(string: codex, attributes: [
             .font: NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
         ])
+        guard error != "未配置 API Key", balance != nil || error != nil else { return text }
         text.append(NSAttributedString(string: " · ", attributes: [
             .font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.secondaryLabelColor
         ]))
-        text.append(NSAttributedString(string: "DS " + (balance?.menuBarAmount ?? "—"), attributes: [
+        text.append(NSAttributedString(string: "DS " + (balance?.menuBarAmount ?? "异常"), attributes: [
             .font: NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
         ]))
         return text
@@ -799,7 +800,8 @@ final class QuotaDashboardView: NSView {
     private func stamp(_ date: Date?) -> String {
         QuotaTimestamp.label(date)
     }
-    var overviewHeight: CGFloat { CGFloat(538 + max(1, snapshot.accountUsage?.windows.count ?? 0) * 42) }
+    var showsDeepSeek: Bool { balanceError != "未配置 API Key" && (balance != nil || balanceError != nil) }
+    var overviewHeight: CGFloat { CGFloat((showsDeepSeek ? 538 : 299) + max(1, snapshot.accountUsage?.windows.count ?? 0) * 42) }
     private var detailSections: [(String, [(String, String)])] {
         var account: [(String, String)] = []
         if let usage = snapshot.accountUsage {
@@ -815,12 +817,14 @@ final class QuotaDashboardView: NSView {
         if let error = snapshot.accountError { account.append(("Codex 状态", error)) }
         account.append(("下次额度刷新", stamp(snapshot.nextRefreshAt)))
         if let widgetError { account.append(("小组件同步状态", widgetError)) }
-        if let balance {
-            account.append(("DeepSeek", balance.is_available ? "账户可用 · 更新 " + stamp(balanceDate) : "余额不足"))
-            for entry in balance.balance_infos {
-                account.append((entry.currency + " · 总余额 " + entry.total_balance, "充值 " + entry.topped_up_balance + " · 赠送 " + entry.granted_balance))
-            }
-        } else { account.append(("DeepSeek 状态", balanceError ?? "正在查询")) }
+        if showsDeepSeek {
+            if let balance {
+                account.append(("DeepSeek", balance.is_available ? "账户可用 · 更新 " + stamp(balanceDate) : "余额不足"))
+                for entry in balance.balance_infos {
+                    account.append((entry.currency + " · 总余额 " + entry.total_balance, "充值 " + entry.topped_up_balance + " · 赠送 " + entry.granted_balance))
+                }
+            } else { account.append(("DeepSeek 状态", balanceError ?? "正在查询")) }
+        }
         var tasks: [(String, String)] = []
         let usage = snapshot.threadUsage
         tasks.append(("最近 \(usage.recent.count) 个任务 · 累计 token", "\(usage.totalRecentTokens) · 属于任务累计值，不是今日消耗"))
@@ -859,13 +863,13 @@ final class QuotaDashboardView: NSView {
         card(y: y, height: 228)
         text("每日 token · 精确数值", x: 28, y: y + 12, size: 13, weight: .semibold)
         text("日期", x: 28, y: y + 40, width: 58, size: 10, color: muted)
-        text("Codex", x: 98, y: y + 40, width: 111, size: 11, color: purple, alignment: .right)
-        text("DeepSeek", x: 220, y: y + 40, width: 118, size: 11, color: teal, alignment: .right)
+        text("Codex", x: 98, y: y + 40, width: showsDeepSeek ? 111 : 240, size: 11, color: purple, alignment: .right)
+        if showsDeepSeek { text("DeepSeek", x: 220, y: y + 40, width: 118, size: 11, color: teal, alignment: .right) }
         for (index, day) in snapshot.dailyTokens.days.enumerated() {
             let row = y + 61 + CGFloat(index) * 20
             text(index == 6 ? "今天" : String(QuotaTimestamp.label(day.date).prefix(5)), x: 28, y: row, width: 58, size: 10, color: muted)
-            text(snapshot.dailyTokens.codexStatus == nil || day.codex > 0 ? String(day.codex) : "—", x: 89, y: row, width: 120, size: 10, mono: true, alignment: .right)
-            text(snapshot.dailyTokens.deepSeekStatus == nil || day.deepSeek > 0 ? String(day.deepSeek) : "—", x: 215, y: row, width: 123, size: 10, mono: true, alignment: .right)
+            text(snapshot.dailyTokens.codexStatus == nil || day.codex > 0 ? String(day.codex) : "—", x: 89, y: row, width: showsDeepSeek ? 120 : 249, size: 10, mono: true, alignment: .right)
+        if showsDeepSeek { text(snapshot.dailyTokens.deepSeekStatus == nil || day.deepSeek > 0 ? String(day.deepSeek) : "—", x: 215, y: row, width: 123, size: 10, mono: true, alignment: .right) }
         }
         text("本机记录 · 含缓存输入 · 非账户全量账单", x: 28, y: y + 205, size: 9, color: muted)
         y += 236
@@ -948,28 +952,33 @@ final class QuotaDashboardView: NSView {
         }
         text(snapshot.accountError == nil ? "已更新 " + stamp(snapshot.accountUsage?.lastSuccessAt) : "缓存数据 · 暂未连接", x: 28, y: y + ch - 16, size: 8, color: muted)
         y += ch + 8
-        card(y: y, height: 86)
-        text("DeepSeek 余额", x: 28, y: y + 10, size: 13, weight: .semibold)
-        text(balance == nil ? "未连接" : (balance!.is_available ? "官方 API" : "余额不足"), x: 253, y: y + 12, width: 85, size: 9, color: balance?.is_available == false ? .systemOrange : teal, alignment: .right)
-        if let balance, !balance.balance_infos.isEmpty {
-            // Show balances side-by-side. Detailed credit breakdown stays in the submenu.
-            let entries = balance.balance_infos.sorted { $0.currency < $1.currency }
-            for (index, entry) in entries.prefix(2).enumerated() {
-                let x: CGFloat = index == 0 ? 28 : 195
-                text(entry.currency, x: x, y: y + 31, width: 143, size: 9, color: muted)
-                text(entry.display, x: x, y: y + 44, width: 143, size: 20, weight: .semibold, mono: true)
-            }
-        } else { text(balanceError ?? "正在查询余额", x: 28, y: y + 40, size: 11, color: muted) }
-        text("更新 " + stamp(balanceDate), x: 28, y: y + 70, size: 8, color: muted)
-        y += 94
+        if showsDeepSeek {
+            card(y: y, height: 86)
+            text("DeepSeek 余额", x: 28, y: y + 10, size: 13, weight: .semibold)
+            text(balance == nil ? "未连接" : (balance!.is_available ? "官方 API" : "余额不足"), x: 253, y: y + 12, width: 85, size: 9, color: balance?.is_available == false ? .systemOrange : teal, alignment: .right)
+            if let balance, !balance.balance_infos.isEmpty {
+                // Show balances side-by-side. Detailed credit breakdown stays in the submenu.
+                let entries = balance.balance_infos.sorted { $0.currency < $1.currency }
+                for (index, entry) in entries.prefix(2).enumerated() {
+                    let x: CGFloat = index == 0 ? 28 : 195
+                    text(entry.currency, x: x, y: y + 31, width: 143, size: 9, color: muted)
+                    text(entry.display, x: x, y: y + 44, width: 143, size: 20, weight: .semibold, mono: true)
+                }
+            } else { text(balanceError ?? "正在查询余额", x: 28, y: y + 40, size: 11, color: muted) }
+            text("更新 " + stamp(balanceDate), x: 28, y: y + 70, size: 8, color: muted)
+            y += 94
+        }
         text("近 7 天 · 每日 tokens", x: 24, y: y + 1, size: 12, weight: .semibold)
         text("含今天 · 本地公历日", x: 217, y: y + 3, width: 127, size: 9, color: muted, alignment: .right)
         y += 25
         let daily = snapshot.dailyTokens
         tokenChart(y: y, title: "Codex", values: daily.days.map(\.codex), status: daily.codexStatus, scope: "本机会话 · 含缓存输入", tint: purple)
         y += 145
-        tokenChart(y: y, title: "DeepSeek", values: daily.days.map(\.deepSeek), status: daily.deepSeekStatus, scope: "本机工具 · 不含其他软件", tint: teal)
-        text("0 无已记录用量 · — 记录不可用 · 向下滚动查看精确明细", x: 24, y: y + 145, width: 324, size: 8, color: muted)
+        if showsDeepSeek {
+            tokenChart(y: y, title: "DeepSeek", values: daily.days.map(\.deepSeek), status: daily.deepSeekStatus, scope: "本机工具 · 不含其他软件", tint: teal)
+            y += 145
+        }
+        text("0 无已记录用量 · — 记录不可用 · 向下滚动查看精确明细", x: 24, y: y, width: 324, size: 8, color: muted)
         drawDetails()
     }
 
@@ -1044,7 +1053,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var latestDailyTokens = DailyTokenUsage.empty()
     private let deepSeekReader = DeepSeekBalanceReader()
     private var deepSeekBalance: DeepSeekBalance?
-    private var deepSeekError: String? = "正在查询"
+    private var deepSeekError: String? = DeepSeekBalanceReader.configuredKey().isEmpty ? "未配置 API Key" : "正在查询"
     private var deepSeekUpdatedAt: Date?
     private var latestSnapshot: AppSnapshot?
     private var deepSeekLoading = false
@@ -1131,9 +1140,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         #endif
         defer {
             if let button = statusItem.button {
-                button.attributedTitle = MenuBarSummary.title(codex: button.title, balance: deepSeekBalance)
+                button.attributedTitle = MenuBarSummary.title(codex: button.title, balance: deepSeekBalance, error: deepSeekError)
                 let amount = deepSeekBalance?.balance_infos.map { $0.display }.joined(separator: " / ") ?? "—"
-                button.toolTip = (button.toolTip ?? "Codex") + "\nDeepSeek " + (deepSeekError ?? amount)
+                if deepSeekError != "未配置 API Key", deepSeekBalance != nil || deepSeekError != nil {
+                    button.toolTip = (button.toolTip ?? "Codex") + "\nDeepSeek " + (deepSeekError ?? amount)
+                }
                 button.setAccessibilityLabel(button.toolTip)
             }
         }

@@ -12,3 +12,7 @@
 当前验证：共享逻辑回归、watchOS 与 iOS 模拟器 SDK 构建及嵌入检查。2026-10-18 已签名安装到原 iPhone 和 Apple Watch，两端安装回执均为 success；用户已确认四行表盘显示正常；系统后台刷新频率和低亮常显效果未单独验收。
 
 开发工程新增 `QuotaWatchWidget` 扩展，使用现有 App Group；个人部署脚本派生 `.watchkitapp.complication` 标识。首次真机安装需为新扩展生成有效签名配置，不可只替换旧 Watch App 可执行文件。
+
+## v3.5.0-beta.2：仅使用 Codex
+
+未配置 DeepSeek 时隐藏余额行，保留重置日期、百分比与独立进度条；配置后查询失败保留异常。缓存提示不随余额行隐藏。本次分支经共享测试和 watchOS 构建验证，尚未真机安装验收。

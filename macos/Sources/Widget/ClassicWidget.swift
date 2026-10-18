@@ -44,7 +44,7 @@ struct MacClassicProvider: TimelineProvider {
         }
         var object: [String: Any] = ["updated_at": iso.string(from: source.updatedAt),
             "codex": ["plan_type": source.plan.lowercased(), "status": source.codexError == nil ? "ok" : "error", "source": "mac-local", "today_tokens": 0, "buckets": buckets],
-            "deepseek": ["status": source.balanceError == "未配置 API Key" ? "not_configured" : (balances.isEmpty ? "error" : "ok"), "balance_infos": balances]]
+            "deepseek": ["status": !source.showsDeepSeek ? "not_configured" : (balances.isEmpty ? "error" : "ok"), "balance_infos": balances]]
         if let credits = source.resetCredits {
             object["reset_credits"] = ["available_count": credits.availableCount,
                                       "expirations": credits.expirations.map { $0.timeIntervalSince1970 }]
