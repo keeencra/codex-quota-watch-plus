@@ -2,6 +2,29 @@
 
 产品发布相对**上一次公开版本**记录变化；仅日志、介绍、配图或维护文档的更新合并到所属版本，不分配新版本号。当前版本见 [VERSION](VERSION)；版本号用于仓库迭代记录，与 App 构建号和 Python 包版本独立。新增、Bug 修复和改进分开说明；没有变化时明确写「无」。后续维护规范见 [AGENTS.md](AGENTS.md)。
 
+## v3.5.0-beta.2 · Bug 修复预发布 · 2026-10-18 · 第 23 次迭代
+
+对比 [v3.5.0-beta.1 → v3.5.0-beta.2](https://github.com/keeencra/codex-quota-watch-plus/compare/v3.5.0-beta.1...v3.5.0-beta.2)。修复 DeepSeek 作为可选服务时仍显示占位的跨端不一致，不新增功能范围；沿用 3.5.0 预发布序列递增 beta 编号。稳定版仍为 v3.3.3。
+
+### 新增内容
+- 无。
+
+### Bug 修复
+- 未配置 DeepSeek 时，Mac 菜单栏、主面板与每日用量明细、手机/手表首页、账户总览组件和手表表盘组件不再保留 DeepSeek 占位；Codex 内容使用释放的空间。
+- 已配置但查询失败时保留异常提示，零余额不作为未配置处理；手机账户组件保留错误状态，避免丢失查询失败信息。
+
+### 改进
+- 表盘纯 Codex 模式增加行间距，保留独立的缓存提示；Mac 面板高度与滚动导航随内容调整。
+
+### 验证与升级说明
+- 192 项 Python 测试与 85 项共享 Swift 测试、Mac 检查与构建、iPhone/watchOS 模拟器构建通过，完成原生视图离屏布局检查；本次纯 Codex 适配尚未真机安装验收。详见[纯 Codex 验证记录](docs/codex-only.md)。
+
+未配置：原先保留余额占位 → 现在仅展示 Codex；已配置查询失败仍保留异常。以下为本项目原生视图离屏渲染、虚构数据，非真机截图。
+
+| 纯 Codex · Mac | 已配置查询失败 · Mac |
+| --- | --- |
+| <img src="docs/assets/v3.5.0-beta.2-codex-only/mac-none.png" width="300" alt="v3.5.0-beta.2 纯 Codex 面板"> | <img src="docs/assets/v3.5.0-beta.2-codex-only/mac-error.png" width="300" alt="v3.5.0-beta.2 查询失败保留异常"> |
+
 ## v3.5.0-beta.1 · 小更新预发布 · 2026-10-18 · 第 22 次迭代
 
 对比 [v3.4.0-beta.2 → v3.5.0-beta.1](https://github.com/keeencra/codex-quota-watch-plus/compare/v3.4.0-beta.2...v3.5.0-beta.1)。新增兼容的表盘显示入口，提升次版本；保留 Antigravity 实验性预发布边界，稳定版仍为 v3.3.3。
@@ -430,6 +453,7 @@
 
 | 迭代 | 项目版本 | 更新类型 | 日期 | 主要变化 |
 | --- | --- | --- | --- | --- |
+| 23 | v3.5.0-beta.2 | Bug 修复预发布 | 2026-10-18 | 纯 Codex 跨端布局、配置失败状态保留 |
 | 22 | v3.5.0-beta.1 | 小更新预发布 | 2026-10-18 | 手表表盘四行额度与余额组件 |
 | 21 | v3.4.0-beta.2 | Bug 修复预发布 | 2026-10-18 | Mac CLI 路径兼容与额度缓存提示 |
 | 20 | v3.4.0-beta.1 | 实验性预发布 | 2026-09-30 | Antigravity CLI 只读状态与两端演示，真实接入未验证 |

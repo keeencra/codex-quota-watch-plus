@@ -1,10 +1,10 @@
 <div align="center">
 
-> 实验性预发布 **v3.5.0-beta.1**：新增手表表盘四行额度与余额组件，用户已确认真机显示正常；保留 Mac 额度刷新修复；保留 Antigravity CLI 手机／手表只读状态与离线演示。真实接入未验证，尚不支持余额、回复和审批回传。[测试说明](docs/antigravity.md) · [稳定版 v3.3.3](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.3.3)
+> Bug 修复预发布 **v3.5.0-beta.2**：Mac、iPhone、Apple Watch 与组件适配纯 Codex；未配置 DeepSeek 时隐藏相关区域，已配置查询失败时保留异常。本次通过测试、构建与离屏渲染，尚未真机验收；保留 Antigravity CLI 手机／手表只读状态与离线演示。真实接入未验证，尚不支持余额、回复和审批回传。[测试说明](docs/antigravity.md) · [稳定版 v3.3.3](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.3.3)
 
 # 码伴 · CodeCompanion
 
-**项目版本 v3.5.0-beta.1 · 小更新预发布 · 第 22 次迭代** · [查看各版本变化](CHANGELOG.md#版本索引)
+**项目版本 v3.5.0-beta.2 · Bug 修复预发布 · 第 23 次迭代** · [查看各版本变化](CHANGELOG.md#版本索引)
 
 重大升级才升第一位；常规功能与局部改进升第二位，Bug 修复升第三位；日志、介绍与配图等文档修改不升版本。详见[版本规则](docs/versioning.md)。
 
@@ -34,22 +34,32 @@ Mac 服务仍需在线提供数据；外出使用需配置 HTTPS。独立品牌�
 
 | 使用场景 | 当前能力 |
 | --- | --- |
-| 只在 Mac 使用 | 菜单栏查看 Codex 额度与 DeepSeek 双币余额，额度读取失败时标注缓存，展开统一滚动面板，查看最近 7 天每日 token、精确明细和任务记录 |
+| 只在 Mac 使用 | 菜单栏查看 Codex 额度，配置 DeepSeek 后显示双币余额，额度读取失败时标注缓存，展开统一滚动面板，查看最近 7 天每日 token、精确明细和任务记录 |
 | 手机看进展 | 按 Mac 侧栏分区查看项目与独立任务，保留分区顺序、任务标题、运行阶段和待审批请求；通过已配置的 HTTPS 连接访问 Mac |
 | 桌面随时查看 | Mac 与 iPhone 均从一个「码伴」入口添加小／中／大号组件，显示额度、余额和重置卡信息 |
-| 手表抬腕查看 | 四行矩形表盘组件显示重置日期、剩余百分比、独立进度条与 DeepSeek 余额；App 查看任务和处理有效审批 |
+| 手表抬腕查看 | 矩形表盘组件显示重置日期、剩余百分比和独立进度条；配置 DeepSeek 后增加余额行；App 查看任务和处理有效审批 |
 | Antigravity（实验性） | CLI 模型额度、会话状态、手机／手表离线演示；真实接入待验收，无回复或审批回传 |
 | 接收任务提醒 | Bark 静音通知、完成提醒带任务名称；已归档历史和积压日志不触发“可能停滞”误报 |
 
-**最近更新：** v3.5.0-beta.1 新增手表表盘组件，四行布局已通过用户真机显示验收； v3.4.0-beta.2 修复 ChatGPT 更新后 Mac 额度停留旧百分比的问题，读取失败时明确标注缓存； v3.4.0-beta.1 新增实验性 Antigravity 只读采集与两端演示（未实测账号）；稳定版 v3.3.3 过滤过期结束提醒。 v3.3.2 修复分区识别与混合任务排序，兼容 iOS 26／27；v3.3.1 修复旧任务停滞误报；v3.3.0 新增每日 token 趋势与统一滚动面板；v3.2.1 修复公历日期显示；v3.2.0 改进大号组件排版、倒计时与菜单栏双币种显示。[完整变化与验证说明](CHANGELOG.md) · [当前预发布源码](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.5.0-beta.1)
+**最近更新：** v3.5.0-beta.2 补齐纯 Codex 跨端布局，隐藏未配置的 DeepSeek，保留已配置查询失败提示； v3.5.0-beta.1 新增手表表盘组件，四行布局已通过用户真机显示验收； v3.4.0-beta.2 修复 ChatGPT 更新后 Mac 额度停留旧百分比的问题，读取失败时明确标注缓存； v3.4.0-beta.1 新增实验性 Antigravity 只读采集与两端演示（未实测账号）；稳定版 v3.3.3 过滤过期结束提醒。 v3.3.2 修复分区识别与混合任务排序，兼容 iOS 26／27；v3.3.1 修复旧任务停滞误报；v3.3.0 新增每日 token 趋势与统一滚动面板；v3.2.1 修复公历日期显示；v3.2.0 改进大号组件排版、倒计时与菜单栏双币种显示。[完整变化与验证说明](CHANGELOG.md) · [当前预发布源码](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.5.0-beta.2)
+
+## 只用 Codex 也可以：三端自动适配
+
+无需注册或配置 DeepSeek。未配置时，Mac 菜单栏、余额卡、用量趋势和明细列、手机与手表首页入口及组件余额区域自动隐藏；配置后查询失败仍展示异常，不误判为未配置。离线时保留上次快照，移除配置后在下一次成功采样同步布局。
+
+| 纯 Codex · Mac 原生面板 | 纯 Codex · 共享组件 |
+| --- | --- |
+| <img src="docs/assets/v3.5.0-beta.2-codex-only/mac-none.png" width="280" alt="v3.5.0-beta.2 Mac 纯 Codex 布局，原生离屏渲染、虚构数据"> | <img src="docs/assets/v3.5.0-beta.2-codex-only/widget-none.png" width="400" alt="v3.5.0-beta.2 纯 Codex 组件，原生离屏渲染、虚构数据"> |
+
+本次展示图来自项目原生视图的离屏渲染，数据虚构，非真机截图。[错误态对照与完整验证](docs/codex-only.md)。
 
 ## 手表表盘：额度与余额四行直达
 
-支持中央矩形复杂功能槽位：第一行显示 Codex 下次重置日期，第二行显示剩余额度与百分比，第三行进度条独占整行，第四行完整显示 DeepSeek 名称与分币种余额。缺失数据不伪装为满额，数据过旧或刷新失败时显示缓存。
+支持中央矩形复杂功能槽位：第一行显示 Codex 下次重置日期，第二行显示剩余额度与百分比，第三行进度条独占整行，配置 DeepSeek 时第四行显示完整名称与分币种余额；未配置时收起这一行并增加行间距，查询失败保留异常。缺失数据不伪装为满额，数据过旧或刷新失败时显示缓存。
 
 ![v3.5.0-beta.1 四行手表组件布局示意，虚构数据，非实机截图](docs/assets/v3.5.0-beta.1-watch-complication.svg)
 
-本项目已实现功能的布局示意，数值虚构，SVG 为可编辑源文件。用户已确认当前真机表盘显示正常；后台刷新时效和常显效果未单独验收。安装新版后，长按表盘 → 编辑 → 中央矩形位置 →「码伴 · 额度与余额」。[部署与刷新说明](docs/watch-complication.md)
+本项目已实现功能的布局示意，数值虚构，SVG 为可编辑源文件。用户已确认 v3.5.0-beta.1 四行表盘显示正常；本次纯 Codex 分支尚未真机验收；后台刷新时效和常显效果未单独验收。安装新版后，长按表盘 → 编辑 → 中央矩形位置 →「码伴 · 额度与余额」。[部署与刷新说明](docs/watch-complication.md)
 
 ## 手机与手表：分区、项目和任务保持一致
 
@@ -99,7 +109,7 @@ Mac 和 iPhone 均通过一个 **码伴** 入口添加小号／中号／大号�
 
 以下均为 **v3.0.0 本项目原生 SwiftUI 视图**在隔离模拟器中渲染，任务、审批、额度和余额均为虚构数据。截图不会执行命令，不包含个人账户或配对信息。设置区域直接挂载原页面对应区域，小组件按实际尺寸在宿主中展示，均非真机／桌面截图。
 
-Plus／Pro 截图展示不同数据窗口，**不表示所有该套餐账号固定拥有同样限制**；实际界面以 Codex 返回窗口为准。有／无 DeepSeek 在小组件使用两套布局，App 内未配置时保留配置提示。可点击任意图片查看大图。[完整图库与采集说明](docs/gallery.md)
+Plus／Pro 截图展示不同数据窗口，**不表示所有该套餐账号固定拥有同样限制**；实际界面以 Codex 返回窗口为准。有／无 DeepSeek 在小组件使用两套布局。v3.5.0-beta.2 进一步在 Mac、手机、手表及表盘组件隐藏未配置的 DeepSeek 区域，查询失败则保留异常提示；见[适配说明与验证](docs/codex-only.md)。下方旧版图库中的未配置提示不代表当前版本布局。可点击任意图片查看大图。[完整图库与采集说明](docs/gallery.md)
 
 ### 手机：任务、审批与账户状态
 
@@ -144,7 +154,7 @@ Plus／Pro 截图展示不同数据窗口，**不表示所有该套餐账号固�
 | <img src="docs/assets/gallery/v3.0.0/iphone-settings-pro-ok.jpg" width="220" alt="v3.0.0 Mac 连接与同步，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-notifications-pro-ok.jpg" width="220" alt="v3.0.0 Bark 提醒设置，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-diagnostics-pro-ok.jpg" width="220" alt="v3.0.0 连接诊断，模拟器虚构数据展示"> | <img src="docs/assets/gallery/v3.0.0/iphone-about-pro-ok.jpg" width="220" alt="v3.0.0 关于码伴，模拟器虚构数据展示"> |
 
 <details>
-<summary>展开：无 DeepSeek、空任务／审批、余额查询失败的全部展示</summary>
+<summary>展开：v3.0.0 历史状态图库（未配置提示已被新版隐藏）</summary>
 
 | Pro · 未配置 DeepSeek | Plus · 未配置 DeepSeek | 未配置余额提示 | 余额查询失败 |
 | --- | --- | --- | --- |
@@ -170,7 +180,7 @@ Plus／Pro 截图展示不同数据窗口，**不表示所有该套餐账号固�
 
 ## DeepSeek 账户余额
 
-Mac、手机与手表均可显示 DeepSeek 余额；手机与手表总览提供 DeepSeek 入口，可查看人民币／美元总余额、充值余额、赠送余额和采集时间；Mac／iPhone 小组件按尺寸显示余额信息。API Key 仅保留在 Mac，沿用原 HTTPS 配对同步。[配置与使用](docs/deepseek-balance.md)。
+DeepSeek 为可选项，不配置也能使用 Codex 功能。未配置时三端隐藏余额与入口；配置后查询失败保留异常，正常零余额仍展示。Mac、手机与手表均可显示 DeepSeek 余额；手机与手表总览提供 DeepSeek 入口，可查看人民币／美元总余额、充值余额、赠送余额和采集时间；Mac／iPhone 小组件按尺寸显示余额信息。API Key 仅保留在 Mac，沿用原 HTTPS 配对同步。[配置与使用](docs/deepseek-balance.md)。
 
 ## 功能一览
 
@@ -180,7 +190,7 @@ Mac、手机与手表均可显示 DeepSeek 余额；手机与手表总览提供 
 | 任务进展 | 侧栏分区、项目与独立任务、筛选、阶段与事件 | 同步分区层级及任务详情 | Hooks + 增量日志观察，处理旧状态 |
 | 逐项审批 | 查看完整操作、批准或拒绝 | 查看完整操作、批准或拒绝 | 接收支持的请求、检验有效期并返回决定 |
 | 额度监控 | 套餐、窗口、重置、今日 Tokens | 额度页与今日用量页 | 读取本机 Codex 返回的额度与用量 |
-| 桌面小组件 | 小号／中号／大号，一个入口添加 | 本项目未提供表盘复杂功能 | 本机也提供三种尺寸，共享摘要与系统刷新 |
+| 桌面小组件 | 小号／中号／大号，一个入口添加 | 提供中央矩形表盘组件，支持纯 Codex 布局 | 本机也提供三种尺寸，共享摘要与系统刷新 |
 | 每日 token 趋势 | 保留手机今日用量口径 | 保留手表今日用量页 | 菜单栏最近 7 天 Codex／DeepSeek 独立柱状图与精确明细 |
 | 任务提醒 | Bark 静音通知，兼容 ntfy | 镜像 iPhone 通知 | 去重、重试、过期和停滞检查 |
 | 外出访问 | 通过固定 HTTPS 地址连接 | 通过配置的互联网连接访问 | 运行认证网关与隧道，Mac 必须在线 |
@@ -248,7 +258,7 @@ scripts/configure-ios-identifiers.sh --bundle-id com.yourname.CodexQuota
 open ios-watch/CodingQuota.xcodeproj
 ```
 
-为 `CodingQuota`、`CodingQuota Watch App`、`CodingQuotaWidgetExtension` 三个 target 选择自己的 Apple Team，并按 [完整安装文档](docs/setup.md) 完成设备信任、开发者模式与真机安装。
+为 `CodingQuota`、`CodingQuota Watch App`、`CodingQuotaWidgetExtension`、`QuotaWatchWidget` 四个 target 选择自己的 Apple Team，并按 [完整安装文档](docs/setup.md) 完成设备信任、开发者模式与真机安装。
 
 ```bash
 scripts/show-pairing-qr.sh --open-html
