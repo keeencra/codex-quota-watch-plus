@@ -152,28 +152,30 @@ struct QuotaWidgetView: View {
                     }
                 }.frame(width: 126, alignment: .leading)
             }.frame(height: denseExpanded || (snapshot.resetCredits?.expirations.count ?? 0) > 1 ? 178 : 150, alignment: .center)
-            Rectangle().fill(Color.white.opacity(0.14)).frame(height: 1)
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("DeepSeek 余额").font(.system(size: 12, weight: .semibold)).foregroundStyle(Color.codexWidgetBlue)
-                    Spacer()
-                    Text("官方 API 余额").font(.system(size: 10)).foregroundStyle(.secondary)
-                }
-                if snapshot.balances.isEmpty {
-                    Text(snapshot.balanceError == "未配置 API Key" ? "未配置 DeepSeek" : "余额暂不可用 · 等待同步")
-                        .font(.system(size: 12)).foregroundStyle(.secondary)
-                } else {
-                    HStack(alignment: .top, spacing: 16) {
-                        ForEach(Array(orderedBalances.prefix(2).enumerated()), id: \.offset) { _, balance in
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(balance.currency).font(.system(size: 10)).foregroundStyle(.secondary)
-                                Text(balance.amount).font(.system(size: 28, weight: .semibold, design: .rounded))
-                                    .monospacedDigit().minimumScaleFactor(0.6).lineLimit(1)
-                            }.frame(maxWidth: .infinity, alignment: .leading)
+            if snapshot.showsDeepSeek {
+                Rectangle().fill(Color.white.opacity(0.14)).frame(height: 1)
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("DeepSeek 余额").font(.system(size: 12, weight: .semibold)).foregroundStyle(Color.codexWidgetBlue)
+                        Spacer()
+                        Text("官方 API 余额").font(.system(size: 10)).foregroundStyle(.secondary)
+                    }
+                    if snapshot.balances.isEmpty {
+                        Text(snapshot.balanceError == "未配置 API Key" ? "未配置 DeepSeek" : "余额暂不可用 · 等待同步")
+                            .font(.system(size: 12)).foregroundStyle(.secondary)
+                    } else {
+                        HStack(alignment: .top, spacing: 16) {
+                            ForEach(Array(orderedBalances.prefix(2).enumerated()), id: \.offset) { _, balance in
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(balance.currency).font(.system(size: 10)).foregroundStyle(.secondary)
+                                    Text(balance.amount).font(.system(size: 28, weight: .semibold, design: .rounded))
+                                        .monospacedDigit().minimumScaleFactor(0.6).lineLimit(1)
+                                }.frame(maxWidth: .infinity, alignment: .leading)
+                            }
                         }
                     }
-                }
-            }.frame(maxHeight: .infinity, alignment: .center)
+                }.frame(maxHeight: .infinity, alignment: .center)
+            }
         }
     }
     var body: some View {
@@ -240,11 +242,13 @@ struct QuotaWidgetView: View {
                             Text(expirationLabel).font(.system(size: expanded ? 10 : 8)).foregroundStyle(.secondary).lineLimit(1)
                         }
                     }.frame(maxWidth: .infinity, alignment: .leading)
-                    Rectangle().fill(Color.white.opacity(0.32)).frame(width: 1)
-                    VStack(alignment: .leading, spacing: 6) {
-                        balanceView
-                        Text("官方 API 余额").font(.system(size: 9)).foregroundStyle(.secondary)
-                    }.frame(width: 112, alignment: .leading)
+                    if snapshot.showsDeepSeek {
+                        Rectangle().fill(Color.white.opacity(0.32)).frame(width: 1)
+                        VStack(alignment: .leading, spacing: 6) {
+                            balanceView
+                            Text("官方 API 余额").font(.system(size: 9)).foregroundStyle(.secondary)
+                        }.frame(width: 112, alignment: .leading)
+                    }
                 }.frame(maxHeight: expanded ? 306 : 97)
                 Spacer(minLength: 0)
             }
