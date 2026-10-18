@@ -258,12 +258,15 @@ private enum MenuBarQuotaGlyph {
 }
 
 final class AccountUsageReader: NSObject, URLSessionWebSocketDelegate {
-    private let codexPath: String = {
-        let candidates = [ProcessInfo.processInfo.environment["CODEX_BINARY"],
-                          "/Applications/Codex.app/Contents/Resources/codex",
-                          "/Applications/ChatGPT.app/Contents/Resources/codex"].compactMap { $0 }
-        return candidates.first { FileManager.default.isExecutableFile(atPath: $0) } ?? candidates[0]
-    }()
+    static func resolveCodexPath(environment: [String: String] = ProcessInfo.processInfo.environment,
+                                 executable: (String) -> Bool = FileManager.default.isExecutableFile(atPath:)) -> String? {
+        let candidates = [environment["CODEX_BINARY"],
+            "/Applications/Codex.app/Contents/Resources/codex",
+            "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+            "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+            "/Applications/ChatGPT.app/Contents/Resources/codex"].compactMap { $0 }
+        return candidates.first(where: executable)
+    }
     private let url = URL(string: "ws://127.0.0.1:47891")!
     private var serverProcess: Process?
     private let cacheURL = URL(fileURLWithPath: NSHomeDirectory())
@@ -293,7 +296,7 @@ final class AccountUsageReader: NSObject, URLSessionWebSocketDelegate {
 
     private func startServerIfNeeded() {
         guard serverProcess?.isRunning != true else { return }
-        guard FileManager.default.fileExists(atPath: codexPath) else { return }
+        guard let codexPath = Self.resolveCodexPath() else { return }
 
         let process = Process()
         process.executableURL = URL(fileURLWithPath: codexPath)
@@ -1145,7 +1148,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             let plan = accountUsage.planType?.lowercased() == "prolite" ? "Pro" : accountUsage.planLabel
             statusItem.button?.title = "\(plan) " + (values.isEmpty ? "—" : values.joined(separator: " "))
+            if snapshot.accountError != nil {
+                statusItem.button?.title = (statusItem.button?.title ?? "Codex") + " · 缓存"
+            }
             statusItem.button?.toolTip = "Codex \(accountUsage.planLabel) 剩余额度：" + values.joined(separator: " · ")
+                + (snapshot.accountError.map { "\n" + $0 + " · 请刷新后确认额度" } ?? "")
             return
         }
 
