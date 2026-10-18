@@ -100,8 +100,8 @@ private func overviewSnapshot(_ entry: CodingQuotaWidgetEntry) -> WidgetSnapshot
             guard let remaining = bucket.remainingPercent else { return nil }
             return .init(label: bucket.window == "7d" ? "周" : (bucket.window ?? bucket.label ?? "额度"), remaining: Int(remaining), resetsAt: bucket.resetAt.flatMap { Date(timeIntervalSince1970: $0) })
         },
-        balances: source.deepseek?.balanceInfos.map { .init(currency: $0.currency, amount: ($0.currency == "CNY" ? "¥" : ($0.currency == "USD" ? "$" : "")) + $0.compactTotal) } ?? [],
+        balances: (source.deepseek?.status == "ok" ? source.deepseek?.balanceInfos : nil)?.map { .init(currency: $0.currency, amount: ($0.currency == "CNY" ? "¥" : ($0.currency == "USD" ? "$" : "")) + $0.compactTotal) } ?? [],
         codexError: entry.refreshFailed ? "刷新失败" : source.codex.error,
-        balanceError: source.deepseek?.status == "not_configured" ? "未配置 API Key" : nil,
+        balanceError: !source.showsDeepSeek ? "未配置 API Key" : (source.deepseek?.status == "ok" ? nil : (source.deepseek?.error ?? "余额查询失败")),
         resetCredits: source.resetCredits.map { .init(availableCount: $0.availableCount, expirations: $0.expirations.map { Date(timeIntervalSince1970: $0) }) })
 }
