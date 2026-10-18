@@ -4,6 +4,9 @@ root = Path(__file__).resolve().parents[1]
 out = root/'build/tests'; out.mkdir(parents=True,exist_ok=True)
 source=(root/'main.swift').read_text().split('let app = NSApplication.shared')[0]
 source+=r'''
+assert(MenuBarSummary.title(codex: "Pro 周72%", balance: nil, error: "未配置 API Key").string == "Pro 周72%")
+assert(MenuBarSummary.title(codex: "Pro 周72%", balance: nil, error: "HTTP 401").string == "Pro 周72% · DS 异常")
+assert(MenuBarSummary.title(codex: "Pro 周72%", balance: nil).string == "Pro 周72%")
 let nestedCLI = "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex"
 assert(AccountUsageReader.resolveCodexPath(environment: [:], executable: { $0 == nestedCLI }) == nestedCLI)
 assert(AccountUsageReader.resolveCodexPath(environment: ["CODEX_BINARY": "/fixture/codex"], executable: { _ in true }) == "/fixture/codex")
