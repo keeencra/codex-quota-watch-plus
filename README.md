@@ -1,16 +1,16 @@
 <div align="center">
 
-> 实验性预发布 **v3.4.0-beta.2**：修复 Mac 额度刷新与缓存提示；保留 Antigravity CLI 手机／手表只读状态与离线演示。真实接入未验证，尚不支持余额、回复和审批回传。[测试说明](docs/antigravity.md) · [稳定版 v3.3.3](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.3.3)
+> 实验性预发布 **v3.5.0-beta.1**：新增手表表盘四行额度与余额组件，用户已确认真机显示正常；保留 Mac 额度刷新修复；保留 Antigravity CLI 手机／手表只读状态与离线演示。真实接入未验证，尚不支持余额、回复和审批回传。[测试说明](docs/antigravity.md) · [稳定版 v3.3.3](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.3.3)
 
 # 码伴 · CodeCompanion
 
-**项目版本 v3.4.0-beta.2 · Bug 修复预发布 · 第 21 次迭代** · [查看各版本变化](CHANGELOG.md#版本索引)
+**项目版本 v3.5.0-beta.1 · 小更新预发布 · 第 22 次迭代** · [查看各版本变化](CHANGELOG.md#版本索引)
 
 重大升级才升第一位；常规功能与局部改进升第二位，Bug 修复升第三位；日志、介绍与配图等文档修改不升版本。详见[版本规则](docs/versioning.md)。
 
 ### 桌面看额度，出门看任务。
 
-Mac 菜单栏 · 每日 token · 项目与任务 · 远程审批 · 三种尺寸小组件
+Mac 菜单栏 · 每日 token · 项目与任务 · 远程审批 · 三种尺寸小组件 · 手表表盘组件
 
 [所有版本下载](docs/downloads.md) · [界面展示](#界面展示) · [开始部署](#开始部署) · [更新日志](CHANGELOG.md) · [功能文档](#功能文档) · [反馈问题](https://github.com/keeencra/codex-quota-watch-plus/issues)
 
@@ -22,7 +22,7 @@ Mac 菜单栏 · 每日 token · 项目与任务 · 远程审批 · 三种尺寸
 
 </div>
 
-**码伴 · CodeCompanion**（原 Codex Quota Watch Plus）是一套连接 Mac、iPhone 与 Apple Watch 的 AI 开发助手。**Mac 显示端可独立使用；配合 iPhone 查看任务和处理审批，Apple Watch 为可选扩展。** 手机可以查看项目与任务、处理支持的审批请求、监控 Codex 额度、显示可选 DeepSeek 余额、使用桌面小组件及接收任务提醒；搭配手表后可抬腕查看和审批。
+**码伴 · CodeCompanion**（原 Codex Quota Watch Plus）是一套连接 Mac、iPhone 与 Apple Watch 的 AI 开发助手。**Mac 显示端可独立使用；配合 iPhone 查看任务和处理审批，Apple Watch 为可选扩展。** 手机可以查看项目与任务、处理支持的审批请求、监控 Codex 额度、显示可选 DeepSeek 余额、使用桌面小组件及接收任务提醒；搭配手表后可抬腕查看和审批，并在支持矩形槽位的表盘直接查看 Codex 进度条、重置日期和 DeepSeek 余额。
 
 Mac 服务仍需在线提供数据；外出使用需配置 HTTPS。独立品牌保留原有开源许可证、版权与上游致谢。
 
@@ -37,11 +37,19 @@ Mac 服务仍需在线提供数据；外出使用需配置 HTTPS。独立品牌�
 | 只在 Mac 使用 | 菜单栏查看 Codex 额度与 DeepSeek 双币余额，额度读取失败时标注缓存，展开统一滚动面板，查看最近 7 天每日 token、精确明细和任务记录 |
 | 手机看进展 | 按 Mac 侧栏分区查看项目与独立任务，保留分区顺序、任务标题、运行阶段和待审批请求；通过已配置的 HTTPS 连接访问 Mac |
 | 桌面随时查看 | Mac 与 iPhone 均从一个「码伴」入口添加小／中／大号组件，显示额度、余额和重置卡信息 |
-| 手表抬腕查看 | 查看额度和任务，处理已接入且仍有效的审批；Apple Watch 为可选扩展 |
+| 手表抬腕查看 | 四行矩形表盘组件显示重置日期、剩余百分比、独立进度条与 DeepSeek 余额；App 查看任务和处理有效审批 |
 | Antigravity（实验性） | CLI 模型额度、会话状态、手机／手表离线演示；真实接入待验收，无回复或审批回传 |
 | 接收任务提醒 | Bark 静音通知、完成提醒带任务名称；已归档历史和积压日志不触发“可能停滞”误报 |
 
-**最近更新：** v3.4.0-beta.2 修复 ChatGPT 更新后 Mac 额度停留旧百分比的问题，读取失败时明确标注缓存； v3.4.0-beta.1 新增实验性 Antigravity 只读采集与两端演示（未实测账号）；稳定版 v3.3.3 过滤过期结束提醒。 v3.3.2 修复分区识别与混合任务排序，兼容 iOS 26／27；v3.3.1 修复旧任务停滞误报；v3.3.0 新增每日 token 趋势与统一滚动面板；v3.2.1 修复公历日期显示；v3.2.0 改进大号组件排版、倒计时与菜单栏双币种显示。[完整变化与验证说明](CHANGELOG.md) · [当前预发布源码](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.4.0-beta.2)
+**最近更新：** v3.5.0-beta.1 新增手表表盘组件，四行布局已通过用户真机显示验收； v3.4.0-beta.2 修复 ChatGPT 更新后 Mac 额度停留旧百分比的问题，读取失败时明确标注缓存； v3.4.0-beta.1 新增实验性 Antigravity 只读采集与两端演示（未实测账号）；稳定版 v3.3.3 过滤过期结束提醒。 v3.3.2 修复分区识别与混合任务排序，兼容 iOS 26／27；v3.3.1 修复旧任务停滞误报；v3.3.0 新增每日 token 趋势与统一滚动面板；v3.2.1 修复公历日期显示；v3.2.0 改进大号组件排版、倒计时与菜单栏双币种显示。[完整变化与验证说明](CHANGELOG.md) · [当前预发布源码](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.5.0-beta.1)
+
+## 手表表盘：额度与余额四行直达
+
+支持中央矩形复杂功能槽位：第一行显示 Codex 下次重置日期，第二行显示剩余额度与百分比，第三行进度条独占整行，第四行完整显示 DeepSeek 名称与分币种余额。缺失数据不伪装为满额，数据过旧或刷新失败时显示缓存。
+
+![v3.5.0-beta.1 四行手表组件布局示意，虚构数据，非实机截图](docs/assets/v3.5.0-beta.1-watch-complication.svg)
+
+本项目已实现功能的布局示意，数值虚构，SVG 为可编辑源文件。用户已确认当前真机表盘显示正常；后台刷新时效和常显效果未单独验收。安装新版后，长按表盘 → 编辑 → 中央矩形位置 →「码伴 · 额度与余额」。[部署与刷新说明](docs/watch-complication.md)
 
 ## 手机与手表：分区、项目和任务保持一致
 
