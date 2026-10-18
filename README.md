@@ -1,6 +1,6 @@
 <div align="center">
 
-> Bug 修复预发布 **v3.5.0-beta.2**：Mac、iPhone、Apple Watch 与组件适配纯 Codex；未配置 DeepSeek 时隐藏相关区域，已配置查询失败时保留异常。本次通过测试、构建与离屏渲染，尚未真机验收；保留 Antigravity CLI 手机／手表只读状态与离线演示。真实接入未验证，尚不支持余额、回复和审批回传。[测试说明](docs/antigravity.md) · [稳定版 v3.3.3](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.3.3)
+> Bug 修复预发布 **v3.5.0-beta.2**：Mac、iPhone、Apple Watch 与组件适配纯 Codex；未配置 DeepSeek 时隐藏相关区域，已配置查询失败时保留异常。本次通过测试、构建与离屏渲染；用户已确认 Mac、iPhone 和 Apple Watch 纯 Codex 布局显示正常；保留 Antigravity CLI 手机／手表只读状态与离线演示。真实接入未验证，尚不支持余额、回复和审批回传。[测试说明](docs/antigravity.md) · [稳定版 v3.3.3](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.3.3)
 
 # 码伴 · CodeCompanion
 
@@ -59,7 +59,7 @@ Mac 服务仍需在线提供数据；外出使用需配置 HTTPS。独立品牌�
 
 ![v3.5.0-beta.1 四行手表组件布局示意，虚构数据，非实机截图](docs/assets/v3.5.0-beta.1-watch-complication.svg)
 
-本项目已实现功能的布局示意，数值虚构，SVG 为可编辑源文件。用户已确认 v3.5.0-beta.1 四行表盘显示正常；本次纯 Codex 分支尚未真机验收；后台刷新时效和常显效果未单独验收。安装新版后，长按表盘 → 编辑 → 中央矩形位置 →「码伴 · 额度与余额」。[部署与刷新说明](docs/watch-complication.md)
+本项目已实现功能的布局示意，数值虚构，SVG 为可编辑源文件。用户已确认 v3.5.0-beta.1 四行表盘显示正常；用户已确认本次纯 Codex 布局显示正常；后台刷新时效和常显效果未单独验收。安装新版后，长按表盘 → 编辑 → 中央矩形位置 →「码伴 · 额度与余额」。[部署与刷新说明](docs/watch-complication.md)
 
 ## 手机与手表：分区、项目和任务保持一致
 
