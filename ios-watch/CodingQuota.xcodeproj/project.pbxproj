@@ -44,6 +44,11 @@ CC3110000000000000000003 = {isa = PBXBuildFile; fileRef = CC31000000000000000000
 		A00100000000000000000030 /* Shared/TaskDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000030; };
 		A00100000000000000000031 /* Shared/TaskDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000030; };
 		A00100000000000000000032 /* Shared/TaskDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000030; };
+C0DE0000000000000000000A = {isa = PBXBuildFile; fileRef = A00200000000000000000001; };
+C0DE0000000000000000000B = {isa = PBXBuildFile; fileRef = A00200000000000000000002; };
+C0DE0000000000000000000C = {isa = PBXBuildFile; fileRef = A00200000000000000000030; };
+C0DE0000000000000000000D = {isa = PBXBuildFile; fileRef = C0DE00000000000000000001; };
+C0DE0000000000000000000E = {isa = PBXBuildFile; fileRef = C0DE00000000000000000002; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -61,6 +66,7 @@ CC3110000000000000000003 = {isa = PBXBuildFile; fileRef = CC31000000000000000000
 			remoteGlobalIDString = A00B00000000000000000003;
 			remoteInfo = CodingQuotaWidgetExtension;
 		};
+C0DE00000000000000000016 = {isa = PBXContainerItemProxy; containerPortal = A00F00000000000000000001; proxyType = 1; remoteGlobalIDString = C0DE0000000000000000001E; remoteInfo = QuotaWatchWidget; };
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -86,6 +92,7 @@ CC3110000000000000000003 = {isa = PBXBuildFile; fileRef = CC31000000000000000000
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+C0DE00000000000000000015 = {isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = ""; dstSubfolderSpec = 13; files = (C0DE0000000000000000000E,); name = "Embed Watch Widgets"; runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -126,6 +133,8 @@ CC3100000000000000000003 = {isa = PBXFileReference; lastKnownFileType = sourceco
 		A00200000000000000000027 /* Config/WidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Config/WidgetExtension.entitlements; sourceTree = "<group>"; };
 		A00200000000000000000028 /* CodingQuotaWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CodingQuotaWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00200000000000000000030 /* Shared/TaskDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/TaskDashboard.swift; sourceTree = "<group>"; };
+C0DE00000000000000000001 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/WatchWidget/QuotaComplication.swift; sourceTree = SOURCE_ROOT; };
+C0DE00000000000000000002 = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; path = QuotaWatchWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -156,6 +165,8 @@ CC3100000000000000000003 = {isa = PBXFileReference; lastKnownFileType = sourceco
 		A00600000000000000000001 = {
 			isa = PBXGroup;
 			children = (
+C0DE00000000000000000001,
+C0DE00000000000000000002,
 				A00600000000000000000002 /* Sources */,
 				A00600000000000000000006 /* Config */,
 				A00200000000000000000019 /* Assets.xcassets */,
@@ -284,6 +295,7 @@ CC3100000000000000000003 = {isa = PBXFileReference; lastKnownFileType = sourceco
 			isa = PBXNativeTarget;
 			buildConfigurationList = A00D00000000000000000003 /* Build configuration list for PBXNativeTarget "CodingQuota Watch App" */;
 			buildPhases = (
+C0DE00000000000000000015,
 				A00800000000000000000002 /* Sources */,
 				A00500000000000000000002 /* Frameworks */,
 				A00700000000000000000002 /* Resources */,
@@ -291,6 +303,7 @@ CC3100000000000000000003 = {isa = PBXFileReference; lastKnownFileType = sourceco
 			buildRules = (
 			);
 			dependencies = (
+C0DE00000000000000000017,
 			);
 			name = "CodingQuota Watch App";
 			productName = "CodingQuota Watch App";
@@ -314,6 +327,7 @@ CC3100000000000000000003 = {isa = PBXFileReference; lastKnownFileType = sourceco
 			productReference = A00200000000000000000028 /* CodingQuotaWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+C0DE0000000000000000001E = {isa = PBXNativeTarget; buildConfigurationList = C0DE0000000000000000001F; buildPhases = (C0DE00000000000000000014,); buildRules = (); dependencies = (); name = QuotaWatchWidget; productName = QuotaWatchWidget; productReference = C0DE00000000000000000002; productType = "com.apple.product-type.app-extension"; };
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -351,6 +365,7 @@ CC3100000000000000000003 = {isa = PBXFileReference; lastKnownFileType = sourceco
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+C0DE0000000000000000001E,
 				A00B00000000000000000001 /* CodingQuota */,
 				A00B00000000000000000002 /* CodingQuota Watch App */,
 				A00B00000000000000000003 /* CodingQuotaWidgetExtension */,
@@ -439,6 +454,7 @@ CC3110000000000000000003,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+C0DE00000000000000000014 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (C0DE0000000000000000000A, C0DE0000000000000000000B, C0DE0000000000000000000C, C0DE0000000000000000000D,); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -452,6 +468,7 @@ CC3110000000000000000003,
 			target = A00B00000000000000000003 /* CodingQuotaWidgetExtension */;
 			targetProxy = A00300000000000000000002 /* PBXContainerItemProxy */;
 		};
+C0DE00000000000000000017 = {isa = PBXTargetDependency; target = C0DE0000000000000000001E; targetProxy = C0DE00000000000000000016; };
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -728,6 +745,8 @@ CC3110000000000000000003,
 			};
 			name = Release;
 		};
+C0DE00000000000000000020 = {isa = XCBuildConfiguration; buildSettings = {APPLICATION_EXTENSION_API_ONLY = YES; CODE_SIGN_ENTITLEMENTS = Config/WatchApp.entitlements; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 6; DEVELOPMENT_TEAM = ""; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = "Config/WatchWidget-Info.plist"; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks",); MARKETING_VERSION = 0.2; PRODUCT_BUNDLE_IDENTIFIER = com.example.CodexQuota.watchkitapp.complication; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = watchos; SKIP_INSTALL = YES; SUPPORTED_PLATFORMS = "watchos watchsimulator"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 4; WATCHOS_DEPLOYMENT_TARGET = 10.0; }; name = Debug; };
+C0DE00000000000000000021 = {isa = XCBuildConfiguration; buildSettings = {APPLICATION_EXTENSION_API_ONLY = YES; CODE_SIGN_ENTITLEMENTS = Config/WatchApp.entitlements; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 6; DEVELOPMENT_TEAM = ""; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = "Config/WatchWidget-Info.plist"; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks",); MARKETING_VERSION = 0.2; PRODUCT_BUNDLE_IDENTIFIER = com.example.CodexQuota.watchkitapp.complication; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = watchos; SKIP_INSTALL = YES; SUPPORTED_PLATFORMS = "watchos watchsimulator"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 4; WATCHOS_DEPLOYMENT_TARGET = 10.0; }; name = Release; };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -767,6 +786,7 @@ CC3110000000000000000003,
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+C0DE0000000000000000001F = {isa = XCConfigurationList; buildConfigurations = (C0DE00000000000000000020, C0DE00000000000000000021,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
 	};
 	rootObject = A00F00000000000000000001 /* Project object */;
