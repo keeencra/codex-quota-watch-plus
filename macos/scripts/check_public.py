@@ -11,5 +11,5 @@ for p in files:
     text = p.read_text()
     for pattern in patterns:
         if re.search(pattern, text): raise SystemExit('Review sensitive pattern in '+str(p.relative_to(root)))
-assert re.fullmatch(r'\d+\.\d+\.\d+\n?', (root.parent/'VERSION').read_text())
+assert re.fullmatch(r'\d+\.\d+\.\d+(?:-(?:alpha|beta|rc)\.\d+)?\n?', (root.parent/'VERSION').read_text())
 print('Public-file checks passed:', len(files), 'files (pattern scan, not a security audit)')

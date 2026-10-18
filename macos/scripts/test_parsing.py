@@ -4,6 +4,11 @@ root = Path(__file__).resolve().parents[1]
 out = root/'build/tests'; out.mkdir(parents=True,exist_ok=True)
 source=(root/'main.swift').read_text().split('let app = NSApplication.shared')[0]
 source+=r'''
+let nestedCLI = "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex"
+assert(AccountUsageReader.resolveCodexPath(environment: [:], executable: { $0 == nestedCLI }) == nestedCLI)
+assert(AccountUsageReader.resolveCodexPath(environment: ["CODEX_BINARY": "/fixture/codex"], executable: { _ in true }) == "/fixture/codex")
+assert(AccountUsageReader.resolveCodexPath(environment: [:], executable: { _ in false }) == nil)
+print("PASS: relocated CLI, explicit override, unavailable CLI")
 let temp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
 try! FileManager.default.createDirectory(at: temp, withIntermediateDirectories: true)
 defer { try? FileManager.default.removeItem(at: temp) }
