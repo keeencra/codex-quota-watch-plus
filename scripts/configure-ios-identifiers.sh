@@ -107,7 +107,9 @@ project_text = project_path.read_text()
 
 def replace_bundle_id(match: re.Match[str]) -> str:
     current = match.group("value")
-    if current.endswith(".watchkitapp"):
+    if current.endswith(".watchkitapp.complication"):
+        value = watch_id + ".complication"
+    elif current.endswith(".watchkitapp"):
         value = watch_id
     elif current.endswith(".widget"):
         value = widget_id
