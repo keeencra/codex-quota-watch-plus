@@ -18,6 +18,7 @@ from .models import safe_error_summary
 from .task_events import save_bark_config, TaskEventStore
 from .task_dashboard import task_dashboard
 from .approvals import ApprovalStore, ApprovalConflict
+from .needs_you import build_needs_you_snapshot, write_needs_you_snapshot
 
 
 app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
@@ -48,7 +49,22 @@ def approvals():
 
 @app.get('/tasks', dependencies=[Depends(require_token)])
 def tasks():
-    return task_dashboard(TaskEventStore())
+    dashboard = task_dashboard(TaskEventStore())
+    try:
+        approvals = ApprovalStore().pending()
+    except Exception:
+        # A damaged approval database must not hide the task inbox.
+        approvals = []
+    dashboard['needs_you'] = build_needs_you_snapshot(
+        dashboard.get('tasks', []),
+        approvals,
+    )
+    try:
+        write_needs_you_snapshot(dashboard['needs_you'])
+    except OSError:
+        # Status display must remain available even if the local cache is unwritable.
+        pass
+    return dashboard
 
 
 @app.get('/approvals/{request_id}', dependencies=[Depends(require_token)])

@@ -89,6 +89,44 @@ final class TaskDashboardTests: XCTestCase {
         XCTAssertEqual(snapshot.sidebarSections(activeOnly: false).map(\.id), ["empty", "fallback"])
         XCTAssertEqual(snapshot.sidebarSections(activeOnly: true)[0].groups[0].tasks.map(\.id), ["a"])
     }
+    func testNeedsYouPayloadDecodesAndPrioritizedItemsStayOrdered() throws {
+        let json = #"{"updated_at":"now","tasks":[],"needs_you":{"state":"needs_you","count":2,"approval_count":1,"input_count":1,"attention_count":0,"running_count":2,"updated_at":"now","items":[{"id":"approval","kind":"approval","title":"Project · Bash","project":"Project","status":"needs_approval","summary":"等待你查看完整操作并确认","updated_at":"now"},{"id":"input","kind":"task","title":"回答架构问题","project":"Project","status":"needs_input","summary":"等待你的回复","updated_at":"now"}]}}"#
+        let snapshot = try JSONDecoder().decode(TaskDashboardSnapshot.self, from: Data(json.utf8))
+        let status = try XCTUnwrap(snapshot.needsYou)
+        XCTAssertEqual(status.state, .needsYou)
+        XCTAssertEqual(status.label, "需要你")
+        XCTAssertEqual(status.detailText, "1 待审批 · 1 待回复 · 2 运行中")
+        XCTAssertEqual(status.items.map(\.id), ["approval", "input"])
+    }
+    func testNeedsYouFallbackUsesApprovalInputAttentionAndRunningPriority() {
+        let approval = NeedsYouSnapshot.derived(
+            tasks: [task("input", "needs_input"), task("run", "running")],
+            approvalCount: 1, approvalEnabled: true, connectionFailed: false
+        )
+        XCTAssertEqual(approval.state, .needsYou)
+        XCTAssertEqual(approval.count, 2)
+        XCTAssertEqual(approval.detailText, "1 待审批 · 1 待回复 · 1 运行中")
+
+        let attention = NeedsYouSnapshot.derived(
+            tasks: [task("stale", "running", stale: true), task("run", "running")],
+            approvalCount: 0, approvalEnabled: false, connectionFailed: false
+        )
+        XCTAssertEqual(attention.state, .attention)
+        XCTAssertEqual(attention.attentionCount, 1)
+
+        let running = NeedsYouSnapshot.derived(
+            tasks: [task("run", "running"), task("done", "finished")],
+            approvalCount: nil, approvalEnabled: nil, connectionFailed: false
+        )
+        XCTAssertEqual(running.state, .running)
+        XCTAssertEqual(running.items.map(\.id), ["run"])
+
+        let idle = NeedsYouSnapshot.derived(
+            tasks: [task("done", "finished")],
+            approvalCount: 0, approvalEnabled: true, connectionFailed: false
+        )
+        XCTAssertEqual(idle.state, .idle)
+    }
     private func task(_ id: String, _ status: String, stale: Bool = false) -> DashboardTask {
         DashboardTask(id: id, project: "Project", title: nil, status: status, phase: "phase", updatedAt: "now", startedAt: "then", stale: stale, recent: [])
     }

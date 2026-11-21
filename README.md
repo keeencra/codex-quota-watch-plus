@@ -1,16 +1,16 @@
 <div align="center">
 
-> 稳定版 **v3.5.1**：修复手机重装、续签或重新连接后，Apple Watch 仍停留缓存的问题；重新激活、回到前台和手表恢复可达时会继续发送最新快照，并拒绝旧消息覆盖新数据。本版完整包含 v3.5.0 系列的纯 Codex 三端适配、四行表盘组件和 Antigravity 实验性只读状态。[同步说明](docs/watch-complication.md) · [当前源码](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.5.1)
+> 稳定版 **v3.6.0**：新增“需要你”状态收件箱和三端状态灯。Mac、iPhone 与 Apple Watch 统一按待审批／待回复、异常、运行中、空闲四级排序，让你一眼判断何时需要回来处理。[功能说明](docs/needs-you-inbox.md) · [当前源码](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.6.0)
 
 # 码伴 · CodeCompanion
 
-**项目版本 v3.5.1 · Bug 修复稳定版 · 第 24 次迭代** · [查看各版本变化](CHANGELOG.md#版本索引)
+**项目版本 v3.6.0 · 小更新稳定版 · 第 25 次迭代** · [查看各版本变化](CHANGELOG.md#版本索引)
 
 重大升级才升第一位；常规功能与局部改进升第二位，Bug 修复升第三位；日志、介绍与配图等文档修改不升版本。详见[版本规则](docs/versioning.md)。
 
 ### 桌面看额度，出门看任务。
 
-Mac 菜单栏 · 每日 token · 项目与任务 · 远程审批 · 三种尺寸小组件 · 手表表盘组件
+Mac 菜单栏 · 每日 token · 项目与任务 · 三端状态灯 · 远程审批 · 三种尺寸小组件 · 手表表盘组件
 
 [所有版本下载](docs/downloads.md) · [界面展示](#界面展示) · [开始部署](#开始部署) · [更新日志](CHANGELOG.md) · [功能文档](#功能文档) · [反馈问题](https://github.com/keeencra/codex-quota-watch-plus/issues)
 
@@ -22,7 +22,7 @@ Mac 菜单栏 · 每日 token · 项目与任务 · 远程审批 · 三种尺寸
 
 </div>
 
-**码伴 · CodeCompanion**（原 Codex Quota Watch Plus）是一套连接 Mac、iPhone 与 Apple Watch 的 AI 开发助手。**Mac 显示端可独立使用；配合 iPhone 查看任务和处理审批，Apple Watch 为可选扩展。** 手机可以查看项目与任务、处理支持的审批请求、监控 Codex 额度、显示可选 DeepSeek 余额、使用桌面小组件及接收任务提醒；搭配手表后可抬腕查看和审批，并在支持矩形槽位的表盘直接查看 Codex 进度条、重置日期和 DeepSeek 余额。
+**码伴 · CodeCompanion**（原 Codex Quota Watch Plus）是一套连接 Mac、iPhone 与 Apple Watch 的 AI 开发助手。**Mac 显示端可独立使用；配合 iPhone 查看任务和处理审批，Apple Watch 为可选扩展。** 三端通过同一套状态灯与“需要你”收件箱判断何时需要回来处理；手机可以查看项目与任务、处理支持的审批请求、监控 Codex 额度、显示可选 DeepSeek 余额、使用桌面小组件及接收任务提醒；搭配手表后可抬腕查看和审批，并在支持矩形槽位的表盘直接查看 Codex 进度条、重置日期和 DeepSeek 余额。
 
 Mac 服务仍需在线提供数据；外出使用需配置 HTTPS。独立品牌保留原有开源许可证、版权与上游致谢。
 
@@ -36,12 +36,19 @@ Mac 服务仍需在线提供数据；外出使用需配置 HTTPS。独立品牌�
 | --- | --- |
 | 只在 Mac 使用 | 菜单栏查看 Codex 额度，配置 DeepSeek 后显示双币余额，额度读取失败时标注缓存，展开统一滚动面板，查看最近 7 天每日 token、精确明细和任务记录 |
 | 手机看进展 | 按 Mac 侧栏分区查看项目与独立任务，保留分区顺序、任务标题、运行阶段和待审批请求；通过已配置的 HTTPS 连接访问 Mac |
+| 判断何时回来 | Mac 菜单栏圆环、iPhone 与 Apple Watch 使用同一套红／橙／蓝／绿状态灯；“需要你”收件箱优先列出待审批、待回复和异常任务 |
 | 桌面随时查看 | Mac 与 iPhone 均从一个「码伴」入口添加小／中／大号组件，显示额度、余额和重置卡信息 |
 | 手表抬腕查看 | 矩形表盘组件显示重置日期、剩余百分比和独立进度条；配置 DeepSeek 后增加余额行；App 查看任务和处理有效审批 |
 | Antigravity（实验性） | CLI 模型额度、会话状态、手机／手表离线演示；真实接入待验收，无回复或审批回传 |
 | 接收任务提醒 | Bark 静音通知、完成提醒带任务名称；已归档历史和积压日志不触发“可能停滞”误报 |
 
-**最近更新：** v3.5.1 修复手表重装、续签和重连后的缓存滞留，增加激活重发、中继重试和旧快照防回写；手机与手表现已在同一刷新时刻显示一致额度。v3.5.0 系列完成纯 Codex 三端适配、四行表盘组件和 Antigravity 实验性只读状态；v3.4.0-beta.2 修复 ChatGPT 更新后 Mac 额度停留旧百分比的问题，读取失败时明确标注缓存；v3.4.0-beta.1 新增实验性 Antigravity 只读采集与两端演示（未实测账号）；v3.3.3 过滤过期结束提醒。v3.3.2 修复分区识别与混合任务排序，兼容 iOS 26／27；v3.3.1 修复旧任务停滞误报；v3.3.0 新增每日 token 趋势与统一滚动面板；v3.2.1 修复公历日期显示；v3.2.0 改进大号组件排版、倒计时与菜单栏双币种显示。[完整变化与验证说明](CHANGELOG.md) · [当前稳定源码](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.5.1)
+**最近更新：** v3.6.0 新增三端统一的“需要你”状态灯与优先任务收件箱；待审批和待回复显示红色，停滞与异常显示橙色，运行中显示蓝色，空闲显示绿色。Mac 菜单栏与面板、手机和手表使用同一优先级，审批详情和远程 Token 不进入 Mac 的只读状态快照。v3.5.1 修复手表重装、续签和重连后的缓存滞留；v3.5.0 系列完成纯 Codex 三端适配、四行表盘组件和 Antigravity 实验性只读状态。[完整变化与验证说明](CHANGELOG.md) · [当前稳定源码](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.6.0)
+
+## 三端状态灯：先看是否需要你
+
+![v3.6.0 三端状态灯与需要你收件箱功能示意图，虚构数据，非实机截图](docs/assets/v3.6.0-needs-you.svg)
+
+Mac 菜单栏在额度圆环右上角显示状态点，展开面板可直接看到最多三项待处理任务；iPhone 与 Apple Watch 首页显示相同状态卡，并可进入按优先级排列的收件箱。连接失败会进入橙色“需要查看”，不会把未知状态误报为空闲。上图为功能示意图，数据虚构，不代表真实任务或设备截图。[优先级、数据路径与隐私边界](docs/needs-you-inbox.md)
 
 ## 只用 Codex 也可以：三端自动适配
 
@@ -303,7 +310,7 @@ iPhone App → **连接与同步 → Mac 连接设置 → 扫描配对二维码*
 
 ## 功能文档
 
-[更新日志](CHANGELOG.md) · [完整安装](docs/setup.md) · [任务总览](docs/task-dashboard.md) · [远程审批](docs/remote-approval.md) · [外网与提醒](docs/enhancements.md) · [自动续签](docs/auto-renew-signing.md) · [常见问题](docs/troubleshooting.md)
+[更新日志](CHANGELOG.md) · [完整安装](docs/setup.md) · [任务总览](docs/task-dashboard.md) · [需要你收件箱](docs/needs-you-inbox.md) · [远程审批](docs/remote-approval.md) · [外网与提醒](docs/enhancements.md) · [自动续签](docs/auto-renew-signing.md) · [常见问题](docs/troubleshooting.md)
 
 开发检查：
 

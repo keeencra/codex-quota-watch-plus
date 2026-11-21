@@ -39,6 +39,11 @@ struct ContentView: View {
                     }.padding(.vertical, 8)
                     // Each link must be a separate Form row; links in one VStack share row activation.
                     NavigationLink {
+                        NeedsYouInboxView(model: dashboard, base: macURL, token: tokenInput)
+                    } label: {
+                        NeedsYouStatusCard(status: dashboard.needsYou)
+                    }.buttonStyle(.plain)
+                    NavigationLink {
                         TaskListView(model: dashboard, base: macURL, token: tokenInput)
                     } label: {
                         OverviewCard(title: "运行中",

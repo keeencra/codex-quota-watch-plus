@@ -59,6 +59,145 @@ public struct DashboardSectionItem: Decodable {
     public let id: String
 }
 
+public enum NeedsYouState: String, Decodable, Equatable {
+    case needsYou = "needs_you"
+    case attention
+    case running
+    case idle
+}
+
+public struct NeedsYouItem: Decodable, Identifiable, Equatable {
+    public let id: String
+    public let kind: String
+    public let title: String
+    public let project: String
+    public let status: String
+    public let summary: String
+    public let updatedAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, kind, title, project, status, summary
+        case updatedAt = "updated_at"
+    }
+
+    public var statusLabel: String {
+        switch status {
+        case "needs_approval": return "等待确认"
+        case "needs_input": return "等待回复"
+        case "stalled": return "可能停滞"
+        case "interrupted": return "已中断"
+        case "running": return "运行中"
+        default: return "需要查看"
+        }
+    }
+}
+
+public struct NeedsYouSnapshot: Decodable, Equatable {
+    public let state: NeedsYouState
+    public let count: Int
+    public let approvalCount: Int
+    public let inputCount: Int
+    public let attentionCount: Int
+    public let runningCount: Int
+    public let updatedAt: String
+    public let items: [NeedsYouItem]
+
+    enum CodingKeys: String, CodingKey {
+        case state, count, items
+        case approvalCount = "approval_count"
+        case inputCount = "input_count"
+        case attentionCount = "attention_count"
+        case runningCount = "running_count"
+        case updatedAt = "updated_at"
+    }
+
+    public init(state: NeedsYouState, count: Int, approvalCount: Int, inputCount: Int,
+                attentionCount: Int, runningCount: Int, updatedAt: String,
+                items: [NeedsYouItem]) {
+        self.state = state
+        self.count = count
+        self.approvalCount = approvalCount
+        self.inputCount = inputCount
+        self.attentionCount = attentionCount
+        self.runningCount = runningCount
+        self.updatedAt = updatedAt
+        self.items = items
+    }
+
+    public var label: String {
+        switch state {
+        case .needsYou: return "需要你"
+        case .attention: return "需要查看"
+        case .running: return "运行中"
+        case .idle: return "当前空闲"
+        }
+    }
+
+    public var detailText: String {
+        var parts: [String] = []
+        if approvalCount > 0 { parts.append("\(approvalCount) 待审批") }
+        if inputCount > 0 { parts.append("\(inputCount) 待回复") }
+        if attentionCount > 0 { parts.append("\(attentionCount) 异常") }
+        if runningCount > 0 { parts.append("\(runningCount) 运行中") }
+        return parts.isEmpty ? "没有待处理任务" : parts.joined(separator: " · ")
+    }
+
+    public func attentionOnConnectionFailure() -> NeedsYouSnapshot {
+        guard state != .needsYou else { return self }
+        return NeedsYouSnapshot(
+            state: .attention,
+            count: max(1, attentionCount),
+            approvalCount: approvalCount,
+            inputCount: inputCount,
+            attentionCount: max(1, attentionCount),
+            runningCount: 0,
+            updatedAt: updatedAt,
+            items: []
+        )
+    }
+
+    public static func derived(tasks: [DashboardTask], approvalCount: Int?,
+                               approvalEnabled: Bool?, connectionFailed: Bool) -> NeedsYouSnapshot {
+        let approvals = approvalEnabled == false ? 0 : max(0, approvalCount ?? 0)
+        let input = tasks.filter { $0.status == "needs_input" && !$0.stale }
+        let attention = tasks.filter {
+            $0.stale || ["stalled", "interrupted"].contains($0.status)
+                || ($0.status == "needs_approval" && approvals == 0)
+        }
+        let running = tasks.filter(\.isRunning)
+        let directCount = approvals + input.count
+        let state: NeedsYouState
+        let count: Int
+        if connectionFailed {
+            state = .attention
+            count = 1
+        } else if directCount > 0 {
+            state = .needsYou
+            count = directCount
+        } else if !attention.isEmpty {
+            state = .attention
+            count = attention.count
+        } else if !running.isEmpty {
+            state = .running
+            count = running.count
+        } else {
+            state = .idle
+            count = 0
+        }
+        let items = Array(input + attention + running).prefix(20).map { task in
+            NeedsYouItem(id: task.id, kind: "task", title: task.displayTitle,
+                         project: task.project, status: task.status, summary: task.phase,
+                         updatedAt: task.updatedAt)
+        }
+        return NeedsYouSnapshot(
+            state: state, count: count, approvalCount: approvals,
+            inputCount: input.count, attentionCount: connectionFailed ? max(1, attention.count) : attention.count,
+            runningCount: connectionFailed ? 0 : running.count,
+            updatedAt: TaskTime.now(), items: items
+        )
+    }
+}
+
 public struct TaskSidebarSection: Identifiable {
     public let id: String
     public let name: String?
@@ -70,7 +209,12 @@ public struct TaskDashboardSnapshot: Decodable {
     public let tasks: [DashboardTask]
     public var projects: [DashboardProject]? = nil
     public var sections: [DashboardSection]? = nil
-    enum CodingKeys: String, CodingKey { case tasks, projects, sections; case updatedAt = "updated_at" }
+    public var needsYou: NeedsYouSnapshot? = nil
+    enum CodingKeys: String, CodingKey {
+        case tasks, projects, sections
+        case updatedAt = "updated_at"
+        case needsYou = "needs_you"
+    }
     public var runningCount: Int { tasks.filter(\.isRunning).count }
     public var attentionCount: Int { tasks.filter(\.needsAttention).count }
 
@@ -147,6 +291,7 @@ import SwiftUI
 @MainActor public final class TaskDashboardModel: ObservableObject {
     @Published public private(set) var snapshot: TaskDashboardSnapshot?
     @Published public private(set) var approvalCount: Int?
+    @Published public private(set) var approvalEnabled: Bool?
     @Published public private(set) var approvalMessage = "连接中"
     @Published public private(set) var taskError: String?
     @Published public private(set) var loading = false
@@ -157,6 +302,7 @@ import SwiftUI
         if connectionKey != base + token {
             snapshot = nil
             approvalCount = nil
+            approvalEnabled = nil
             taskError = nil
             connectionKey = base + token
         }
@@ -182,12 +328,27 @@ import SwiftUI
         do {
             let result = try await ApprovalClient.list(base: base, token: token)
             guard !Task.isCancelled else { return }
+            approvalEnabled = result.enabled
             approvalCount = result.enabled ? result.requests.filter { $0.canDecide() }.count : nil
             approvalMessage = result.enabled ? "查看并处理" : "尚未启用"
         } catch {
+            approvalEnabled = nil
             approvalCount = nil
             approvalMessage = "连接失败"
         }
+    }
+
+    public var needsYou: NeedsYouSnapshot {
+        let fallback = NeedsYouSnapshot.derived(
+            tasks: snapshot?.tasks ?? [],
+            approvalCount: approvalCount,
+            approvalEnabled: approvalEnabled,
+            connectionFailed: taskError != nil && snapshot == nil
+        )
+        guard taskError == nil else {
+            return (snapshot?.needsYou ?? fallback).attentionOnConnectionFailure()
+        }
+        return snapshot?.needsYou ?? fallback
     }
 }
 
@@ -249,6 +410,11 @@ public struct TaskOverviewLinks: View {
     }
     public var body: some View {
         NavigationLink {
+            NeedsYouInboxView(model: model, base: base, token: token)
+        } label: {
+            NeedsYouStatusCard(status: model.needsYou)
+        }.buttonStyle(.plain)
+        NavigationLink {
             TaskListView(model: model, base: base, token: token)
         } label: {
             OverviewCard(title: "运行中", value: running,
@@ -261,6 +427,192 @@ public struct TaskOverviewLinks: View {
             OverviewCard(title: "待审批", value: model.approvalCount.map(String.init) ?? "—",
                          subtitle: model.approvalMessage, symbol: "checkmark.shield.fill", tint: .orange)
         }.buttonStyle(.plain)
+    }
+}
+
+public struct NeedsYouStatusLight: View {
+    public let state: NeedsYouState
+
+    public init(state: NeedsYouState) { self.state = state }
+
+    public var body: some View {
+        ZStack {
+            Circle().fill(state.tint.opacity(0.20)).frame(width: 22, height: 22)
+            Circle().fill(state.tint).frame(width: 10, height: 10)
+        }
+        .accessibilityHidden(true)
+    }
+}
+
+public struct NeedsYouStatusCard: View {
+    public let status: NeedsYouSnapshot
+
+    public init(status: NeedsYouSnapshot) { self.status = status }
+
+    public var body: some View {
+        HStack(spacing: 10) {
+            NeedsYouStatusLight(state: status.state)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(status.label).font(.headline)
+                    if status.count > 0 {
+                        Text("\(status.count)")
+                            .font(.system(.title3, design: .rounded, weight: .bold))
+                            .monospacedDigit()
+                    }
+                }
+                Text(status.detailText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+        }
+        .foregroundStyle(status.state.tint)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(status.state.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 16))
+        .contentShape(RoundedRectangle(cornerRadius: 16))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(status.label)，\(status.detailText)")
+    }
+}
+
+public struct NeedsYouInboxView: View {
+    @ObservedObject var model: TaskDashboardModel
+    let base: String
+    let token: String
+
+    public init(model: TaskDashboardModel, base: String, token: String) {
+        self.model = model
+        self.base = base
+        self.token = token
+    }
+
+    public var body: some View {
+        List {
+            Section {
+                HStack(spacing: 12) {
+                    NeedsYouStatusLight(state: model.needsYou.state)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(model.needsYou.label).font(.headline)
+                        Text(model.needsYou.detailText).font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    if model.needsYou.count > 0 {
+                        Text("\(model.needsYou.count)")
+                            .font(.system(.title2, design: .rounded, weight: .bold))
+                            .monospacedDigit()
+                    }
+                }
+                .foregroundStyle(model.needsYou.state.tint)
+            } header: {
+                Text("现在")
+            }
+
+            if model.needsYou.items.isEmpty {
+                Label(model.needsYou.state == .idle ? "当前没有需要你处理的任务" : "暂时没有可显示的任务",
+                      systemImage: model.needsYou.state.symbol)
+                    .font(.callout).foregroundStyle(.secondary)
+            } else {
+                Section("按优先级排列") {
+                    ForEach(model.needsYou.items) { item in
+                        NavigationLink {
+                            if item.kind == "approval" {
+                                ApprovalInboxView(base: base, token: token)
+                            } else {
+                                TaskProgressView(id: item.id, model: model, base: base, token: token)
+                            }
+                        } label: {
+                            NeedsYouInboxRow(item: item)
+                        }
+                    }
+                }
+            }
+
+            Button("刷新需要你的任务") {
+                Task { await model.refresh(base: base, token: token) }
+            }.disabled(model.loading)
+
+            Text("只显示当前需要你确认、回复、查看异常或正在运行的任务；已完成和归档任务不会进入这里。")
+                .font(.caption2).foregroundStyle(.secondary)
+        }
+        .navigationTitle("需要你")
+        .watchReturnButton()
+        .task {
+            while !Task.isCancelled {
+                await model.refresh(base: base, token: token)
+                do { try await Task.sleep(nanoseconds: 10_000_000_000) } catch { return }
+            }
+        }
+    }
+}
+
+private struct NeedsYouInboxRow: View {
+    let item: NeedsYouItem
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Circle()
+                .fill(item.tint)
+                .frame(width: 9, height: 9)
+                .padding(.top, 5)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(item.title).font(.headline).lineLimit(2)
+                HStack(spacing: 6) {
+                    Text(item.statusLabel)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(item.tint)
+                    if !item.project.isEmpty {
+                        Text(item.project)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+                Text(item.summary)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+        }
+        .padding(.vertical, 3)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private extension NeedsYouState {
+    var tint: Color {
+        switch self {
+        case .needsYou: return .red
+        case .attention: return .orange
+        case .running: return .cyan
+        case .idle: return .green
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .needsYou: return "hand.raised.fill"
+        case .attention: return "exclamationmark.triangle.fill"
+        case .running: return "bolt.fill"
+        case .idle: return "checkmark.circle.fill"
+        }
+    }
+}
+
+private extension NeedsYouItem {
+    var tint: Color {
+        switch status {
+        case "needs_approval", "needs_input": return .red
+        case "stalled", "interrupted": return .orange
+        case "running": return .cyan
+        default: return .gray
+        }
     }
 }
 
@@ -371,6 +723,12 @@ public struct TaskProgressView: View {
 #endif
 
 public enum TaskTime {
+    public static func now() -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.string(from: Date())
+    }
+
     public static func label(_ raw: String) -> String {
         let parser = ISO8601DateFormatter()
         parser.formatOptions = [.withInternetDateTime, .withFractionalSeconds]

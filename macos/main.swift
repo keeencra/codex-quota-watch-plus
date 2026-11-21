@@ -60,6 +60,100 @@ struct AppSnapshot {
     var dailyTokens: DailyTokenUsage = .empty()
 }
 
+struct NeedsYouItem: Decodable, Identifiable {
+    let id: String
+    let kind: String
+    let title: String
+    let project: String
+    let status: String
+    let summary: String
+    let updatedAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, kind, title, project, status, summary
+        case updatedAt = "updated_at"
+    }
+}
+
+struct NeedsYouSnapshot: Decodable {
+    let state: String
+    let count: Int
+    let approvalCount: Int
+    let inputCount: Int
+    let attentionCount: Int
+    let runningCount: Int
+    let updatedAt: String
+    let items: [NeedsYouItem]
+
+    enum CodingKeys: String, CodingKey {
+        case state, count, items
+        case approvalCount = "approval_count"
+        case inputCount = "input_count"
+        case attentionCount = "attention_count"
+        case runningCount = "running_count"
+        case updatedAt = "updated_at"
+    }
+
+    var label: String {
+        switch state {
+        case "needs_you": return "需要你"
+        case "attention": return "需要查看"
+        case "running": return "运行中"
+        default: return "当前空闲"
+        }
+    }
+
+    var isStale: Bool {
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let whole = ISO8601DateFormatter()
+        guard let date = fractional.date(from: updatedAt) ?? whole.date(from: updatedAt) else { return true }
+        return Date().timeIntervalSince(date) > 120
+    }
+
+    var detailText: String {
+        var parts: [String] = []
+        if approvalCount > 0 { parts.append("\(approvalCount) 待审批") }
+        if inputCount > 0 { parts.append("\(inputCount) 待回复") }
+        if attentionCount > 0 { parts.append("\(attentionCount) 异常") }
+        if runningCount > 0 { parts.append("\(runningCount) 运行中") }
+        let summary = parts.isEmpty ? "没有待处理任务" : parts.joined(separator: " · ")
+        return isStale ? summary + " · 状态已缓存" : summary
+    }
+
+    var color: NSColor {
+        switch state {
+        case "needs_you": return .systemRed
+        case "attention": return .systemOrange
+        case "running": return .systemCyan
+        default: return .systemGreen
+        }
+    }
+}
+
+final class NeedsYouReader {
+    private let path: URL
+
+    init(home: URL = FileManager.default.homeDirectoryForCurrentUser) {
+        path = home
+            .appendingPathComponent("Library/Application Support/CodexQuotaWatch")
+            .appendingPathComponent("needs-you-snapshot.json")
+    }
+
+    func read() -> (NeedsYouSnapshot?, String?) {
+        guard FileManager.default.fileExists(atPath: path.path) else {
+            return (nil, "任务状态服务尚未生成收件箱")
+        }
+        do {
+            let data = try Data(contentsOf: path)
+            let snapshot = try JSONDecoder().decode(NeedsYouSnapshot.self, from: data)
+            return (snapshot, nil)
+        } catch {
+            return (nil, "任务状态数据读取失败")
+        }
+    }
+}
+
 
 // Local records only: neither provider's account-wide billing history is inferred.
 struct DailyTokenUsage {
@@ -233,7 +327,7 @@ private enum UsageColors {
 }
 
 private enum MenuBarQuotaGlyph {
-    static func image(short: Int?, total: Int?) -> NSImage {
+    static func image(short: Int?, total: Int?, statusColor: NSColor? = nil) -> NSImage {
         let remaining = [short, total].compactMap { $0 }.min()
         return NSImage(size: NSSize(width: 16, height: 18), flipped: false) { _ in
             let center = NSPoint(x: 8, y: 9)
@@ -252,6 +346,12 @@ private enum MenuBarQuotaGlyph {
             }
             NSColor.labelColor.withAlphaComponent(0.8).setFill()
             NSBezierPath(ovalIn: NSRect(x: 6.5, y: 7.5, width: 3, height: 3)).fill()
+            if let statusColor {
+                NSColor.windowBackgroundColor.withAlphaComponent(0.92).setFill()
+                NSBezierPath(ovalIn: NSRect(x: 10.5, y: 11.5, width: 5.5, height: 5.5)).fill()
+                statusColor.setFill()
+                NSBezierPath(ovalIn: NSRect(x: 11.5, y: 12.5, width: 3.5, height: 3.5)).fill()
+            }
             return true
         }
     }
@@ -771,17 +871,22 @@ final class QuotaDashboardView: NSView {
     let balanceError: String?
     let balanceDate: Date?
     let widgetError: String?
+    let needsYou: NeedsYouSnapshot?
+    let needsYouError: String?
     private let ink = NSColor(calibratedWhite: 0.94, alpha: 1)
     private let muted = NSColor(calibratedRed: 0.54, green: 0.60, blue: 0.69, alpha: 1)
     private let purple = NSColor(calibratedRed: 0.63, green: 0.57, blue: 1, alpha: 1)
     private let teal = NSColor(calibratedRed: 0.35, green: 0.83, blue: 0.79, alpha: 1)
     override var isFlipped: Bool { true }
-    init(snapshot: AppSnapshot, balance: DeepSeekBalance?, error: String?, date: Date?, widgetError: String? = nil) {
-        self.snapshot = snapshot; self.balance = balance; balanceError = error; balanceDate = date; self.widgetError = widgetError
+    init(snapshot: AppSnapshot, balance: DeepSeekBalance?, error: String?, date: Date?,
+         widgetError: String? = nil, needsYou: NeedsYouSnapshot? = nil, needsYouError: String? = nil) {
+        self.snapshot = snapshot; self.balance = balance; balanceError = error; balanceDate = date
+        self.widgetError = widgetError; self.needsYou = needsYou; self.needsYouError = needsYouError
         super.init(frame: NSRect(x: 0, y: 0, width: 368, height: 0))
         setFrameSize(NSSize(width: 368, height: contentHeight))
         setAccessibilityElement(true)
-        setAccessibilityLabel("AI 额度与用量。向下滚动查看每日精确用量、账户详情和任务记录。" + detailSections.map { $0.0 + "。" + $0.1.map { $0.0 + "：" + $0.1 }.joined(separator: "。") }.joined(separator: "。"))
+        let inbox = needsYou.map { "需要你。\($0.label)。\($0.detailText)。" } ?? (needsYouError.map { "任务状态。\($0)。" } ?? "")
+        setAccessibilityLabel(inbox + "AI 额度与用量。向下滚动查看每日精确用量、账户详情和任务记录。" + detailSections.map { $0.0 + "。" + $0.1.map { $0.0 + "：" + $0.1 }.joined(separator: "。") }.joined(separator: "。"))
     }
     required init?(coder: NSCoder) { fatalError() }
     private func text(_ value: String, x: CGFloat, y: CGFloat, width: CGFloat = 310, size: CGFloat = 12,
@@ -801,7 +906,13 @@ final class QuotaDashboardView: NSView {
         QuotaTimestamp.label(date)
     }
     var showsDeepSeek: Bool { balanceError != "未配置 API Key" && (balance != nil || balanceError != nil) }
-    var overviewHeight: CGFloat { CGFloat((showsDeepSeek ? 538 : 299) + max(1, snapshot.accountUsage?.windows.count ?? 0) * 42) }
+    var needsYouCardHeight: CGFloat {
+        guard let needsYou else { return 70 }
+        return 64 + CGFloat(min(3, needsYou.items.count)) * 30
+    }
+    var overviewHeight: CGFloat {
+        needsYouCardHeight + 8 + CGFloat((showsDeepSeek ? 538 : 299) + max(1, snapshot.accountUsage?.windows.count ?? 0) * 42)
+    }
     private var detailSections: [(String, [(String, String)])] {
         var account: [(String, String)] = []
         if let usage = snapshot.accountUsage {
@@ -920,12 +1031,42 @@ final class QuotaDashboardView: NSView {
             text(today ? "今天" : dates.string(from: day.date), x: x, y: base + 5, width: step, size: 9, color: today ? tint : muted, alignment: .center)
         }
     }
+    private func drawNeedsYouCard(y: CGFloat) {
+        card(y: y, height: needsYouCardHeight)
+        let tint = needsYou?.color ?? NSColor.systemGray
+        tint.setFill()
+        NSBezierPath(ovalIn: NSRect(x: 28, y: y + 17, width: 9, height: 9)).fill()
+        text("需要你", x: 46, y: y + 10, width: 130, size: 13, weight: .semibold)
+        text(needsYou?.label ?? "状态未连接", x: 226, y: y + 12, width: 112, size: 10,
+             color: tint, weight: .semibold, alignment: .right)
+        text(needsYou?.detailText ?? needsYouError ?? "启动 Mac 任务服务后显示",
+             x: 28, y: y + 31, width: 310, size: 9, color: muted)
+        guard let needsYou else { return }
+        for (index, item) in needsYou.items.prefix(3).enumerated() {
+            let row = y + 54 + CGFloat(index) * 30
+            let itemTint: NSColor = {
+                switch item.status {
+                case "needs_approval", "needs_input": return .systemRed
+                case "stalled", "interrupted": return .systemOrange
+                case "running": return .systemCyan
+                default: return .secondaryLabelColor
+                }
+            }()
+            itemTint.setFill()
+            NSBezierPath(ovalIn: NSRect(x: 30, y: row + 5, width: 5, height: 5)).fill()
+            text(item.title, x: 43, y: row, width: 210, size: 10, weight: .medium)
+            let project = item.project.isEmpty ? item.summary : item.project + " · " + item.summary
+            text(project, x: 43, y: row + 14, width: 286, size: 8, color: muted)
+        }
+    }
     override func draw(_ dirtyRect: NSRect) {
         NSColor(calibratedRed: 0.035, green: 0.052, blue: 0.083, alpha: 1).setFill()
         NSBezierPath(roundedRect: bounds.insetBy(dx: 4, dy: 0), xRadius: 14, yRadius: 14).fill()
         text("AI 额度与用量", x: 24, y: 13, size: 17, weight: .bold)
-        text("每 60 秒刷新", x: 248, y: 18, width: 96, size: 9, color: muted, alignment: .right)
+        text("任务 10 秒 · 余额 60 秒", x: 214, y: 18, width: 130, size: 8, color: muted, alignment: .right)
         var y: CGFloat = 45
+        drawNeedsYouCard(y: y)
+        y += needsYouCardHeight + 8
         let windows = snapshot.accountUsage?.windows ?? []
         let ch = CGFloat(58 + max(1, windows.count) * 42)
         card(y: y, height: ch)
@@ -1049,6 +1190,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let accountReader = AccountUsageReader()
     private let reader = CodexUsageReader()
     private let dailyReader = DailyTokenReader()
+    private let needsYouReader = NeedsYouReader()
     private var dailyLoading = false
     private var latestDailyTokens = DailyTokenUsage.empty()
     private let deepSeekReader = DeepSeekBalanceReader()
@@ -1056,8 +1198,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var deepSeekError: String? = DeepSeekBalanceReader.configuredKey().isEmpty ? "未配置 API Key" : "正在查询"
     private var deepSeekUpdatedAt: Date?
     private var latestSnapshot: AppSnapshot?
+    private var needsYouSnapshot: NeedsYouSnapshot?
+    private var needsYouError: String?
     private var deepSeekLoading = false
     private var timer: Timer?
+    private var needsYouTimer: Timer?
     private var widgetError: String?
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -1067,12 +1212,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.button?.target = self
         statusItem.button?.action = #selector(togglePanel)
         refresh()
+        refreshNeedsYou()
         timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             self?.refresh()
+        }
+        needsYouTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
+            self?.refreshNeedsYou()
         }
     }
 
     private func refresh() {
+        refreshNeedsYou()
         if !dailyLoading {
             dailyLoading = true
             DispatchQueue.global(qos: .utility).async {
@@ -1124,6 +1274,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    private func refreshNeedsYou() {
+        DispatchQueue.global(qos: .utility).async {
+            let result = self.needsYouReader.read()
+            DispatchQueue.main.async {
+                self.needsYouSnapshot = result.0
+                self.needsYouError = result.1
+                if let snapshot = self.latestSnapshot {
+                    self.updateTitle(snapshot)
+                    self.updatePanel(snapshot)
+                } else {
+                    self.updateStatusToolTip()
+                }
+            }
+        }
+    }
+
+    private func statusSummaryLine() -> String {
+        if let needsYouSnapshot {
+            return "需要你：\(needsYouSnapshot.label) · \(needsYouSnapshot.detailText)"
+        }
+        return "需要你：\(needsYouError ?? "任务状态未连接")"
+    }
+
+    private func statusToolTip(_ base: String) -> String {
+        base + "\n" + statusSummaryLine()
+    }
+
+    private func updateStatusToolTip() {
+        guard let button = statusItem.button else { return }
+        let base = button.toolTip?.split(separator: "\n").first.map(String.init) ?? "码伴 Mac"
+        button.toolTip = statusToolTip(base)
+    }
+
     private func updateTitle(_ snapshot: AppSnapshot) {
         #if WIDGET_SUPPORT
         let widget = WidgetSnapshot(updatedAt: Date(), codexUpdatedAt: snapshot.accountUsage?.lastSuccessAt,
@@ -1152,7 +1335,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let accountUsage = snapshot.accountUsage {
             let shortRemaining = accountUsage.shortWindow?.remainingPercent
             let totalRemaining = accountUsage.totalWindow?.remainingPercent
-            statusItem.button?.image = MenuBarQuotaGlyph.image(short: shortRemaining, total: totalRemaining)
+            statusItem.button?.image = MenuBarQuotaGlyph.image(
+                short: shortRemaining,
+                total: totalRemaining,
+                statusColor: needsYouSnapshot?.color ?? NSColor.secondaryLabelColor
+            )
             let values = accountUsage.windows.map {
                 let label = $0.windowLabel == "1周" ? "周" : ($0.windowLabel == "5小时" ? "5h" : $0.windowLabel)
                 return "\(label)\($0.remainingPercent)%"
@@ -1162,24 +1349,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if snapshot.accountError != nil {
                 statusItem.button?.title = (statusItem.button?.title ?? "Codex") + " · 缓存"
             }
-            statusItem.button?.toolTip = "Codex \(accountUsage.planLabel) 剩余额度：" + values.joined(separator: " · ")
-                + (snapshot.accountError.map { "\n" + $0 + " · 请刷新后确认额度" } ?? "")
+            statusItem.button?.toolTip = statusToolTip(
+                "Codex \(accountUsage.planLabel) 剩余额度：" + values.joined(separator: " · ")
+                    + (snapshot.accountError.map { "\n" + $0 + " · 请刷新后确认额度" } ?? "")
+            )
             return
         }
 
-        statusItem.button?.image = MenuBarQuotaGlyph.image(short: nil, total: nil)
+        statusItem.button?.image = MenuBarQuotaGlyph.image(
+            short: nil,
+            total: nil,
+            statusColor: needsYouSnapshot?.color ?? NSColor.secondaryLabelColor
+        )
         guard snapshot.threadUsage.error == nil, let current = snapshot.threadUsage.current else {
             statusItem.button?.title = " --%"
-            statusItem.button?.toolTip = "Codex 用量读取中"
+            statusItem.button?.toolTip = statusToolTip("Codex 用量读取中")
             return
         }
 
         if let remaining = reader.contextRemainingPercent(for: current) {
             statusItem.button?.title = " \(remaining)%"
-            statusItem.button?.toolTip = "当前任务上下文剩余 \(remaining)%"
+            statusItem.button?.toolTip = statusToolTip("当前任务上下文剩余 \(remaining)%")
         } else {
             statusItem.button?.title = " \(formatTokens(current.tokens))"
-            statusItem.button?.toolTip = "当前任务已用 \(formatTokens(current.tokens)) tokens"
+            statusItem.button?.toolTip = statusToolTip("当前任务已用 \(formatTokens(current.tokens)) tokens")
         }
     }
 
@@ -1202,7 +1395,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             popover.contentSize = controller.view.frame.size
             popover.appearance = NSAppearance(named: .darkAqua)
         }
-        panelController?.update(QuotaDashboardView(snapshot: snapshot, balance: deepSeekBalance, error: deepSeekError, date: deepSeekUpdatedAt, widgetError: widgetError))
+        panelController?.update(QuotaDashboardView(
+            snapshot: snapshot,
+            balance: deepSeekBalance,
+            error: deepSeekError,
+            date: deepSeekUpdatedAt,
+            widgetError: widgetError,
+            needsYou: needsYouSnapshot,
+            needsYouError: needsYouError
+        ))
     }
 
     @objc private func togglePanel() {

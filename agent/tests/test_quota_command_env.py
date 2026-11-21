@@ -1,4 +1,5 @@
 import json
+import shlex
 import sys
 import time
 from datetime import datetime, timezone
@@ -29,7 +30,7 @@ async def test_codex_quota_command_caps_codex_app_server_timeout_below_provider_
     )
 
     settings = Settings(
-        codex_quota_command=f"{sys.executable} {command}",
+            codex_quota_command=f"{shlex.quote(sys.executable)} {command}",
         codex_quota_cache_path=str(tmp_path / "codex-cache.json"),
         codex_binary="/opt/homebrew/bin/codex",
         codex_app_server_timeout_seconds=30,
@@ -59,7 +60,7 @@ async def test_codex_quota_command_keeps_requested_timeout_when_provider_allows(
     )
 
     settings = Settings(
-        codex_quota_command=f"{sys.executable} {command}",
+            codex_quota_command=f"{shlex.quote(sys.executable)} {command}",
         codex_quota_cache_path=str(tmp_path / "codex-cache.json"),
         codex_app_server_timeout_seconds=30,
         quota_provider_timeout_seconds=40,
@@ -91,7 +92,7 @@ async def test_codex_quota_command_uses_recent_cache_after_command_failure(tmp_p
     raw["cached_at"] = expected_cached_at.timestamp()
     cache_path.write_text(json.dumps(raw))
     settings = Settings(
-        codex_quota_command=f"{sys.executable} -c 'raise SystemExit(2)'",
+            codex_quota_command=f"{shlex.quote(sys.executable)} -c 'raise SystemExit(2)'",
         codex_quota_cache_path=str(cache_path),
         quota_cache_max_age_seconds=300,
     )
@@ -179,7 +180,7 @@ async def test_codex_quota_command_uses_stale_complete_cache_after_command_failu
     raw["cached_at"] = time.time() - 3600
     cache_path.write_text(json.dumps(raw))
     settings = Settings(
-        codex_quota_command=f"{sys.executable} -c 'raise SystemExit(2)'",
+        codex_quota_command=f"{shlex.quote(sys.executable)} -c 'raise SystemExit(2)'",
         codex_quota_cache_path=str(cache_path),
         quota_cache_max_age_seconds=300,
     )
@@ -210,7 +211,7 @@ async def test_codex_quota_command_rejects_day_old_stale_cache_after_command_fai
     raw["cached_at"] = time.time() - (25 * 60 * 60)
     cache_path.write_text(json.dumps(raw))
     settings = Settings(
-        codex_quota_command=f"{sys.executable} -c 'raise SystemExit(2)'",
+        codex_quota_command=f"{shlex.quote(sys.executable)} -c 'raise SystemExit(2)'",
         codex_quota_cache_path=str(cache_path),
         quota_cache_max_age_seconds=300,
     )
@@ -235,7 +236,7 @@ async def test_codex_quota_command_rejects_degraded_percent_only_cache_after_fai
         cache_path=cache_path,
     )
     settings = Settings(
-        codex_quota_command=f"{sys.executable} -c 'raise SystemExit(2)'",
+        codex_quota_command=f"{shlex.quote(sys.executable)} -c 'raise SystemExit(2)'",
         codex_quota_cache_path=str(cache_path),
         quota_cache_max_age_seconds=300,
     )

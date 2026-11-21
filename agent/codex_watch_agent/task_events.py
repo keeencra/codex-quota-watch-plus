@@ -285,6 +285,7 @@ def run_worker():
     from .task_observer import TaskObserver
     observer = TaskObserver(store)
     from .desktop_approvals import start_desktop_bridge
+    from .needs_you import refresh_needs_you_snapshot
     start_desktop_bridge()
     next_observe = 0.0
     while True:
@@ -293,6 +294,7 @@ def run_worker():
                 observer.scan()
                 from .approvals import ApprovalStore
                 ApprovalStore(store.root).pending()  # Expire abandoned requests and erase details.
+                refresh_needs_you_snapshot(store=store)
                 next_observe = time.monotonic() + 10
             deliver_pending(store)
         except Exception:

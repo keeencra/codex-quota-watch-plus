@@ -38,6 +38,9 @@ try:
     stage.rename(target)
     plist.parent.mkdir(parents=True,exist_ok=True)
     plist.write_bytes(plistlib.dumps({'Label':label,'ProgramArguments':[str(target/'Contents/MacOS/CodexUsageBar')],'RunAtLoad':True,'KeepAlive':False}))
+    for attribute in ('com.apple.quarantine','com.apple.provenance'):
+        subprocess.run(['xattr','-d',attribute,str(plist)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    subprocess.run(['launchctl','enable',f'gui/{os.getuid()}/{label}'],check=True)
     subprocess.run(['launchctl','bootstrap',f'gui/{os.getuid()}',str(plist)],check=True)
     # Register the replaced extension, then retire only its old process.
     # RunAtLoad already starts the host; opening it again creates a duplicate.

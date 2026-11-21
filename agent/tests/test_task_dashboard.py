@@ -1,5 +1,6 @@
 import json
 import sqlite3
+import time
 from fastapi.testclient import TestClient
 from codex_watch_agent.task_events import TaskEventStore
 from codex_watch_agent.task_dashboard import task_dashboard
@@ -66,13 +67,19 @@ def test_task_endpoint_requires_token_and_does_not_cache(tmp_path, monkeypatch):
     monkeypatch.setenv('CODEX_QUOTA_STATE_DIR', str(tmp_path))
     monkeypatch.setenv('CODEX_HOME', str(tmp_path))
     monkeypatch.setattr(gateway.settings, 'watch_token', 'dashboard-test-token-123456789')
-    record(TaskEventStore(tmp_path))
+    record(TaskEventStore(tmp_path), at=time.time())
     with TestClient(gateway.app) as client:
         assert client.get('/tasks').status_code == 401
         response = client.get('/tasks', headers={'x-watch-token': 'dashboard-test-token-123456789'})
         assert response.status_code == 200
         assert response.headers['cache-control'] == 'no-store'
         assert len(response.json()['tasks']) == 1
+        needs_you = response.json()['needs_you']
+        assert needs_you['state'] == 'running'
+        assert needs_you['running_count'] == 1
+        snapshot_path = tmp_path / 'needs-you-snapshot.json'
+        assert snapshot_path.exists()
+        assert json.loads(snapshot_path.read_text()) == needs_you
 
 
 def catalog_db(home):
