@@ -34,7 +34,10 @@ final class WatchConnectivityReceiver: NSObject, ObservableObject, WCSessionDele
             let didRefresh = await self.refreshDirectlyFromMac()
             await MainActor.run {
                 self.directRefreshTask = nil
-                if !didRefresh && !WatchRefreshPolicy.requestsPhoneRelayOnOpen {
+                if !didRefresh {
+                    // The first relay request can race with WatchConnectivity
+                    // activation. Re-send after a failed direct fetch; the
+                    // debounce prevents a tight request loop.
                     self.requestRefreshFromPhone()
                 }
             }
@@ -60,10 +63,7 @@ final class WatchConnectivityReceiver: NSObject, ObservableObject, WCSessionDele
                 timeoutSeconds: WatchRefreshPolicy.directRefreshTimeoutSeconds
             )
             await MainActor.run {
-                self.snapshot = updatedSnapshot
-                SharedUsageStore.shared.save(updatedSnapshot)
-                WidgetCenter.shared.reloadTimelines(ofKind: "QuotaWatchComplication")
-                self.refreshRoute = .directOK
+                self.adopt(updatedSnapshot, route: .directOK)
             }
             return true
         } catch {
@@ -110,12 +110,22 @@ final class WatchConnectivityReceiver: NSObject, ObservableObject, WCSessionDele
 
         DispatchQueue.main.async {
             if let decodedSnapshot {
-                self.snapshot = decodedSnapshot
-                SharedUsageStore.shared.save(decodedSnapshot)
-                WidgetCenter.shared.reloadTimelines(ofKind: "QuotaWatchComplication")
-                self.refreshRoute = .iPhone
+                self.adopt(decodedSnapshot, route: .iPhone)
             }
         }
+    }
+
+    private func adopt(_ incoming: WatchSnapshot, route: WatchRefreshRoute) {
+        guard WatchSnapshotFreshness.incoming(incoming, isAtLeastAsNewAs: snapshot) else {
+            return
+        }
+        let changed = incoming != snapshot
+        snapshot = incoming
+        SharedUsageStore.shared.save(incoming)
+        if changed {
+            WidgetCenter.shared.reloadTimelines(ofKind: "QuotaWatchComplication")
+        }
+        refreshRoute = route
     }
 
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
@@ -134,6 +144,11 @@ final class WatchConnectivityReceiver: NSObject, ObservableObject, WCSessionDele
 
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
         apply(message)
+    }
+
+    func sessionReachabilityDidChange(_ session: WCSession) {
+        guard session.isReachable else { return }
+        requestRefreshFromPhone()
     }
 
     #if os(iOS)

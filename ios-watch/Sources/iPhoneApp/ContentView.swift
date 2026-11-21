@@ -238,6 +238,11 @@ struct ContentView: View {
                     BackgroundRefreshService.cancel()
                 }
             }
+            .onChange(of: scenePhase) { _, phase in
+                guard phase == .active else { return }
+                PhoneConnectivity.shared.resendLatestSnapshot()
+                refreshDiagnostics()
+            }
             .onReceive(NotificationCenter.default.publisher(for: PhoneConnectivity.refreshRequestNotification)) { notification in
                 applyWatchRefreshResult(notification.object)
             }

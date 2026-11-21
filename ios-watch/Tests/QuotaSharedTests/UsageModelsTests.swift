@@ -593,6 +593,38 @@ final class UsageModelsTests: XCTestCase {
         XCTAssertTrue(WatchRefreshPolicy.shouldRequestPhoneRelay(lastRequestAt: now.addingTimeInterval(-3), now: now))
     }
 
+    func testWatchSnapshotFreshnessRejectsDelayedOlderUpdates() {
+        let current = WatchSnapshot(
+            updatedAt: "2026-11-20T12:30:00Z",
+            codex: ProviderUsage.placeholder(status: "ok")
+        )
+        let newer = WatchSnapshot(
+            updatedAt: "2026-11-20T12:31:00Z",
+            codex: ProviderUsage.placeholder(status: "ok")
+        )
+        let older = WatchSnapshot(
+            updatedAt: "2026-11-20T12:29:00Z",
+            codex: ProviderUsage.placeholder(status: "ok")
+        )
+
+        XCTAssertTrue(WatchSnapshotFreshness.incoming(newer, isAtLeastAsNewAs: current))
+        XCTAssertTrue(WatchSnapshotFreshness.incoming(current, isAtLeastAsNewAs: current))
+        XCTAssertFalse(WatchSnapshotFreshness.incoming(older, isAtLeastAsNewAs: current))
+    }
+
+    func testWatchSnapshotFreshnessAcceptsUnknownTimestampsForRecovery() {
+        let current = WatchSnapshot(
+            updatedAt: "not-a-date",
+            codex: ProviderUsage.placeholder(status: "ok")
+        )
+        let incoming = WatchSnapshot(
+            updatedAt: "2026-11-20T12:31:00Z",
+            codex: ProviderUsage.placeholder(status: "ok")
+        )
+
+        XCTAssertTrue(WatchSnapshotFreshness.incoming(incoming, isAtLeastAsNewAs: current))
+    }
+
     func testWatchLayoutMetricsScalesQuotaReadoutAcrossWatchFamilies() {
         let compact = WatchLayoutMetrics(width: 162, height: 197)
         let regular = WatchLayoutMetrics(width: 198, height: 242)

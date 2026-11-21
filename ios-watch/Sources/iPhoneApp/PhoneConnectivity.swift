@@ -5,6 +5,7 @@ final class PhoneConnectivity: NSObject, ObservableObject, WCSessionDelegate {
     static let shared = PhoneConnectivity()
     static let refreshRequestNotification = Notification.Name("PhoneConnectivityRefreshRequest")
     private var watchRefreshTask: Task<Void, Never>?
+    private(set) var lastDeliveryError: String?
 
     override init() {
         super.init()
@@ -27,7 +28,7 @@ final class PhoneConnectivity: NSObject, ObservableObject, WCSessionDelegate {
                 return "未配对（可选，不影响手机使用）"
             }
             if !session.isWatchAppInstalled {
-                return "手表 App 未安装（可选）"
+                return "手表已配对，安装状态待刷新"
             }
             return session.isReachable ? "reachable" : "installed"
         @unknown default:
@@ -36,15 +37,41 @@ final class PhoneConnectivity: NSObject, ObservableObject, WCSessionDelegate {
     }
 
     func send(snapshot: WatchSnapshot, macURL: String, token: String) {
-        guard WCSession.isSupported(), WCSession.default.activationState == .activated,
-              WCSession.default.isPaired, WCSession.default.isWatchAppInstalled else { return }
+        guard WCSession.isSupported() else { return }
+        let session = WCSession.default
+        guard session.activationState == .activated, session.isPaired else { return }
         guard let data = try? JSONEncoder().encode(snapshot),
               let json = String(data: data, encoding: .utf8) else { return }
 
         let context = context(snapshotJSON: json, macURL: macURL, token: token)
-        try? WCSession.default.updateApplicationContext(context)
-        if WCSession.default.isReachable {
-            WCSession.default.sendMessage(context, replyHandler: nil, errorHandler: nil)
+        deliver(context, through: session)
+    }
+
+    /// Replays the newest local snapshot when WatchConnectivity finishes
+    /// activation. `isWatchAppInstalled` can remain stale after a reinstall,
+    /// so it must not gate delivery.
+    func resendLatestSnapshot() {
+        guard let snapshot = SharedUsageStore.shared.loadOptional() else { return }
+        let defaults = UserDefaults(suiteName: AppConstants.appGroupID) ?? .standard
+        let macURL = defaults.string(forKey: AppConstants.macURLKey) ?? "http://127.0.0.1:8787"
+        let token = WatchTokenStore.migrateLegacyTokenIfNeeded(defaults: defaults)
+        send(snapshot: snapshot, macURL: macURL, token: token)
+    }
+
+    private func deliver(_ context: [String: Any], through session: WCSession) {
+        do {
+            try session.updateApplicationContext(context)
+            lastDeliveryError = nil
+        } catch {
+            lastDeliveryError = error.localizedDescription
+            // transferUserInfo is queued by the system and survives a temporary
+            // watch disconnect or a delayed app activation.
+            session.transferUserInfo(context)
+        }
+        if session.isReachable {
+            session.sendMessage(context, replyHandler: nil) { [weak self] error in
+                self?.lastDeliveryError = error.localizedDescription
+            }
         }
     }
 
@@ -59,7 +86,19 @@ final class PhoneConnectivity: NSObject, ObservableObject, WCSessionDelegate {
         return payload
     }
 
-    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
+    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+        guard activationState == .activated, error == nil else { return }
+        resendLatestSnapshot()
+    }
+
+    func sessionWatchStateDidChange(_ session: WCSession) {
+        resendLatestSnapshot()
+    }
+
+    func sessionReachabilityDidChange(_ session: WCSession) {
+        guard session.isReachable else { return }
+        resendLatestSnapshot()
+    }
 
     private func handleRefreshRequest(_ payload: [String: Any]) {
         guard RefreshRequestPayload.isRefreshRequest(payload) else { return }

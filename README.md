@@ -1,10 +1,10 @@
 <div align="center">
 
-> Bug 修复预发布 **v3.5.0-beta.2**：Mac、iPhone、Apple Watch 与组件适配纯 Codex；未配置 DeepSeek 时隐藏相关区域，已配置查询失败时保留异常。本次通过测试、构建与离屏渲染；用户已确认 Mac、iPhone 和 Apple Watch 纯 Codex 布局显示正常；保留 Antigravity CLI 手机／手表只读状态与离线演示。真实接入未验证，尚不支持余额、回复和审批回传。[测试说明](docs/antigravity.md) · [稳定版 v3.3.3](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.3.3)
+> 稳定版 **v3.5.1**：修复手机重装、续签或重新连接后，Apple Watch 仍停留缓存的问题；重新激活、回到前台和手表恢复可达时会继续发送最新快照，并拒绝旧消息覆盖新数据。本版完整包含 v3.5.0 系列的纯 Codex 三端适配、四行表盘组件和 Antigravity 实验性只读状态。[同步说明](docs/watch-complication.md) · [当前源码](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.5.1)
 
 # 码伴 · CodeCompanion
 
-**项目版本 v3.5.0-beta.2 · Bug 修复预发布 · 第 23 次迭代** · [查看各版本变化](CHANGELOG.md#版本索引)
+**项目版本 v3.5.1 · Bug 修复稳定版 · 第 24 次迭代** · [查看各版本变化](CHANGELOG.md#版本索引)
 
 重大升级才升第一位；常规功能与局部改进升第二位，Bug 修复升第三位；日志、介绍与配图等文档修改不升版本。详见[版本规则](docs/versioning.md)。
 
@@ -41,7 +41,7 @@ Mac 服务仍需在线提供数据；外出使用需配置 HTTPS。独立品牌�
 | Antigravity（实验性） | CLI 模型额度、会话状态、手机／手表离线演示；真实接入待验收，无回复或审批回传 |
 | 接收任务提醒 | Bark 静音通知、完成提醒带任务名称；已归档历史和积压日志不触发“可能停滞”误报 |
 
-**最近更新：** v3.5.0-beta.2 补齐纯 Codex 跨端布局，隐藏未配置的 DeepSeek，保留已配置查询失败提示； v3.5.0-beta.1 新增手表表盘组件，四行布局已通过用户真机显示验收； v3.4.0-beta.2 修复 ChatGPT 更新后 Mac 额度停留旧百分比的问题，读取失败时明确标注缓存； v3.4.0-beta.1 新增实验性 Antigravity 只读采集与两端演示（未实测账号）；稳定版 v3.3.3 过滤过期结束提醒。 v3.3.2 修复分区识别与混合任务排序，兼容 iOS 26／27；v3.3.1 修复旧任务停滞误报；v3.3.0 新增每日 token 趋势与统一滚动面板；v3.2.1 修复公历日期显示；v3.2.0 改进大号组件排版、倒计时与菜单栏双币种显示。[完整变化与验证说明](CHANGELOG.md) · [当前预发布源码](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.5.0-beta.2)
+**最近更新：** v3.5.1 修复手表重装、续签和重连后的缓存滞留，增加激活重发、中继重试和旧快照防回写；手机与手表现已在同一刷新时刻显示一致额度。v3.5.0 系列完成纯 Codex 三端适配、四行表盘组件和 Antigravity 实验性只读状态；v3.4.0-beta.2 修复 ChatGPT 更新后 Mac 额度停留旧百分比的问题，读取失败时明确标注缓存；v3.4.0-beta.1 新增实验性 Antigravity 只读采集与两端演示（未实测账号）；v3.3.3 过滤过期结束提醒。v3.3.2 修复分区识别与混合任务排序，兼容 iOS 26／27；v3.3.1 修复旧任务停滞误报；v3.3.0 新增每日 token 趋势与统一滚动面板；v3.2.1 修复公历日期显示；v3.2.0 改进大号组件排版、倒计时与菜单栏双币种显示。[完整变化与验证说明](CHANGELOG.md) · [当前稳定源码](https://github.com/keeencra/codex-quota-watch-plus/releases/tag/v3.5.1)
 
 ## 只用 Codex 也可以：三端自动适配
 
@@ -49,7 +49,7 @@ Mac 服务仍需在线提供数据；外出使用需配置 HTTPS。独立品牌�
 
 | 纯 Codex · Mac 原生面板 | 纯 Codex · 共享组件 |
 | --- | --- |
-| <img src="docs/assets/v3.5.0-beta.2-codex-only/mac-none.png" width="280" alt="v3.5.0-beta.2 Mac 纯 Codex 布局，原生离屏渲染、虚构数据"> | <img src="docs/assets/v3.5.0-beta.2-codex-only/widget-none.png" width="400" alt="v3.5.0-beta.2 纯 Codex 组件，原生离屏渲染、虚构数据"> |
+| <img src="docs/assets/v3.5.0-beta.2-codex-only/mac-none.png" width="280" alt="v3.5.0 系列 Mac 纯 Codex 布局，原生离屏渲染、虚构数据"> | <img src="docs/assets/v3.5.0-beta.2-codex-only/widget-none.png" width="400" alt="v3.5.0 系列纯 Codex 组件，原生离屏渲染、虚构数据"> |
 
 本次展示图来自项目原生视图的离屏渲染，数据虚构，非真机截图。[错误态对照与完整验证](docs/codex-only.md)。
 
@@ -59,7 +59,7 @@ Mac 服务仍需在线提供数据；外出使用需配置 HTTPS。独立品牌�
 
 ![v3.5.0-beta.1 四行手表组件布局示意，虚构数据，非实机截图](docs/assets/v3.5.0-beta.1-watch-complication.svg)
 
-本项目已实现功能的布局示意，数值虚构，SVG 为可编辑源文件。用户已确认 v3.5.0-beta.1 四行表盘显示正常；用户已确认本次纯 Codex 布局显示正常；后台刷新时效和常显效果未单独验收。安装新版后，长按表盘 → 编辑 → 中央矩形位置 →「码伴 · 额度与余额」。[部署与刷新说明](docs/watch-complication.md)
+本项目已实现功能的布局示意，数值虚构，SVG 为可编辑源文件。用户已确认四行表盘和纯 Codex 布局正常；v3.5.1 进一步验证手机刷新后，手表 App 与手机更新到同一额度快照。后台调度仍由 watchOS 决定，常显效果未单独验收。安装新版后，长按表盘 → 编辑 → 中央矩形位置 →「码伴 · 额度与余额」。[部署、同步与恢复说明](docs/watch-complication.md)
 
 ## 手机与手表：分区、项目和任务保持一致
 
@@ -109,7 +109,7 @@ Mac 和 iPhone 均通过一个 **码伴** 入口添加小号／中号／大号�
 
 以下均为 **v3.0.0 本项目原生 SwiftUI 视图**在隔离模拟器中渲染，任务、审批、额度和余额均为虚构数据。截图不会执行命令，不包含个人账户或配对信息。设置区域直接挂载原页面对应区域，小组件按实际尺寸在宿主中展示，均非真机／桌面截图。
 
-Plus／Pro 截图展示不同数据窗口，**不表示所有该套餐账号固定拥有同样限制**；实际界面以 Codex 返回窗口为准。有／无 DeepSeek 在小组件使用两套布局。v3.5.0-beta.2 进一步在 Mac、手机、手表及表盘组件隐藏未配置的 DeepSeek 区域，查询失败则保留异常提示；见[适配说明与验证](docs/codex-only.md)。下方旧版图库中的未配置提示不代表当前版本布局。可点击任意图片查看大图。[完整图库与采集说明](docs/gallery.md)
+Plus／Pro 截图展示不同数据窗口，**不表示所有该套餐账号固定拥有同样限制**；实际界面以 Codex 返回窗口为准。有／无 DeepSeek 在小组件使用两套布局。v3.5.1 继续在 Mac、手机、手表及表盘组件隐藏未配置的 DeepSeek 区域，查询失败则保留异常提示；见[适配说明与验证](docs/codex-only.md)。下方旧版图库中的未配置提示不代表当前版本布局。可点击任意图片查看大图。[完整图库与采集说明](docs/gallery.md)
 
 ### 手机：任务、审批与账户状态
 

@@ -243,6 +243,31 @@ public enum WatchRefreshPolicy {
     }
 }
 
+public enum WatchSnapshotFreshness {
+    /// Prevents a delayed WatchConnectivity update from replacing a newer
+    /// snapshot that the Watch already fetched directly from the Mac.
+    public static func incoming(
+        _ incoming: WatchSnapshot,
+        isAtLeastAsNewAs current: WatchSnapshot
+    ) -> Bool {
+        guard let incomingDate = parseDate(incoming.updatedAt),
+              let currentDate = parseDate(current.updatedAt) else {
+            // Unknown timestamps must not block recovery from an older format.
+            return true
+        }
+        return incomingDate >= currentDate
+    }
+
+    private static func parseDate(_ rawValue: String) -> Date? {
+        let formatter = ISO8601DateFormatter()
+        if let date = formatter.date(from: rawValue) {
+            return date
+        }
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.date(from: rawValue)
+    }
+}
+
 public struct WatchLayoutMetrics: Equatable {
     public enum SizeClass: String, Equatable {
         case compact
